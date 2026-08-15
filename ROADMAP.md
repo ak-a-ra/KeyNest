@@ -60,3 +60,7 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
 
 ## 💡 Suggestions & Contributions
 Have a feature request or security recommendation? Please open an issue or submit a pull request!
+
+---
+
+> 📌 **Note on Paused Features:** Key Generator and Security Audit sheets have been temporarily commented out (`//`) to minimize active app memory footprint and streamline navigation. They will be re-evaluated and re-added in a future release if memory impact remains lightweight.

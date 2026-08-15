@@ -282,17 +282,8 @@ fun VaultHomeScreen(
                 }
             )
         }
-        is VaultDialogState.Generator -> {
-            KeyGeneratorSheet(
-                onDismiss = { viewModel.closeDialog() },
-                onSaveToVault = { generatedKey ->
-                    viewModel.openDialog(VaultDialogState.AddKey(initialKey = generatedKey))
-                },
-                onCopy = { key ->
-                    viewModel.copyToClipboard(key, "Generated Secret", isSecret = true)
-                }
-            )
-        }
+        // Temporarily paused KeyGenerator & SecurityAudit
+        is VaultDialogState.Generator, is VaultDialogState.SecurityAudit -> Unit
         is VaultDialogState.DotEnvExport -> {
             DotEnvExportSheet(
                 keys = allKeys,
@@ -313,14 +304,6 @@ fun VaultHomeScreen(
                     viewModel.copyToClipboard(content, ".env Export", isSecret = true)
                 },
                 onImportKeys = { items -> viewModel.importKeys(items) }
-            )
-        }
-        is VaultDialogState.SecurityAudit -> {
-            SecurityAuditSheet(
-                keys = allKeys,
-                isPinEnabled = isPinConfigured,
-                onDismiss = { viewModel.closeDialog() },
-                onSelectKey = { keyItem -> viewModel.openDialog(VaultDialogState.KeyDetail(keyItem)) }
             )
         }
         is VaultDialogState.PinSettings -> {

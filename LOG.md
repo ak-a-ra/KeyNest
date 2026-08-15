@@ -25,4 +25,6 @@
 - 2026-08-15: Added AI Studio banner HTML block to top of README.md.
 - 2026-08-15: Updated CONTRIBUTING.md for human contributors; added Roadmap and Contributing links to README.md.
 - 2026-08-15: Incremented versionCode to 3 and versionName to 0.0.3 in app/build.gradle.kts for v0.0.3 release staging.
+- 2026-08-15: Refactored MaskedKeyPreview IconButton touch target to 48.dp for accessibility compliance and added testTag.
+- 2026-08-15: Temporarily paused Key Generator & Security Audit sheets in drawer/dialog matching to optimize memory footprint; added note to ROADMAP.md.
 

@@ -253,7 +253,9 @@ fun MaskedKeyPreview(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = { isRevealed = !isRevealed },
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag("toggle_reveal_button")
                 ) {
                     Icon(
                         imageVector = if (isRevealed) Icons.Default.VisibilityOff else Icons.Default.Visibility,

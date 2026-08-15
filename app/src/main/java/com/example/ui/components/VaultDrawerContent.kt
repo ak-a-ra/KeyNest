@@ -225,27 +225,27 @@ fun VaultDrawerSheetContent(
                 )
             }
 
-            item {
-                NavigationDrawerItem(
-                    label = { Text("Security Audit") },
-                    selected = false,
-                    onClick = onOpenSecurityAudit,
-                    icon = { Icon(Icons.Default.Shield, contentDescription = null, tint = CyberGold) },
-                    shape = RoundedCornerShape(24.dp),
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent, unselectedTextColor = TextSecondary)
-                )
-            }
-
-            item {
-                NavigationDrawerItem(
-                    label = { Text("Key Generator") },
-                    selected = false,
-                    onClick = onOpenGenerator,
-                    icon = { Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = CyberEmerald) },
-                    shape = RoundedCornerShape(24.dp),
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent, unselectedTextColor = TextSecondary)
-                )
-            }
+//             item {
+//                 NavigationDrawerItem(
+//                     label = { Text("Security Audit") },
+//                     selected = false,
+//                     onClick = onOpenSecurityAudit,
+//                     icon = { Icon(Icons.Default.Shield, contentDescription = null, tint = CyberGold) },
+//                     shape = RoundedCornerShape(24.dp),
+//                     colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent, unselectedTextColor = TextSecondary)
+//                 )
+//             }
+// 
+//             item {
+//                 NavigationDrawerItem(
+//                     label = { Text("Key Generator") },
+//                     selected = false,
+//                     onClick = onOpenGenerator,
+//                     icon = { Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = CyberEmerald) },
+//                     shape = RoundedCornerShape(24.dp),
+//                     colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent, unselectedTextColor = TextSecondary)
+//                 )
+//             }
 
             item {
                 NavigationDrawerItem(
