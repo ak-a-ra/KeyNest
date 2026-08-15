@@ -16,7 +16,8 @@ This repository uses local Markdown-based tracking and GitHub issue integration.
 
 ## 📋 Active Issue Backlog
 
-### 🔴 ISSUE-8: Prevent Plaintext Fallback on Encryption Failure in `Cryptography.kt`
+### 🔴 ISSUE #5: Prevent Plaintext Fallback on Encryption Failure in `Cryptography.kt`
+- **GitHub URL:** https://github.com/ak-a-ra/KeyNest/issues/5
 - **Status:** Open
 - **Priority:** High (Security Invariant)
 - **Description:** In `Cryptography.encrypt()`, the catch block currently returns raw `plainText` when AES cipher encryption fails. This violates the security invariant that secrets must never touch storage in plaintext.
@@ -25,7 +26,8 @@ This repository uses local Markdown-based tracking and GitHub issue integration.
   - Failures should either throw a secure exception or return an empty/error token.
   - Unit tests in `CryptographyTest.kt` verify no plaintext leakage under fault conditions.
 
-### 🟠 ISSUE-9: Enforce Strict Hardware-Backed Encrypted Preferences in `VaultSecurity.kt`
+### 🟠 ISSUE #6: Enforce Strict Hardware-Backed Encrypted Preferences in `VaultSecurity.kt`
+- **GitHub URL:** https://github.com/ak-a-ra/KeyNest/issues/6
 - **Status:** Open
 - **Priority:** High (Security Invariant)
 - **Description:** `VaultSecurity.getPrefs()` falls back to unencrypted standard `SharedPreferences` if `EncryptedSharedPreferences.create()` fails. This could leak master PIN hashes and device salt in plaintext.
@@ -33,7 +35,8 @@ This repository uses local Markdown-based tracking and GitHub issue integration.
   - Eliminate unencrypted fallback or handle initialization errors with graceful degraded read-only / locked state.
   - Verify all sensitive preference operations require valid master key encryption.
 
-### 🟡 ISSUE-10: Deprecate Legacy `String.hashCode()` PIN Verification
+### 🟡 ISSUE #7: Deprecate Legacy `String.hashCode()` PIN Verification
+- **GitHub URL:** https://github.com/ak-a-ra/KeyNest/issues/7
 - **Status:** Open
 - **Priority:** Medium (Code Hygiene & Standards)
 - **Description:** `VaultSecurity.generateLegacyHash` relies on `String.hashCode()` for backward compatibility.
@@ -67,7 +70,9 @@ This repository uses local Markdown-based tracking and GitHub issue integration.
 - **Status:** Resolved
 - **Priority:** Low
 - **Description:** Complex nested ternary and Elvis operator expressions during sheet state initialization.
-- **Resolution:** Refactored into clean, readable `when` expressions for `selectedProvider` and `title`.\n\n### 🟢 ISSUE-5: Decryption Performance Bottleneck in Repository
+- **Resolution:** Refactored into clean, readable `when` expressions for `selectedProvider` and `title`.
+
+### 🟢 ISSUE-5: Decryption Performance Bottleneck in Repository
 - **Status:** Resolved
 - **Priority:** High
 - **Description:** Every `getAllKeys()` Flow emission re-decrypted every key from SQLite, causing UI frame drops during search/filtering.
