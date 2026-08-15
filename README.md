@@ -14,6 +14,8 @@
 
 > Ultra-fast, encrypted API key and developer secret vault for Android. Built with Jetpack Compose, Material 3, and Android Keystore encryption.
 
+🗺️ **[Roadmap](ROADMAP.md)** | 🤝 **[Contributing](CONTRIBUTING.md)** | 📄 **[License](LICENSE)**
+
 ---
 
 ## ⚡ Highlights

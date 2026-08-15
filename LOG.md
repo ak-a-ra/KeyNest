@@ -23,4 +23,6 @@
 - 2026-08-15: Closed GitHub issues #1 and #2 on repository ak-a-ra/Keyvaults.
 - 2026-08-15: Installed skills from JuliusBrussee/caveman to .agents/skills.
 - 2026-08-15: Added AI Studio banner HTML block to top of README.md.
+- 2026-08-15: Updated CONTRIBUTING.md for human contributors; added Roadmap and Contributing links to README.md.
+- 2026-08-15: Incremented versionCode to 3 and versionName to 0.0.3 in app/build.gradle.kts for v0.0.3 release staging.
 

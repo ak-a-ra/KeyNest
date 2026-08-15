@@ -1,34 +1,36 @@
-# Contributing to KeyNest
+# Contributing to KeyNest 🤝
 
 Thank you for your interest in contributing to **KeyNest**! KeyNest is an ultra-fast, encrypted API Key & Developer Secret Vault for Android built with Kotlin, Jetpack Compose, and Material Design 3.
 
+We welcome contributions from everyone—whether you're fixing a bug, improving documentation, or adding a new feature from our [Roadmap](ROADMAP.md).
+
 ---
 
-## 🔒 Security First
+## 🔒 Security Invariants
 
-KeyNest deals with sensitive developer credentials and cryptographic operations. Before writing code, please review these strict security invariants:
+KeyNest deals with sensitive developer credentials and cryptographic operations. Before submitting code, please ensure your changes uphold these strict security rules:
 
-1. **Keystore-Backed Encryption**: Key values must always be encrypted at rest using AES-256 GCM backed by the Android KeyStore (`Cryptography.kt` / `EncryptedSharedPreferences`). Never store plaintext keys in SQLite, Room without encryption, shared preferences, or flat files.
-2. **Masked Inputs**: Secret and API key input fields must stay masked by default (`PasswordVisualTransformation`) with an explicit reveal toggle.
-3. **No Logging**: Never log key values, plain secrets, or PIN hashes, even in debug builds (`Log.d`, `println`, etc.).
-4. **Sensitive Clipboard Flags**: All clipboard writes must preserve `ClipDescription.EXTRA_IS_SENSITIVE` on API 33+.
-5. **No Cloud Sync Without End-to-End Encryption**: The vault is local-first. Do not introduce unencrypted third-party analytics, remote logs, or cloud tracking.
+1. **Keystore-Backed Encryption**: Key values must always be encrypted at rest using AES-256 GCM backed by Android KeyStore (`EncryptedSharedPreferences`). Never store plaintext keys in SQLite, Room without encryption, standard SharedPreferences, or flat files.
+2. **Masked Inputs**: Secret and API key input fields must remain masked by default (`PasswordVisualTransformation`) with an explicit reveal toggle.
+3. **No Logging**: Never log key values, plain secrets, or PIN hashes—even in debug builds (`Log.d`, `println`, etc.).
+4. **Sensitive Clipboard Flags**: All clipboard writes must preserve `ClipDescription.EXTRA_IS_SENSITIVE` on API 33+ (Android 13+).
+5. **Offline & Privacy First**: The vault is local-first. Do not introduce unencrypted third-party analytics, remote logs, or mandatory cloud dependencies.
 
 ---
 
 ## 🛠️ Development Setup
 
 ### Prerequisites
-- Android Studio Ladybug (or newer) / IntelliJ IDEA with Android SDK
+- [Android Studio](https://developer.android.com/studio) (Ladybug / Meerkat or newer)
 - JDK 17 or JDK 21
-- Android SDK Platform 34+ / Build Tools
+- Android SDK Platform 34+
 
-### Building the Project
-Clone the repository and build using Gradle:
+### Building & Testing
+Clone the repository and build via Gradle:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/KeyNest.git
+git clone https://github.com/ak-a-ra/KeyNest.git
 cd KeyNest
 
 # Build debug APK
@@ -40,33 +42,34 @@ cd KeyNest
 
 ---
 
-## 📐 Code Style & Architecture Guidelines
+## 📐 Architecture & Code Style
 
-- **Language**: Kotlin exclusively for UI and logic.
+- **Language**: 100% Kotlin.
 - **UI Framework**: Jetpack Compose adhering strictly to Material Design 3 (M3).
-- **Architecture**: MVVM with Clean Architecture principles.
-- **YAGNI & Minimal Code**: Reach for stdlib and native Android platform features before pulling in external dependencies.
-- **Naming & Testing**:
-  - Add `Modifier.testTag("unique_tag_name")` to interactive elements and buttons.
-  - Follow Android resource conventions (`res/values/strings.xml` for user-facing copy).
+- **Architecture**: MVVM with Clean Architecture principles (`ViewModel`, `StateFlow`, Coroutines).
+- **Minimal Dependencies (YAGNI)**: Utilize standard library and native Android platform APIs before adding external dependencies.
+- **Accessibility & Testability**:
+  - Add `Modifier.testTag("unique_tag_name")` to interactive UI components.
+  - Keep user-facing strings in `res/values/strings.xml`.
 
 ---
 
 ## 🔄 Contribution Workflow
 
-1. **Fork & Branch**: Create a feature branch from `main`:
+1. **Find an Issue or Feature**: Check our [Roadmap](ROADMAP.md) or open an issue on [GitHub](https://github.com/ak-a-ra/KeyNest/issues).
+2. **Fork & Branch**: Create a feature branch off `main`:
    ```bash
-   git checkout -b feature/grid-view-toggle
+   git checkout -b feature/your-feature-name
    ```
-2. **Implement**: Keep commits atomic, well-described, and focused on a single responsibility.
-3. **Verify Build**: Ensure code compiles without errors or lint warnings:
+3. **Write Clean Code**: Keep commits atomic and focused.
+4. **Verify Build**: Ensure code compiles without errors or test failures:
    ```bash
    ./gradlew assembleDebug test
    ```
-4. **Submit PR**: Open a Pull Request against `main` with a clear description of the feature or bug fix and reference any relevant issues or roadmap items.
+5. **Submit a Pull Request**: Open a PR against `main` explaining your changes and referencing any related issues.
 
 ---
 
 ## 📜 License
 
-By contributing to KeyNest, you agree that your contributions will be licensed under the project's [Apache 2.0 / MIT License](LICENSE).
+By contributing to KeyNest, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).
