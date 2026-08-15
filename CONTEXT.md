@@ -1,0 +1,36 @@
+# KeyNest Context
+
+## Purpose
+
+KeyNest is a single-activity Android vault for developers to store, organize, reveal, copy, import, and export API keys and related secrets.
+
+## Primary domain terms
+
+- **Vault item**: An `ApiKeyItem` holding an API key, optional secret key, and metadata such as provider, category, environment, labels, and rotation details.
+- **Secret**: An API key or secret key. It must never be logged or persist unencrypted.
+- **Field encryption**: Keystore-backed AES-GCM encryption of `ApiKeyItem.apiKey` and `ApiKeyItem.secretKey` before Room persistence.
+- **Sensitive preferences**: PIN state, PIN hash, salt, clipboard self-copy marker, and other protected settings stored through `EncryptedSharedPreferences`.
+- **Secure degraded state**: The locked or unavailable state used when Android Keystore or encrypted preferences cannot initialize. It must not fall back to plaintext or crash startup.
+- **Legacy vault data**: Data written before field encryption or earlier encryption formats. It requires an explicit migration or recovery path, never implicit plaintext treatment of malformed ciphertext.
+
+## Architecture
+
+- `data/db`: Room schema and DAO.
+- `data/model`: Persistent domain models and provider presets.
+- `data/repository`: Encryption-aware persistence boundary for vault items.
+- `data/security`: Android Keystore cryptography, encrypted preferences, PIN handling, and security helpers.
+- `ui/viewmodel`: StateFlow-backed presentation state and user actions.
+- `ui/screens` and `ui/components`: Compose user interface.
+
+## Invariants
+
+- Room secrets use Keystore-backed field encryption.
+- Sensitive preferences use `EncryptedSharedPreferences`.
+- Encryption failures are explicit and atomic. A failure must not be represented by an empty secret or overwrite data.
+- Vault data must remain recoverable across supported encryption changes.
+- Sensitive text is masked by default and clipboard secrets use `EXTRA_IS_SENSITIVE` on API 33+.
+- `android:allowBackup` remains `false`.
+
+## Consumer rules
+
+Read this file before architecture, diagnosis, or TDD work. Read applicable records under `docs/adr/` before changing a decision they cover. Update this file when the ubiquitous language, module boundaries, or system invariants change.

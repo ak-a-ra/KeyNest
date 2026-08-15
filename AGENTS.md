@@ -51,9 +51,18 @@ Before adding code, in order: does this need to exist? → already in the codeba
 
 ## Agent skills
 
-- **Issue tracker**: [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md)
-- **Triage labels**: [docs/agents/triage-labels.md](docs/agents/triage-labels.md)
-- **Domain layout**: [docs/agents/domain.md](docs/agents/domain.md)
+### Issue tracker
+
+GitHub Issues in `ak-a-ra/KeyNest` are the system of record. See [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
+
+### Triage labels
+
+Use the confirmed GitHub lifecycle labels. See [docs/agents/triage-labels.md](docs/agents/triage-labels.md).
+
+### Domain docs
+
+This is a single-context repository with root `CONTEXT.md` and ADRs under `docs/adr/`. See [docs/agents/domain.md](docs/agents/domain.md).
+
 - **UI/UX Pro Max**: [/.agents/skills/ui-ux-pro-max/SKILL.md](/.agents/skills/ui-ux-pro-max/SKILL.md) (Design intelligence database & search script `scripts/search.py`)
 - **Ponytail Suite**: [/.agents/skills/ponytail/SKILL.md](/.agents/skills/ponytail/SKILL.md) (`ponytail`, `ponytail-audit`, `ponytail-debt`, `ponytail-gain`, `ponytail-help`, `ponytail-review`)
 

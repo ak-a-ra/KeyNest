@@ -1,11 +1,13 @@
 # Triage Labels
 
-Standard triage roles and vocabulary for agent and engineering workflows:
+GitHub Issues use these lifecycle labels:
 
-| Role | Label | Purpose |
+| Role | Label | Use |
 |---|---|---|
-| `needs-triage` | `needs-triage` | Newly created item awaiting review, reproduction, or scoping. |
-| `needs-info` | `needs-info` | Blocked on user clarification, missing reproduction steps, or credentials. |
-| `ready-for-agent` | `ready-for-agent` | Specification is clear, scope is validated, ready for AI agent execution. |
-| `ready-for-human` | `ready-for-human` | Requires human decision, physical device hardware test, or private credential rotation. |
-| `wontfix` | `wontfix` | Out of scope, rejected, or invalid request. |
+| Needs evaluation | `needs-triage` | All newly created issues awaiting review, reproduction, or scope validation. |
+| Needs reporter input | `needs-info` | Missing reproduction details, clarification, or non-sensitive information. |
+| Ready for an agent | `ready-for-agent` | Scope and acceptance criteria are clear enough for autonomous implementation. |
+| Ready for a human | `ready-for-human` | Requires a human decision, physical-device test, credential rotation, or other human-only action. |
+| Will not fix | `wontfix` | Invalid, rejected, or out-of-scope work. |
+
+Security findings additionally receive the `security` label and are prioritized immediately. When transitioning labels, remove the prior lifecycle label so an issue has one lifecycle state.
