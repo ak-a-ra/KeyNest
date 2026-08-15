@@ -30,3 +30,4 @@
 - 2026-08-15: Added Android mobile anti-slop UI craft items (semantic status accents, utility empty states, technical microcopy) to ROADMAP.md Phase 2.
 - 2026-08-15: Installed skill `find-skills` from vercel-labs/skills to `/.agents/skills/find-skills`.
 
+- 2026-08-15: Created active issues (ISSUE-8, ISSUE-9, ISSUE-10) in docs/agents/issue-tracker.md from security and standards audit.

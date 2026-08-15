@@ -16,7 +16,30 @@ This repository uses local Markdown-based tracking and GitHub issue integration.
 
 ## 📋 Active Issue Backlog
 
-*No active issues left in the backlog! All identified issues are resolved.*
+### 🔴 ISSUE-8: Prevent Plaintext Fallback on Encryption Failure in `Cryptography.kt`
+- **Status:** Open
+- **Priority:** High (Security Invariant)
+- **Description:** In `Cryptography.encrypt()`, the catch block currently returns raw `plainText` when AES cipher encryption fails. This violates the security invariant that secrets must never touch storage in plaintext.
+- **Acceptance Criteria:**
+  - `Cryptography.encrypt()` must never return the unencrypted input string upon failure.
+  - Failures should either throw a secure exception or return an empty/error token.
+  - Unit tests in `CryptographyTest.kt` verify no plaintext leakage under fault conditions.
+
+### 🟠 ISSUE-9: Enforce Strict Hardware-Backed Encrypted Preferences in `VaultSecurity.kt`
+- **Status:** Open
+- **Priority:** High (Security Invariant)
+- **Description:** `VaultSecurity.getPrefs()` falls back to unencrypted standard `SharedPreferences` if `EncryptedSharedPreferences.create()` fails. This could leak master PIN hashes and device salt in plaintext.
+- **Acceptance Criteria:**
+  - Eliminate unencrypted fallback or handle initialization errors with graceful degraded read-only / locked state.
+  - Verify all sensitive preference operations require valid master key encryption.
+
+### 🟡 ISSUE-10: Deprecate Legacy `String.hashCode()` PIN Verification
+- **Status:** Open
+- **Priority:** Medium (Code Hygiene & Standards)
+- **Description:** `VaultSecurity.generateLegacyHash` relies on `String.hashCode()` for backward compatibility.
+- **Acceptance Criteria:**
+  - Mark `generateLegacyHash()` with `@Deprecated` and establish a sunset timeline.
+  - Ensure modern SHA-256 with per-device salt remains the sole standard.
 
 ---
 
@@ -44,9 +67,7 @@ This repository uses local Markdown-based tracking and GitHub issue integration.
 - **Status:** Resolved
 - **Priority:** Low
 - **Description:** Complex nested ternary and Elvis operator expressions during sheet state initialization.
-- **Resolution:** Refactored into clean, readable `when` expressions for `selectedProvider` and `title`.
-
-### 🟢 ISSUE-5: Decryption Performance Bottleneck in Repository
+- **Resolution:** Refactored into clean, readable `when` expressions for `selectedProvider` and `title`.\n\n### 🟢 ISSUE-5: Decryption Performance Bottleneck in Repository
 - **Status:** Resolved
 - **Priority:** High
 - **Description:** Every `getAllKeys()` Flow emission re-decrypted every key from SQLite, causing UI frame drops during search/filtering.
@@ -81,5 +102,3 @@ This repository uses local Markdown-based tracking and GitHub issue integration.
 - **Priority:** High
 - **Description:** Implemented disciplined bug diagnosis loop and test suite verifying hardware-backed Keystore security invariants, entropy analysis, provider detection patterns, and .env parser/exporter edge cases.
 - **Resolution:** Added `VaultSecurityTest.kt` (PIN lifecycle, key masking, provider signature detection, Shannon entropy calculations, key generators) and `VaultDotEnvTest.kt` (.env export/parse roundtrip, comment stripping, environment mapping). All tests verified passing in local JVM unit testing.
-
-
