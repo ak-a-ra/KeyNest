@@ -44,7 +44,8 @@ object Cryptography {
             val combined = iv + encryptedBytes
             return Base64.encodeToString(combined, Base64.NO_WRAP)
         } catch (e: Exception) {
-            return plainText
+            // Security: Never return plaintext on encryption failure
+            return ""
         }
     }
 
@@ -52,7 +53,7 @@ object Cryptography {
         if (cipherText.isEmpty()) return ""
         try {
             val combined = Base64.decode(cipherText, Base64.NO_WRAP)
-            if (combined.size <= IV_LENGTH) return cipherText
+            if (combined.size <= IV_LENGTH) return ""
             val iv = combined.copyOfRange(0, IV_LENGTH)
             val encryptedBytes = combined.copyOfRange(IV_LENGTH, combined.size)
 
@@ -63,7 +64,8 @@ object Cryptography {
             val decryptedBytes = cipher.doFinal(encryptedBytes)
             return String(decryptedBytes, Charsets.UTF_8)
         } catch (e: Exception) {
-            return cipherText
+            // Security: Never return ciphertext/plaintext on decryption failure
+            return ""
         }
     }
 }

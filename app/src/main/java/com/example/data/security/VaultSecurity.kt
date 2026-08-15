@@ -34,7 +34,9 @@ object VaultSecurity {
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
     } catch (_: Exception) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        // Security: Never fall back to plain SharedPreferences - if encryption fails,
+        // throw exception to prevent plaintext data leakage
+        throw RuntimeException("Encrypted preferences unavailable - cannot store sensitive data")
     }
 
     private fun getOrCreateSalt(context: Context): String {
