@@ -27,4 +27,6 @@
 - 2026-08-15: Incremented versionCode to 3 and versionName to 0.0.3 in app/build.gradle.kts for v0.0.3 release staging.
 - 2026-08-15: Refactored MaskedKeyPreview IconButton touch target to 48.dp for accessibility compliance and added testTag.
 - 2026-08-15: Temporarily paused Key Generator & Security Audit sheets in drawer/dialog matching to optimize memory footprint; added note to ROADMAP.md.
+- 2026-08-15: Added Android mobile anti-slop UI craft items (semantic status accents, utility empty states, technical microcopy) to ROADMAP.md Phase 2.
+- 2026-08-15: Installed skill `find-skills` from vercel-labs/skills to `/.agents/skills/find-skills`.
 

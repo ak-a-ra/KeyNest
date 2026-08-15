@@ -41,6 +41,10 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
 - [ ] **Google Keep Pastel Color Palette Picker**: Keep-style bottom color-dot selector (Coral, Sand, Sage, Fog, Dusk, Storm, Blossom) for custom note card pastel tints.
 - [ ] **Developer Code Exporter Action Sheet**: 1-tap quick code snippet copy for `.env`, Shell `export`, `Authorization: Bearer <key>`, cURL, and Python `requests` headers.
 - [ ] **Archive & Soft-Delete Trash Bin**: Archive inactive keys and provide a 30-day recoverable Trash bin in navigation drawer with restore and permanent purge protection.
+- [ ] **Anti-Slop UI Craft Polish**:
+  - [ ] **Semantic Status Accents**: Color-coded key health indicators (expiring warning accents, cyan active indicators) over decorative ambient background glows.
+  - [ ] **Utility-Driven Empty States**: Quick 1-tap preset sample importer in empty vault view (e.g., "Import AWS / OpenAI Template").
+  - [ ] **Technical Microcopy Precision**: Direct, action-oriented developer microcopy across empty states and security dialogs ("AES-256 KeyStore Vault • Zero Plaintext Logs").
 - [ ] **Native BiometricPrompt Integration**: Fingerprint and Face Unlock support integrated with Android BiometricManager.
 - [ ] **Per-Key Biometric Gate**: Require explicit biometric auth before revealing or copying high-risk production keys.
 - [ ] **Auto-Lock Timeout**: Configurable background timeout lock (Instant, 30s, 1m, 5m).
