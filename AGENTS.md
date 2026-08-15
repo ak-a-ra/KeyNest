@@ -15,12 +15,21 @@ Before adding code, in order: does this need to exist? → already in the codeba
 
 ## Security invariants — do not regress these
 
-- Key values are stored via `EncryptedSharedPreferences` only. Never swap in plain `SharedPreferences`, a flat file, or a database without an equivalent Keystore-backed encryption layer.
+- Key values stored in Room must use Keystore-backed field encryption. Sensitive preferences must use `EncryptedSharedPreferences`. Never swap either layer for plain `SharedPreferences`, a flat file, or an unencrypted database.
 - `android:allowBackup="false"` stays false.
 - The "API key" input field in `AddKeyDialog` / `AddEditKeySheet` stays masked by default (`PasswordVisualTransformation`) with an explicit reveal toggle — it was plaintext-on-screen before, that was a real bug, not a style choice.
 - Clipboard writes stay flagged `ClipDescription.EXTRA_IS_SENSITIVE` on API 33+.
 - Saving a label that already exists must warn before overwriting (SharedPreferences keys on label — a silent overwrite is silent data loss).
 - Never log key values, even in debug builds.
+- Encryption failures must be explicit and atomic. Do not use an empty string as an error sentinel, silently overwrite secrets, or destroy data that cannot be encrypted or decrypted.
+- Preserve legacy encrypted and plaintext vault data through a deliberate migration or recovery path. Do not treat arbitrary malformed ciphertext as legacy plaintext.
+- If Android Keystore or encrypted-preferences initialization fails, preserve the no-plaintext invariant and enter a secure locked or degraded state with a non-sensitive recovery message. Do not crash at startup or fall back to plaintext storage.
+
+## Issue workflow
+
+- New issues start with `needs-triage`.
+- After a finding is reproduced or validated and its scope is clear, add `ready-for-agent`.
+- Security findings must also use the `security` label and be prioritized immediately.
 
 ## Agent Guidelines (Persona & Behavior)
 
