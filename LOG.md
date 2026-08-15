@@ -22,5 +22,5 @@
 - 2026-08-15: Resolved ISSUE-7: Replaced static salt with per-device randomly generated salt stored in EncryptedSharedPreferences with automatic backward compatibility migration.
 - 2026-08-15: Closed GitHub issues #1 and #2 on repository ak-a-ra/Keyvaults.
 - 2026-08-15: Installed skills from JuliusBrussee/caveman to .agents/skills.
-- 2026-08-15: Resolved ISSUE-8: Fixed navigation drawer animation lag by offloading combined flow filtering to Dispatchers.Default, and styled ModalDrawerSheet with smooth 24dp right corners.
+- 2026-08-15: Added AI Studio banner HTML block to top of README.md.
 
