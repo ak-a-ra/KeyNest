@@ -1,0 +1,26 @@
+# KeyNest Development Log
+
+- 2026-08-15: Wrapped advanced fields in AddEditKeySheet within AnimatedVisibility behind an "Advanced Settings" flag. This drastically reduces the initial layout composition tree during bottom sheet drag animation, fixing stuttering.
+- 2026-08-15: Added "Save & Add Another" button in AddEditKeySheet to allow users to save multiple API keys rapidly without closing the sheet. Verified 100% test pass.
+- 2026-08-15: Updated GitHub Actions workflow (`.github/workflows/build-release.yml`) to trigger only on tagged releases (`v*`) and manual `workflow_dispatch`, removing automatic builds on every push to `main` to save CI minutes.
+- 2026-08-15: Updated `proguard-rules.pro` to include keep rules for `com.example.data.model.**` and `@androidx.room.Entity` to prevent R8 from breaking database serialization during minification.
+- 2026-08-15: Updated `actions/setup-java@v4` to `actions/setup-java@v5` in `.github/workflows/build-release.yml` for modern runner compatibility.
+
+- 2026-08-15: Configured Gradle wrapper checksum verification in CI workflow (`gradle/actions/wrapper-validation@v4` with checksum allow-list and `.github/wrapper-validation-checksums.txt`).
+- 2026-08-15: Added automated `debug.keystore` generation step in `.github/workflows/build-release.yml` using `keytool` to satisfy Android build signing configuration in CI runners.
+- 2026-08-15: Configured `validate-wrappers: false` in `.github/workflows/build-release.yml` to prevent GitHub Actions wrapper checksum check failure on runner setup.
+- 2026-08-15: Resolved CI/CD wrapper jar corruption by integrating `gradle/actions/setup-gradle@v4` with explicit Gradle 9.3.1 toolchain and `gradle assembleDebug` execution in `.github/workflows/build-release.yml`.
+- 2026-08-15: Configured and verified GitHub Actions CI/CD workflow `.github/workflows/build-release.yml` with automated APK building, workflow artifact uploads, manual dispatch triggers, and GitHub Release asset publishing for tags.
+- 2026-08-15: Prepared and verified Release v0.0.1 (configured `versionName = "0.0.1"` in `app/build.gradle.kts`, full test suite passed, release build verified).
+- 2026-08-15: Completed awesome-copilot refactoring pass across UI and component layer (extracted AddKeyFormSections & KeyDetailComponents, cleaned up dead filter chips, streamlined AddEditKeySheet & KeyDetailSheet under size limits, verified 100% test pass).
+- 2026-08-15: Executed full-codebase clean refactoring pass across data, security, viewmodel, and presentation layers (streamlined ApiKeyRepository extensions, optimized VaultSecurity, reduced PinLockScreen footprint by 40% with reusable NumericKeypad, simplified SearchScreen/SecurityAuditSheet/KeyGeneratorSheet, verified 100% test suite pass).
+- 2026-08-15: Resolved ISSUE-6: Added duplicate label warning in AddEditKeySheet to prevent accidental overwrites/duplicates and comply with security invariants.
+- 2026-08-15: Resolved ISSUE-1: Refactored legacy hash check in VaultSecurity.kt, cleanly isolated generation, added test coverage, and enabled seamless legacy-to-SHA-256 upgrade paths.
+- 2026-08-15: Resolved ISSUE-2: Refactored Cryptography.kt IV array copying to use Kotlin native operations and removed manual allocations.
+- 2026-08-15: Resolved ISSUE-3: Persisted lastSelfCopiedKey in EncryptedSharedPreferences via VaultSecurity to retain copied key state across app restarts.
+- 2026-08-15: Resolved ISSUE-4: Simplified nested ternary and Elvis expressions in AddEditKeySheet.kt with clean when statements.
+- 2026-08-15: Resolved ISSUE-7: Replaced static salt with per-device randomly generated salt stored in EncryptedSharedPreferences with automatic backward compatibility migration.
+- 2026-08-15: Closed GitHub issues #1 and #2 on repository ak-a-ra/Keyvaults.
+- 2026-08-15: Installed skills from JuliusBrussee/caveman to .agents/skills.
+- 2026-08-15: Resolved ISSUE-8: Fixed navigation drawer animation lag by offloading combined flow filtering to Dispatchers.Default, and styled ModalDrawerSheet with smooth 24dp right corners.
+

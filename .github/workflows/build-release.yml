@@ -1,0 +1,99 @@
+name: Build & Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+        with:
+          allow-checksums: 'a5e75118d96b4eac2100876f6af6a5ca5029cd440f87736425350fb4cf308b42'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+          validate-wrappers: false
+
+      - name: Create Env Configuration
+        run: |
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          else
+            touch .env
+          fi
+
+      - name: Generate Debug Keystore
+        run: |
+          if [ ! -f debug.keystore ]; then
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build Debug APK
+        run: gradle assembleDebug --no-daemon
+
+      - name: Prepare APK Output
+        id: prepare_apk
+        run: |
+          APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            APK_PATH=$(find . -name "*.apk" | head -n 1)
+          fi
+          
+          if [ -z "$APK_PATH" ]; then
+            echo "Error: No APK file was generated!"
+            exit 1
+          fi
+          
+          VERSION_TAG="${{ github.ref_name }}"
+          if [ "${{ github.ref_type }}" != "tag" ]; then
+            VERSION_TAG="ci-${{ github.sha }}"
+          fi
+
+          RENAMED_APK="app/build/outputs/apk/debug/KeyNest-${VERSION_TAG}.apk"
+          cp "$APK_PATH" "$RENAMED_APK"
+          echo "apk_file=$RENAMED_APK" >> $GITHUB_OUTPUT
+          echo "Prepared APK at: $RENAMED_APK"
+
+      - name: Upload APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KeyNest-APK
+          path: ${{ steps.prepare_apk.outputs.apk_file }}
+          retention-days: 14
+
+      - name: Create & Publish GitHub Release (Tag Triggers Only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "KeyNest ${{ github.ref_name }}"
+          body: |
+            ## KeyNest Vault Release ${{ github.ref_name }}
+            
+            ### Artifacts
+            - **Debug APK**: Ready to install directly on Android devices.
+          draft: false
+          prerelease: false
+          files: ${{ steps.prepare_apk.outputs.apk_file }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,6 @@
+{
+  "name": "KeyNest",
+  "description": "Ultra-fast, secure API Key & Secret Vault with 1-tap copy, clipboard auto-detection, .env exporter, and key rotation tracker.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

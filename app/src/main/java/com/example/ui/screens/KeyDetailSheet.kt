@@ -1,0 +1,275 @@
+package com.example.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.data.model.ApiKeyItem
+import com.example.data.model.ProviderPresets
+import com.example.ui.components.EntropyStrengthBar
+import com.example.ui.components.EnvironmentTag
+import com.example.ui.components.KeyCodeSnippetsCard
+import com.example.ui.components.KeyDetailActivityMetricsCard
+import com.example.ui.components.KeyDetailFingerprintCard
+import com.example.ui.components.KeyDeveloperConsoleButton
+import com.example.ui.components.KeyExpirationStatusCard
+import com.example.ui.components.MaskedKeyPreview
+import com.example.ui.components.ProviderIconBadge
+import com.example.ui.theme.CyberCyan
+import com.example.ui.theme.CyberGold
+import com.example.ui.theme.ObsidianSurface
+import com.example.ui.theme.ObsidianSurfaceElevated
+import com.example.ui.theme.StatusDanger
+import com.example.ui.theme.TextPrimary
+import com.example.ui.theme.TextSecondary
+import com.example.ui.theme.TextTertiary
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun KeyDetailSheet(
+    item: ApiKeyItem,
+    onDismiss: () -> Unit,
+    onEdit: (ApiKeyItem) -> Unit,
+    onDelete: (ApiKeyItem) -> Unit,
+    onTogglePin: (ApiKeyItem) -> Unit,
+    onCopyKey: (String, String, Long) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val preset = remember(item.provider) { ProviderPresets.findByName(item.provider) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = ObsidianSurface,
+        dragHandle = null
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 600.dp)
+                .align(Alignment.CenterHorizontally)
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ProviderIconBadge(
+                        provider = item.provider,
+                        colorHex = item.colorHex ?: preset.defaultColorHex,
+                        size = 38
+                    )
+                    Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = item.title,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.padding(top = 2.dp)
+                        ) {
+                            EnvironmentTag(environment = item.environment)
+                            Text(
+                                text = "• ${item.provider}",
+                                fontSize = 12.sp,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { onTogglePin(item) }) {
+                        Icon(
+                            imageVector = if (item.isPinned) Icons.Default.Star else Icons.Default.StarBorder,
+                            contentDescription = "Pin Key",
+                            tint = if (item.isPinned) CyberGold else TextTertiary
+                        )
+                    }
+                    IconButton(onClick = { onEdit(item) }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = CyberCyan)
+                    }
+                    IconButton(onClick = { showDeleteConfirm = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = StatusDanger)
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = TextTertiary)
+                    }
+                }
+            }
+
+            // Primary API Key Section
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "API KEY / TOKEN",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextTertiary,
+                    letterSpacing = 0.8.sp
+                )
+                MaskedKeyPreview(
+                    apiKey = item.apiKey,
+                    onCopy = {
+                        onCopyKey(item.apiKey, "${item.title} API Key", item.id)
+                    }
+                )
+            }
+
+            // Secret Key Section (if present)
+            if (item.secretKey.isNotBlank()) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "SECONDARY SECRET / KEY ID",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextTertiary,
+                        letterSpacing = 0.8.sp
+                    )
+                    MaskedKeyPreview(
+                        apiKey = item.secretKey,
+                        onCopy = {
+                            onCopyKey(item.secretKey, "${item.title} Secret", item.id)
+                        }
+                    )
+                }
+            }
+
+            // Entropy strength analysis
+            EntropyStrengthBar(apiKey = item.apiKey)
+
+            // SHA-256 Key Fingerprint Badge
+            KeyDetailFingerprintCard(apiKey = item.apiKey)
+
+            // Key Expiration & Rotation Status Card
+            KeyExpirationStatusCard(
+                item = item,
+                onRotateClick = { onEdit(item) }
+            )
+
+            // Usage & Timestamp Metrics Card
+            KeyDetailActivityMetricsCard(item = item)
+
+            // Quick Code Snippets (Ready to copy for .env, cURL, Python, Node.js)
+            KeyCodeSnippetsCard(
+                item = item,
+                preset = preset,
+                onCopySnippet = { snippet, label ->
+                    onCopyKey(snippet, label, item.id)
+                }
+            )
+
+            // Developer console link (if available)
+            if (preset.consoleUrl.isNotEmpty()) {
+                KeyDeveloperConsoleButton(
+                    provider = item.provider,
+                    consoleUrl = preset.consoleUrl
+                )
+            }
+
+            // Notes and Tags if any
+            if (item.notes.isNotBlank() || item.tags.isNotBlank()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(ObsidianSurfaceElevated)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    if (item.tags.isNotBlank()) {
+                        Text(
+                            text = "TAGS: ${item.tags}",
+                            fontSize = 11.sp,
+                            color = TextTertiary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    if (item.notes.isNotBlank()) {
+                        Text(
+                            text = item.notes,
+                            fontSize = 12.5.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete Key?", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to permanently delete \"${item.title}\"? This action cannot be undone.", color = TextSecondary) },
+            containerColor = ObsidianSurface,
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirm = false
+                        onDelete(item)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = StatusDanger)
+                ) {
+                    Text("Delete", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            }
+        )
+    }
+}
