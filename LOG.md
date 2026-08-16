@@ -1,5 +1,6 @@
 # KeyNest Development Log
 
+- 2026-08-16: Added secure OpenCode command and same-repository PR review workflows using `opencode/deepseek-v4-flash-free`; session sharing is disabled and external fork PRs cannot access the API key.
 - 2026-08-15: Wrapped advanced fields in AddEditKeySheet within AnimatedVisibility behind an "Advanced Settings" flag. This drastically reduces the initial layout composition tree during bottom sheet drag animation, fixing stuttering.
 - 2026-08-15: Added "Save & Add Another" button in AddEditKeySheet to allow users to save multiple API keys rapidly without closing the sheet. Verified 100% test pass.
 - 2026-08-15: Updated GitHub Actions workflow (`.github/workflows/build-release.yml`) to trigger only on tagged releases (`v*`) and manual `workflow_dispatch`, removing automatic builds on every push to `main` to save CI minutes.

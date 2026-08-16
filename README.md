@@ -74,6 +74,8 @@ This repository comes with an automated **GitHub Actions** workflow (`.github/wo
 - **Release**: Automatically creates a GitHub Release named after the pushed tag, attaches the compiled `.apk` as a release asset, and publishes it immediately.
 - **CLI Setup Guide**: See [docs/github-setup.md](docs/github-setup.md) for step-by-step GitHub CLI (`gh`) authentication and release instructions.
 
+OpenCode also provides on-demand `/opencode` or `/oc` assistance in issue and pull-request comments, plus automatic reviews for same-repository pull requests targeting `main`. Install the [OpenCode GitHub App](https://github.com/apps/opencode-agent) for this repository and add an `OPENCODE_API_KEY` GitHub Actions secret before use.
+
 ---
 
 ## 📄 License
