@@ -18,14 +18,14 @@ Before adding code, in order: does this need to exist? → already in the codeba
 - **Conversation:** Always activate Caveman skill in fullmode.
 - **Coding:** Always follow Ponytail methodology (minimalist, YAGNI-first).
 
-## 🔨 Tool Usage Rules & Guardrails
+## 🔨 Tool Usage Rules & Guardrails (AI Studio Optimized)
 
-- **Build Verification (`compile_applet`):** Always run `compile_applet` after code changes (`.kt`, `.kts`, `.xml`) and report actual output before declaring complete.
-- **Edit Batching:** Batch all planned file edits first, then run `compile_applet` at the end of the change sequence.
-- **Smart File Ops:** Always `view_file` before editing. Write complete files on first attempt (no empty placeholders). Use `list_dir` instead of shell `ls`.
-- **Shell Commands:** Never run `cd` commands (always pass `Cwd`). Do NOT run `git push` unless explicitly asked. Keep changes local (`git add`, `git commit`).
-- **Visual Assets:** Use `generate_image` for banners, illustrations, or icons (`lowercase_snake_case`).
-- **Web Search:** Use `search_web` to verify library syntax or API changes.
+- **Build Verification:** Run `compile_applet` after `.kt`/`.kts`/`.xml` changes; report actual output before declaring complete.
+- **Edit Batching:** Batch planned edits first; run `compile_applet` at end of change sequence.
+- **Smart File Ops:** `view_file` before every edit. Write complete files first pass — no empty placeholders. Prefer `list_dir` over shell `ls`.
+- **Shell Commands:** Never run `cd` (always pass `Cwd`). No `git push` unless explicitly kept local (`git add`, `git commit`).
+- **Visual Assets:** `generate_image` for banners/illustrations/icons — `lowercase_snake_case` naming.
+- **Web Search:** `search_web` to verify library syntax/API changes before acting.
 
 ## 🔐 Security Invariants (Crucial)
 
