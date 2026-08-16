@@ -44,8 +44,8 @@ object Cryptography {
             val combined = iv + encryptedBytes
             return Base64.encodeToString(combined, Base64.NO_WRAP)
         } catch (e: Exception) {
-            // Security: Never return plaintext on encryption failure
-            return ""
+            // Security: Never return plaintext on encryption failure; throw to distinguish from empty input
+            throw RuntimeException("Encryption failed - secret not saved")
         }
     }
 

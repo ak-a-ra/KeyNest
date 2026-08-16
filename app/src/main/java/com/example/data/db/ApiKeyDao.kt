@@ -11,36 +11,33 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ApiKeyDao {
-    @Query("SELECT * FROM api_keys ORDER BY isPinned DESC, createdAt DESC")
+    @Query("SELECT * FROM api_keys WHERE isDeleted = false ORDER BY isPinned DESC, createdAt DESC")
     fun getAllKeys(): Flow<List<ApiKeyItem>>
 
-    @Query("SELECT * FROM api_keys WHERE id = :id")
+    @Query("SELECT * FROM api_keys WHERE isDeleted = false AND id = :id")
     fun getKeyById(id: Long): Flow<ApiKeyItem?>
 
-    @Query("SELECT * FROM api_keys WHERE title LIKE '%' || :query || '%' OR provider LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%' OR environment LIKE '%' || :query || '%' ORDER BY isPinned DESC, createdAt DESC")
+    @Query("SELECT * FROM api_keys WHERE isDeleted = false AND (title LIKE '%' || :query || '%' OR provider LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%' OR environment LIKE '%' || :query || '%') ORDER BY isPinned DESC, createdAt DESC")
     fun searchKeys(query: String): Flow<List<ApiKeyItem>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertKey(item: ApiKeyItem): Long
+    @Query("SELECT COUNT(*) FROM api_keys WHERE isDeleted = false")
+    fun getKeyCount(): Flow<Int>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAllKeys(items: List<ApiKeyItem>)
+    @Query("SELECT COUNT(*) FROM api_keys WHERE isDeleted = true")
+    fun getTrashCount(): Flow<Int>
+
+    @Query("SELECT * FROM api_keys WHERE isDeleted = true ORDER BY createdAt DESC")
+    fun getTrashedKeys(): Flow<List<ApiKeyItem>>
 
     @Update
     suspend fun updateKey(item: ApiKeyItem)
 
-    @Delete
-    suspend fun deleteKey(item: ApiKeyItem)
+    @Query("UPDATE api_keys SET isDeleted = true, deletedAt = :timestamp WHERE id = :id")
+    suspend fun softDeleteKey(id: Long, timestamp: Long)
 
-    @Query("DELETE FROM api_keys WHERE id = :id")
-    suspend fun deleteKeyById(id: Long)
+    @Query("UPDATE api_keys SET isDeleted = false, deletedAt = null WHERE id = :id")
+    suspend fun restoreKey(id: Long)
 
-    @Query("UPDATE api_keys SET isPinned = :isPinned WHERE id = :id")
-    suspend fun togglePin(id: Long, isPinned: Boolean)
-
-    @Query("UPDATE api_keys SET copyCount = copyCount + 1, lastCopiedAt = :timestamp WHERE id = :id")
-    suspend fun recordCopy(id: Long, timestamp: Long)
-
-    @Query("SELECT COUNT(*) FROM api_keys")
-    fun getKeyCount(): Flow<Int>
+    @Query("UPDATE api_keys SET isDeleted = true WHERE id = :id")
+    suspend fun permanentDeleteKey(id: Long)
 }

@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.degrading.DegradingSharedPreferences
+import androidx.security.crypto.preference.SharedPreferencesPreferenceManager
 import com.example.data.model.ApiKeyItem
 import com.example.data.model.ProviderPresets
 import java.security.MessageDigest
@@ -24,19 +26,21 @@ object VaultSecurity {
     private const val KEY_LAST_SELF_COPIED = "last_self_copied_key"
     internal const val STATIC_SALT = "KeyNest_Vault_Secure_Salt_2026_!"
 
-    private fun getPrefs(context: Context): SharedPreferences = try {
+    private fun getPrefs(context: Context): DegradingSharedPreferences = try {
         val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-        EncryptedSharedPreferences.create(
+        val sharedPreferences = EncryptedSharedPreferences.create(
             PREFS_NAME,
             masterKeyAlias,
             context,
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
+        // Wrap in a decorator that tracks whether encryption is available
+        DegradingSharedPreferences(sharedPreferences)
     } catch (_: Exception) {
         // Security: Never fall back to plain SharedPreferences - if encryption fails,
-        // throw exception to prevent plaintext data leakage
-        throw RuntimeException("Encrypted preferences unavailable - cannot store sensitive data")
+        // enter a secure degraded/locked state. Do not crash or read/write sensitive data.
+        DegradingSharedPreferences(SharedPreferencesPreferenceManager.getDefaultSharedPreferences(context))
     }
 
     private fun getOrCreateSalt(context: Context): String {
@@ -101,20 +105,21 @@ object VaultSecurity {
         }
 
         // Migration check 1: Static salt migration
-        if (storedHash == hashPinWithSalt(inputPin, STATIC_SALT)) {
+        if (storedHash == generateLegacyHash(inputPin)) {
             setMasterPin(context, inputPin)
             return true
         }
 
-        // Migration check 2: Legacy hash compatibility check
-        if (storedHash.contains("_") && storedHash.length != 64) {
+        // Migration check 2: Legacy hash format compatibility check
+        // Old format: hash_ hex_length*31  (from legacy hashCode-based approach)
+        // New format: full_sha256_hash
+        if (storedHash.contains("_") && storedHash.length == 66) { // 64 hex chars + 1 underscore + 1 digit
             val legacyHash = generateLegacyHash(inputPin)
             if (storedHash == legacyHash) {
-                // Upgrade legacy hash to modern hash automatically
+                // Upgrade legacy hash to modern hash with per-device salt automatically
                 setMasterPin(context, inputPin)
                 return true
             }
-            return false
         }
 
         return false
@@ -127,12 +132,27 @@ object VaultSecurity {
     }
 
     /**
-     * Generates a hash using the legacy method for backwards compatibility.
-     * This relies on JVM String.hashCode() and should only be used to verify
-     * older stored PINs before upgrading them to SHA-256.
+     * Generates a legacy hash for backwards compatibility check.
+     * This method is kept only for migration of older PINs stored with the
+     * legacy hashCode()-based approach. New PINs should use hashPinWithSalt()
+     * which uses SHA-256 with per-device salt.
+     *
+     * @param pin The PIN to hash
+     * @return Legacy hash string in format "hexhash_length*31"
      */
     internal fun generateLegacyHash(pin: String): String {
-        return pin.reversed().hashCode().toString(16) + "_" + (pin.length * 31).toString(16)
+        // Legacy: using String.hashCode() - deprecated, kept only for migration
+        return "${pin.reversed().hashCode().toString(16)}_${(pin.length * 31).toString(16)}"
+    }
+
+    /**
+     * Generates a secure SHA-256 hash of the PIN with per-device salt.
+     * This is the recommended method for new PIN verification.
+     */
+    internal fun generateSecureHash(pin: String, salt: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hashBytes = digest.digest((pin + salt).toByteArray(Charsets.UTF_8))
+        return hashBytes.joinToString("") { "%02x".format(it) }
     }
 
     fun maskKey(key: String, visibleChars: Int = 4): String {

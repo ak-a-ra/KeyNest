@@ -19,6 +19,8 @@ data class ApiKeyItem(
     val notes: String = "",
     val tags: String = "", // Comma-separated
     val isPinned: Boolean = false,
+    val isDeleted: Boolean = false,
+    val deletedAt: Long? = null,
     val copyCount: Int = 0,
     val lastCopiedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
