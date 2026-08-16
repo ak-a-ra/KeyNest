@@ -74,7 +74,7 @@ KeyNest is an encrypted Android vault for API keys and developer secrets. It use
 
 `.github/workflows/build-release.yml` builds a debug APK and publishes it as a GitHub release when you push a tag matching `v*`, such as `v1.0.0`. The APK is unsigned. For GitHub CLI authentication and release steps, see [docs/github-setup.md](docs/github-setup.md).
 
-OpenCode responds to `/opencode` and `/oc` in issue or pull-request comments. It also reviews same-repository pull requests that target `main`.
+OpenCode responds to `/opencode` and `/oc` from repository owners, members, and collaborators in issue or pull-request comments. It also reviews same-repository pull requests that target `main`.
 
 ---
 
