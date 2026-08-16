@@ -13,17 +13,50 @@ Single-activity Kotlin/Compose Android app.
 
 Before adding code, in order: does this need to exist? → already in the codebase? → stdlib? → native platform feature? → an already-installed dependency? → a one-liner? → only then write new code. Don't add abstractions with one implementation, config nobody sets, or a layer with one caller. Never skip validation, error handling, or a security measure to hit this bar — "minimal" means fewest moving parts, not fewer safeguards.
 
-## Security invariants — do not regress these
+## Operating Modes (Active until user says "exit mode")
 
-- Key values stored in Room must use Keystore-backed field encryption. Sensitive preferences must use `EncryptedSharedPreferences`. Never swap either layer for plain `SharedPreferences`, a flat file, or an unencrypted database.
-- `android:allowBackup="false"` stays false.
-- The "API key" input field in `AddKeyDialog` / `AddEditKeySheet` stays masked by default (`PasswordVisualTransformation`) with an explicit reveal toggle — it was plaintext-on-screen before, that was a real bug, not a style choice.
-- Clipboard writes stay flagged `ClipDescription.EXTRA_IS_SENSITIVE` on API 33+.
-- Saving a label that already exists must warn before overwriting (SharedPreferences keys on label — a silent overwrite is silent data loss).
-- Never log key values, even in debug builds.
-- Encryption failures must be explicit and atomic. Do not use an empty string as an error sentinel, silently overwrite secrets, or destroy data that cannot be encrypted or decrypted.
-- Preserve legacy encrypted and plaintext vault data through a deliberate migration or recovery path. Do not treat arbitrary malformed ciphertext as legacy plaintext.
-- If Android Keystore or encrypted-preferences initialization fails, preserve the no-plaintext invariant and enter a secure locked or degraded state with a non-sensitive recovery message. Do not crash at startup or fall back to plaintext storage.
+- **Conversation:** Always activate Caveman skill in fullmode.
+- **Coding:** Always follow Ponytail methodology (minimalist, YAGNI-first).
+
+## 🔨 Tool Usage Rules & Guardrails
+
+- **Build Verification (`compile_applet`):** Always run `compile_applet` after code changes (`.kt`, `.kts`, `.xml`) and report actual output before declaring complete.
+- **Edit Batching:** Batch all planned file edits first, then run `compile_applet` at the end of the change sequence.
+- **Smart File Ops:** Always `view_file` before editing. Write complete files on first attempt (no empty placeholders). Use `list_dir` instead of shell `ls`.
+- **Shell Commands:** Never run `cd` commands (always pass `Cwd`). Do NOT run `git push` unless explicitly asked. Keep changes local (`git add`, `git commit`).
+- **Visual Assets:** Use `generate_image` for banners, illustrations, or icons (`lowercase_snake_case`).
+- **Web Search:** Use `search_web` to verify library syntax or API changes.
+
+## 🔐 Security Invariants (Crucial)
+
+- Never log plain text secrets or API keys.
+- Store sensitive values ONLY in `EncryptedSharedPreferences` (Android KeyStore backed).
+- Keep secret input fields masked by default (`PasswordVisualTransformation`).
+- Mark clipboard copies with `ClipDescription.EXTRA_IS_SENSITIVE` on API 33+.
+
+## 💻 Coding Invariants (Ponytail)
+
+- **Ponytail Hierarchy:** 1. Needs to exist? → 2. Already in codebase? → 3. Kotlin stdlib? → 4. Native Android feature? → 5. Existing dependency? → 6. One-liner? → Only then write new code.
+- **Change Scope:** Edit only necessary lines — never touch unrelated code.
+- **Safeguards:** Never skip validation, error handling, Keystore security, or accessibility.
+- **Confirmation Required:** Ask user before introducing breaking changes, new dependencies, schema/API shifts, or deleting >20 lines.
+- **Ambiguity Rule:** Ask for clarification — never guess.
+- **Explanations:** 1-line summary max — no long essays.
+
+## 📝 Documentation Rules (Check all 6 after meaningful edits)
+
+- README.md  → Setup / usage changes
+- PLAN.md    → Current task status
+- ROADMAP.md → Milestones / feature status
+- LOG.md     → Always append 1 dated entry line
+- AGENTS.md  → Agent contracts / architecture changes
+- CONTEXT.md → Key decisions & context
+
+**Rule:** Match target file format/tone. If only LOG.md updated, append: "no other doc updates needed".
+
+## Skills
+
+use skill "find-skills" to look for skill on skill.sh if you needed skill to solve problem, blocked, improve, debugging, guidelines, etc - tell user before install.
 
 ## Issue workflow
 
@@ -72,10 +105,12 @@ This is a single-context repository with root `CONTEXT.md` and ADRs under `docs/
 - All agent operations and code modifications must follow DOX contracts.
 
 ### Core Contract
+
 - AGENTS.md files are binding work contracts for their subtrees.
-- Work products, source materials, instructions, records, assets, and durable docs must stay understandable from the nearest applicable AGENTS.md plus every parent AGENTS.md above it.
+- Work products, source materials, records, assets, and durable docs must stay understandable from the nearest applicable AGENTS.md plus every parent AGENTS.md above it.
 
 ### Read Before Editing
+
 1. Read the root AGENTS.md.
 2. Identify every file or folder expected to touch.
 3. Walk from the repository root to each target path.
@@ -84,6 +119,7 @@ This is a single-context repository with root `CONTEXT.md` and ADRs under `docs/
 6. Use the nearest AGENTS.md as the local contract and parent docs for repo-wide rules.
 
 ### Update After Editing
+
 Every meaningful change requires a DOX pass before the task is complete.
 Update the closest owning AGENTS.md when a change affects:
 - purpose, scope, ownership, or responsibilities
@@ -92,5 +128,6 @@ Update the closest owning AGENTS.md when a change affects:
 - user preferences about behavior, communication, process, organization, or quality
 
 ### Child DOX Index
+
 - No child AGENTS.md files are needed for the current repository structure.
 - Root-owned files: `README.md`, `ROADMAP.md`, `metadata.json`, `build.gradle.kts`, `settings.gradle.kts`, `app/` hierarchy.
