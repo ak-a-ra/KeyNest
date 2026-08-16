@@ -1,5 +1,6 @@
 # KeyNest Development Log
 
+- 2026-08-16: Rewrote ROADMAP.md in direct, natural language while preserving all technical details and milestone status.
 - 2026-08-16: Restricted secret-backed OpenCode comment commands to repository owners, members, and collaborators; same-repository-only automatic reviews and disabled session sharing remain in place.
 - 2026-08-16: Rewrote README.md and CONTRIBUTING.md in plain, direct language while keeping their security guidance, setup steps, and contribution workflow intact.
 - 2026-08-16: Removed the completed OpenCode GitHub App and API key setup instruction from README.md; no CONTRIBUTING.md change was needed because it did not contain that instruction.
