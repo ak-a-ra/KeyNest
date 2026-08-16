@@ -1,39 +1,37 @@
 # Contributing to KeyNest 🤝
 
-Thank you for your interest in contributing to **KeyNest**! KeyNest is an ultra-fast, encrypted API Key & Developer Secret Vault for Android built with Kotlin, Jetpack Compose, and Material Design 3.
-
-We welcome contributions from everyone—whether you're fixing a bug, improving documentation, or adding a new feature from our [Roadmap](ROADMAP.md).
+Thanks for contributing to KeyNest, an Android vault for API keys and developer secrets. Bug fixes, documentation corrections, and focused features from the [roadmap](ROADMAP.md) are all welcome.
 
 ---
 
-## 🔒 Security Invariants
+## 🔒 Security rules
 
-KeyNest deals with sensitive developer credentials and cryptographic operations. Before submitting code, please ensure your changes uphold these strict security rules:
+KeyNest stores credentials, so security rules apply to every change:
 
-1. **Keystore-Backed Encryption**: Key values must always be encrypted at rest using AES-256 GCM backed by Android KeyStore (`EncryptedSharedPreferences`). Never store plaintext keys in SQLite, Room without encryption, standard SharedPreferences, or flat files.
-2. **Masked Inputs**: Secret and API key input fields must remain masked by default (`PasswordVisualTransformation`) with an explicit reveal toggle.
-3. **No Logging**: Never log key values, plain secrets, or PIN hashes—even in debug builds (`Log.d`, `println`, etc.).
-4. **Sensitive Clipboard Flags**: All clipboard writes must preserve `ClipDescription.EXTRA_IS_SENSITIVE` on API 33+ (Android 13+).
-5. **Offline & Privacy First**: The vault is local-first. Do not introduce unencrypted third-party analytics, remote logs, or mandatory cloud dependencies.
+1. **Encrypt saved values:** Store key values with Android Keystore-backed `EncryptedSharedPreferences` and AES-256 GCM. Never put plaintext secrets in SQLite, unencrypted Room tables, standard `SharedPreferences`, or files.
+2. **Mask secrets by default:** API key and secret fields use `PasswordVisualTransformation`. Users must choose to reveal a value.
+3. **Do not log secrets:** Do not log key values, plaintext secrets, or PIN hashes, including in debug builds. That includes `Log.d` and `println`.
+4. **Mark clipboard data as sensitive:** On Android 13 and later, preserve `ClipDescription.EXTRA_IS_SENSITIVE` for every clipboard write.
+5. **Keep the vault local:** Do not add unencrypted analytics, remote logging, or required cloud services.
 
 ---
 
-## 🛠️ Development Setup
+## 🛠️ Set up the project
 
-### Prerequisites
-- [Android Studio](https://developer.android.com/studio) (Ladybug / Meerkat or newer)
-- JDK 17 or JDK 21
-- Android SDK Platform 34+
+### Requirements
 
-### Building & Testing
-Clone the repository and build via Gradle:
+- [Android Studio](https://developer.android.com/studio), Ladybug, Meerkat, or newer
+- JDK 17 or 21
+- Android SDK Platform 34 or newer
+
+### Build and test
 
 ```bash
 # Clone the repository
 git clone https://github.com/ak-a-ra/KeyNest.git
 cd KeyNest
 
-# Build debug APK
+# Build a debug APK
 ./gradlew assembleDebug
 
 # Run unit tests
@@ -42,34 +40,37 @@ cd KeyNest
 
 ---
 
-## 📐 Architecture & Code Style
+## 📐 Code style
 
-- **Language**: 100% Kotlin.
-- **UI Framework**: Jetpack Compose adhering strictly to Material Design 3 (M3).
-- **Architecture**: MVVM with Clean Architecture principles (`ViewModel`, `StateFlow`, Coroutines).
-- **Minimal Dependencies (YAGNI)**: Utilize standard library and native Android platform APIs before adding external dependencies.
-- **Accessibility & Testability**:
-  - Add `Modifier.testTag("unique_tag_name")` to interactive UI components.
-  - Keep user-facing strings in `res/values/strings.xml`.
+- Write Kotlin.
+- Use Jetpack Compose and Material Design 3.
+- Keep the existing MVVM structure: `ViewModel`, `StateFlow`, and coroutines.
+- Prefer Kotlin, Android, and existing dependencies before adding a library.
+- Give interactive UI elements a unique `Modifier.testTag("...")`.
+- Put user-visible strings in `res/values/strings.xml`.
 
 ---
 
-## 🔄 Contribution Workflow
+## 🔄 Submit a change
 
-1. **Find an Issue or Feature**: Check our [Roadmap](ROADMAP.md) or open an issue on [GitHub](https://github.com/ak-a-ra/KeyNest/issues).
-2. **Fork & Branch**: Create a feature branch off `main`:
+1. Find an issue, pick an item from the [roadmap](ROADMAP.md), or open an issue first.
+2. Create a branch from `main`:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
-3. **Write Clean Code**: Keep commits atomic and focused.
-4. **Verify Build**: Ensure code compiles without errors or test failures:
+
+3. Keep commits focused.
+4. Before opening a pull request, build and test the app:
+
    ```bash
    ./gradlew assembleDebug test
    ```
-5. **Submit a Pull Request**: Open a PR against `main` explaining your changes and referencing any related issues.
+
+5. Open a pull request against `main`. Explain the change and link related issues.
 
 ---
 
 ## 📜 License
 
-By contributing to KeyNest, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).
+Contributions are released under the project's [MIT License](LICENSE).

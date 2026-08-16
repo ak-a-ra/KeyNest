@@ -2,81 +2,82 @@
 
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 
-  <h1>Built with AI Studio</h2>
+<h1>Built with AI Studio</h1>
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+<p>Build Gemini-powered apps from a prompt.</p>
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+<a href="https://aistudio.google.com/apps">Open AI Studio</a>
 
 </div>
 
 # KeyNest 🔐
 
-> Ultra-fast, encrypted API key and developer secret vault for Android. Built with Jetpack Compose, Material 3, and Android Keystore encryption.
+KeyNest is an encrypted Android vault for API keys and developer secrets. It uses Jetpack Compose, Material 3, and Android Keystore-backed encryption.
 
-🗺️ **[Roadmap](ROADMAP.md)** | 🤝 **[Contributing](CONTRIBUTING.md)** | 📄 **[License](LICENSE)**
-
----
-
-## ⚡ Highlights
-
-- **🔒 Hardware-Backed Security**: Encrypted using Android Keystore and AES-256 GCM (`EncryptedSharedPreferences`). No plaintext secrets on disk.
-- **⚡ 1-Tap Tactile Copy**: Instant copy with visual feedback, auto-clearing clipboard timers, and API 33+ `EXTRA_IS_SENSITIVE` flag protection.
-- **📋 Smart Clipboard Sniffer**: Automatically detects known API key formats (OpenAI, Gemini, Anthropic, Stripe, GitHub, AWS, etc.) from clipboard and prompts to securely vault them.
-- **🗂️ Rich Metadata & Navigation Drawer**: Google Keep-style floating search bar with Modal Navigation Drawer layout for filtering by Category (`AI & LLMs`, `Cloud`, `Payments`), Environment (`Production`, `Staging`, `Dev`), and quick access to Security Tools & Theme toggles.
-- **🛡️ Security & Entropy Auditing**: Real-time Shannon entropy calculation and strength scoring, identifying weak or expired keys.
-- **⏳ Key Expiration & Rotation Tracker**: Material 3 visual cards with 3-tier color-coded alerts (🟢 Fresh, 🟠 Approaching Expiry, 🔴 Overdue), animated lifecycle progress indicators, and 1-tap quick rotation CTA.
-- **🎲 Built-in Key & Secret Generator**: Generate cryptographically secure tokens, API keys, hex secrets, and UUIDs on demand.
-- **📄 Batch `.env` Import / Export**: One-tap export to formatted `.env` files or bulk import secrets from existing config files.
-- **🔢 Master PIN & Lock**: Optional Vault lock screen with PIN protection to safeguard secrets from shoulder surfers.
+🗺️ [Roadmap](ROADMAP.md) | 🤝 [Contributing](CONTRIBUTING.md) | 📄 [License](LICENSE)
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## ⚡ What it does
 
-- **Language**: Kotlin 100%
-- **UI Framework**: Jetpack Compose with Material Design 3 (M3)
-- **State Management**: Android Architecture Components (`ViewModel`, Kotlin Coroutines, `StateFlow`)
-- **Encryption**: AndroidX Security Crypto (`EncryptedSharedPreferences`, AES256-SIV / AES256-GCM)
-- **Theming**: Custom Vibrant Palette (Cobalt & Soft Periwinkle surfaces, Emerald/Rose status accents)
-
----
-
-## 🔒 Security Invariants
-
-1. **Storage Isolation**: Secrets are only ever persisted using `EncryptedSharedPreferences` backed by the Android MasterKey system. Plain `SharedPreferences` or unencrypted databases are strictly prohibited.
-2. **Masked by Default**: All sensitive fields in input dialogs and cards render masked values (`••••••••`) by default with an explicit reveal toggle.
-3. **Clipboard Hygiene**: Clipboard writes are flagged with `ClipDescription.EXTRA_IS_SENSITIVE` on Android 13+ (API 33+) to prevent clipboard managers from exposing secrets.
-4. **No Logging**: Sensitive API key values are never emitted to Logcat or debug logs.
-5. **Backup Disabled**: `android:allowBackup="false"` is enforced to prevent secrets extraction via ADB backup.
+- **Encrypted storage:** Secrets live in `EncryptedSharedPreferences`, protected by Android Keystore and AES-256 GCM. Plaintext never goes to disk.
+- **Quick copy:** Copy a value with feedback and an automatic clipboard-clear timer. On Android 13 and later, copied secrets carry the `EXTRA_IS_SENSITIVE` flag.
+- **Clipboard detection:** Recognizes common API key formats, including OpenAI, Gemini, Anthropic, Stripe, GitHub, and AWS keys, then offers to save them.
+- **Search and filters:** Search from a floating bar, filter by category and environment, and reach security tools or theme settings from the navigation drawer.
+- **Key checks:** Calculates Shannon entropy, assigns a strength score, and flags weak or expired keys.
+- **Expiry tracking:** Shows fresh, expiring, and overdue keys with progress indicators and a quick rotation action.
+- **Key generator:** Creates secure tokens, API keys, hex secrets, and UUIDs.
+- **`.env` import and export:** Import configuration files in bulk or export saved values as a formatted `.env` file.
+- **Optional PIN lock:** Lock the vault with a PIN when you need extra protection from someone looking over your shoulder.
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ Stack
 
-### Prerequisites
-- Android Studio Ladybug / Meerkat or newer
-- Android SDK 34+
-- JDK 17+
+- Kotlin
+- Jetpack Compose with Material Design 3
+- Android Architecture Components: `ViewModel`, Kotlin Coroutines, and `StateFlow`
+- AndroidX Security Crypto: `EncryptedSharedPreferences`, AES256-SIV, and AES256-GCM
+- Cobalt and soft-periwinkle surfaces, with emerald and rose status colors
 
-### Building and Running
-1. Clone this repository.
-2. Open the project in Android Studio.
-3. Run the application on an Android device or emulator:
+---
+
+## 🔒 Security rules
+
+1. **Encrypted storage only:** Persist secrets only in `EncryptedSharedPreferences` backed by Android's `MasterKey`. Do not use plain `SharedPreferences` or unencrypted databases.
+2. **Masked fields:** Keep secret values masked by default. Revealing a value must be an explicit action.
+3. **Sensitive clipboard:** On Android 13 and later, mark every secret copied to the clipboard with `ClipDescription.EXTRA_IS_SENSITIVE`.
+4. **No secret logs:** Do not write API key values to Logcat or any debug log.
+5. **No Android backups:** `android:allowBackup="false"` prevents secrets from being extracted through ADB backup.
+
+---
+
+## 🚀 Get started
+
+### Requirements
+
+- Android Studio Ladybug, Meerkat, or newer
+- Android SDK 34 or newer
+- JDK 17 or newer
+
+### Build and run
+
+1. Clone the repository.
+2. Open it in Android Studio.
+3. Build a debug APK and run it on a device or emulator:
+
    ```bash
    ./gradlew assembleDebug
    ```
 
-### 🤖 CI/CD Build & Release
-This repository comes with an automated **GitHub Actions** workflow (`.github/workflows/build-release.yml`) that builds and releases KeyNest debug APKs:
-- **Trigger**: Pushing a new git tag matching the `v*` pattern (e.g., `git tag v1.0.0 && git push origin v1.0.0`).
-- **Build Output**: Compiles an unaligned/unsigned debug APK.
-- **Release**: Automatically creates a GitHub Release named after the pushed tag, attaches the compiled `.apk` as a release asset, and publishes it immediately.
-- **CLI Setup Guide**: See [docs/github-setup.md](docs/github-setup.md) for step-by-step GitHub CLI (`gh`) authentication and release instructions.
+### 🤖 CI/CD
 
-OpenCode also provides on-demand `/opencode` or `/oc` assistance in issue and pull-request comments, plus automatic reviews for same-repository pull requests targeting `main`.
+`.github/workflows/build-release.yml` builds a debug APK and publishes it as a GitHub release when you push a tag matching `v*`, such as `v1.0.0`. The APK is unsigned. For GitHub CLI authentication and release steps, see [docs/github-setup.md](docs/github-setup.md).
+
+OpenCode responds to `/opencode` and `/oc` in issue or pull-request comments. It also reviews same-repository pull requests that target `main`.
 
 ---
 
 ## 📄 License
-MIT License. See [LICENSE](LICENSE) for details.
+
+KeyNest is released under the [MIT License](LICENSE).
