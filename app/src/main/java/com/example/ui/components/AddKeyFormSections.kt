@@ -3,6 +3,8 @@ package com.example.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,8 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -42,6 +46,7 @@ import com.example.data.model.ProviderPresets
 import com.example.data.security.VaultSecurity
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.CyberGold
+import com.example.ui.theme.LocalKeyNestColors
 import com.example.ui.theme.MonospaceCodeStyle
 import com.example.ui.theme.ObsidianBorder
 import com.example.ui.theme.ObsidianSurface
@@ -50,6 +55,7 @@ import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
+import com.example.ui.theme.VaultCardColor
 
 @Composable
 fun ProviderPresetCarousel(
@@ -363,6 +369,65 @@ fun RotationIntervalPicker(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VaultColorDotPicker(
+    selectedColorHex: String?,
+    onSelectColor: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "CARD COLOR TINT",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextTertiary,
+            letterSpacing = 0.8.sp
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(VaultCardColor.entries, key = { it.label }) { colorOption ->
+                val isSelected = (colorOption.hex == null && (selectedColorHex == null || selectedColorHex.isEmpty())) ||
+                        (colorOption.hex != null && colorOption.hex.equals(selectedColorHex, ignoreCase = true))
+                val isDark = LocalKeyNestColors.current.isDark
+                val dotColor = if (colorOption.hex == null) {
+                    if (isDark) Color(0xFF3C4043) else Color(0xFFE8EAED)
+                } else {
+                    Color(if (isDark) colorOption.darkBg else colorOption.lightBg)
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(dotColor)
+                        .border(
+                            width = if (isSelected) 2.5.dp else 1.dp,
+                            color = if (isSelected) CyberGold else ObsidianBorder,
+                            shape = CircleShape
+                        )
+                        .clickable { onSelectColor(colorOption.hex) }
+                        .testTag("color_dot_${colorOption.label.lowercase()}"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "${colorOption.label} selected",
+                            tint = if (isDark) Color.White else Color.Black,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }

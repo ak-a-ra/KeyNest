@@ -226,3 +226,26 @@ val VibrantAvatarBg: Color
     @Composable
     get() = LocalKeyNestColors.current.vibrantAvatarBg
 
+enum class VaultCardColor(
+    val hex: String?,
+    val lightBg: Long,
+    val darkBg: Long,
+    val label: String
+) {
+    DEFAULT(null, 0xFFFFFFFF, 0xFF202124, "Default"),
+    CORAL("#F28B82", 0xFFFCE8E6, 0xFF492120, "Coral"),
+    SAND("#FBBC04", 0xFFFEF7E0, 0xFF4A3E17, "Sand"),
+    SAGE("#CCFF90", 0xFFE6F4EA, 0xFF1E3A27, "Sage"),
+    FOG("#A7FFEB", 0xFFE0F7FA, 0xFF143B39, "Fog"),
+    STORM("#CBF0F8", 0xFFE8F0FE, 0xFF1E384D, "Storm"),
+    DUSK("#D7AEFB", 0xFFF3E8FD, 0xFF352048, "Dusk"),
+    BLOSSOM("#FDCFE8", 0xFFFCE8F3, 0xFF441C34, "Blossom");
+
+    companion object {
+        fun fromHex(hex: String?): VaultCardColor {
+            if (hex.isNullOrBlank()) return DEFAULT
+            return entries.firstOrNull { it.hex.equals(hex, ignoreCase = true) } ?: DEFAULT
+        }
+    }
+}
+

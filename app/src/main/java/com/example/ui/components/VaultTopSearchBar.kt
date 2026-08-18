@@ -43,6 +43,8 @@ import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.VibrantPillBg
 import com.example.ui.viewmodel.SortOption
 
+import androidx.compose.material.icons.filled.ViewAgenda
+
 @Composable
 fun GoogleKeepTopSearchBar(
     searchQuery: String,
@@ -52,6 +54,8 @@ fun GoogleKeepTopSearchBar(
     onSortOptionChange: (SortOption) -> Unit,
     onOpenDrawer: () -> Unit,
     onOpenAudit: () -> Unit,
+    isGridView: Boolean,
+    onToggleGridView: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
@@ -122,12 +126,12 @@ fun GoogleKeepTopSearchBar(
 
                 // Grid View Toggle Icon
                 IconButton(
-                    onClick = { /* Toggle view */ },
-                    modifier = Modifier.size(38.dp)
+                    onClick = onToggleGridView,
+                    modifier = Modifier.size(38.dp).testTag("button_toggle_grid")
                 ) {
                     Icon(
-                        imageVector = Icons.Default.GridView,
-                        contentDescription = "Toggle Grid View",
+                        imageVector = if (isGridView) Icons.Default.ViewAgenda else Icons.Default.GridView,
+                        contentDescription = if (isGridView) "Switch to List View" else "Switch to Grid View",
                         tint = TextPrimary,
                         modifier = Modifier.size(20.dp)
                     )

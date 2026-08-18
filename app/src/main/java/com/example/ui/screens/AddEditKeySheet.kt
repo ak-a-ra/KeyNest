@@ -53,6 +53,7 @@ import com.example.ui.components.EnvironmentPickerRow
 import com.example.ui.components.ProviderIconBadge
 import com.example.ui.components.ProviderPresetCarousel
 import com.example.ui.components.RotationIntervalPicker
+import com.example.ui.components.VaultColorDotPicker
 import com.example.ui.theme.CyberGold
 import com.example.ui.theme.MonospaceCodeStyle
 import com.example.ui.theme.ObsidianBorder
@@ -107,6 +108,7 @@ fun AddEditKeySheet(
     var tags by remember { mutableStateOf(existingItem?.tags ?: "") }
     var isPinned by remember { mutableStateOf(existingItem?.isPinned ?: false) }
     var rotationDays by remember { mutableStateOf(existingItem?.rotationDays ?: 90) }
+    var selectedColorHex by remember { mutableStateOf<String?>(existingItem?.colorHex ?: preset.defaultColorHex) }
 
     var isKeyVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -140,7 +142,7 @@ fun AddEditKeySheet(
                 lastCopiedAt = existingItem?.lastCopiedAt,
                 createdAt = existingItem?.createdAt ?: System.currentTimeMillis(),
                 rotationDays = rotationDays,
-                colorHex = preset.defaultColorHex
+                colorHex = selectedColorHex ?: preset.defaultColorHex
             )
 
             val hasDuplicate = existingTitles.any { it.equals(title.trim(), ignoreCase = true) }
@@ -331,6 +333,12 @@ fun AddEditKeySheet(
             CategoryPickerRow(
                 selectedCategory = selectedCategory,
                 onCategorySelect = { selectedCategory = it }
+            )
+
+            // Pastel Note Color Picker
+            VaultColorDotPicker(
+                selectedColorHex = selectedColorHex,
+                onSelectColor = { selectedColorHex = it }
             )
 
             androidx.compose.material3.TextButton(

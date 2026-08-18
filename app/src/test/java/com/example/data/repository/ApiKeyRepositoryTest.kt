@@ -37,6 +37,11 @@ class FakeApiKeyDao : ApiKeyDao {
     override suspend fun togglePin(id: Long, isPinned: Boolean) {}
     override suspend fun recordCopy(id: Long, timestamp: Long) {}
     override fun getKeyCount(): Flow<Int> = flowOf(keys.size)
+    override fun getTrashCount(): Flow<Int> = flowOf(0)
+    override fun getTrashedKeys(): Flow<List<ApiKeyItem>> = flowOf(emptyList())
+    override suspend fun softDeleteKey(id: Long, timestamp: Long) {}
+    override suspend fun restoreKey(id: Long) {}
+    override suspend fun permanentDeleteKey(id: Long) {}
 }
 
 @RunWith(RobolectricTestRunner::class)

@@ -1,94 +1,70 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AlphaAnimation
-import androidx.compose.animation.AnimationSpec
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.snap {
-    LastSnappingItemIndex(0, Edge.Start)
-}
-import androidx.compose.foundation.reminderLocalization
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed as staggeredItemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ViewJustify
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Chip
-import androidx.compose.material3.ChipGroup
-import androidx.compose.material3.ChipGroup互State
-import androidx.compose.material3.ChipGroup互SelectionMode
-import androidx.compose.material3.ChipGroup互State
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.ModalFocusManager
-import androidx.compose.ui.focus.findFocusManager
-import androidx.compose.ui.focus.requestFocus
-import androidx.compose.ui.focus.sense.isFocused
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.targetPixmap
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTags
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.ApiKeyItem
-import com.example.data.security.VaultSecurity
 import com.example.ui.components.ApiKeyCard
 import com.example.ui.components.ClipboardAutoClearBanner
 import com.example.ui.components.ClipboardDetectionBanner
 import com.example.ui.components.EmptyKeysState
 import com.example.ui.components.GoogleKeepTopSearchBar
 import com.example.ui.components.KeyCardActions
-import com.example.ui.viewmodel.VaultViewModel
-import com.example.ui.theme.CyberCyan
-import com.example.ui.theme.CyberEmerald
-import com.example.ui.theme.CyberGold
-import com.example.ui.theme.MonospaceCodeStyle
-import com.example.ui.theme.ObsidianBorder
-import com.example.ui.theme.ObsidianBorderLight
-import com.example.ui.theme.ObsidianSurface
+import com.example.ui.components.VaultDrawerSheetContent
+import com.example.ui.theme.ObsidianBg
 import com.example.ui.theme.ObsidianSurfaceElevated
-import com.example.ui.theme.StatusWarning
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
-import com.example.ui.theme.TextTertiary
+import com.example.ui.viewmodel.VaultViewModel
+import com.example.ui.viewmodel.VaultDialogState
+import com.example.ui.viewmodel.DisplayMode
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,6 +86,9 @@ fun VaultHomeScreen(
     val clipboardCopyState by viewModel.clipboardCopyState.collectAsStateWithLifecycle()
     val displayMode by viewModel.displayMode.collectAsStateWithLifecycle()
 
+    val coroutineScope = rememberCoroutineScope()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+
     val cardActions = remember(viewModel) {
         KeyCardActions(
             onClick = { item -> viewModel.openDialog(VaultDialogState.KeyDetail(item)) },
@@ -120,63 +99,8 @@ fun VaultHomeScreen(
         )
     }
 
-    // Grid/List toggle chips
-    var selectedChip by remember { mutableIntStateOf(0) }
-
-    val gridListChips = remember {
-        listOf(DisplayMode.Grid, DisplayMode.List).map { mode ->
-            Chip(
-                selected = selectedChip == when (mode) {
-                    DisplayMode.Grid -> 0
-                    DisplayMode.List -> 1
-                    else -> 0
-                },
-                onSelected = {
-                    selectedChip = when (mode) {
-                        DisplayMode.Grid -> 1
-                        DisplayMode.List -> 0
-                        else -> 1
-                    }
-                    viewModel.setDisplayMode(mode)
-                },
-                text = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spedBy(4.dp)
-                    ) {
-                        Icon(
-                            if (mode.isGrid) Icons.Default.GridOn else Icons.Default.List,
-                            contentDescription = null,
-                            tint = if (selectedChip == when (mode) {
-                                DisplayMode.Grid -> 0
-                                DisplayMode.List -> 1
-                                else -> 0
-                            }) CyberGold else CyberCyan,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = mode.label,
-                            fontSize = 11.sp,
-                            fontWeight = if (selectedChip == when (mode) {
-                                DisplayMode.Grid -> 0
-                                DisplayMode.List -> 1
-                                else -> 0
-                            }) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selectedChip == when (mode) {
-                                DisplayMode.Grid -> 0
-                                DisplayMode.List -> 1
-                                else -> 0
-                            }) CyberGold else CyberCyan
-                        )
-                    }
-                },
-                modifier = Modifier.padding(4.dp)
-            )
-        }
-    }
-
     ModalNavigationDrawer(
-        drawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
+        drawerState = drawerState,
         gesturesEnabled = true,
         drawerContent = {
             VaultDrawerSheetContent(
@@ -188,25 +112,32 @@ fun VaultHomeScreen(
                 onSelectAllSecrets = {
                     viewModel.setSelectedCategory("All")
                     viewModel.setSelectedEnvironment("All")
+                    coroutineScope.launch { drawerState.close() }
                 },
                 onSelectCategory = { category ->
                     viewModel.setSelectedCategory(category)
+                    coroutineScope.launch { drawerState.close() }
                 },
                 onSelectEnvironment = { env ->
                     viewModel.setSelectedEnvironment(env)
+                    coroutineScope.launch { drawerState.close() }
                 },
                 onOpenSecurityAudit = {
                     viewModel.openDialog(VaultDialogState.SecurityAudit)
+                    coroutineScope.launch { drawerState.close() }
                 },
                 onOpenGenerator = {
                     viewModel.openDialog(VaultDialogState.Generator)
+                    coroutineScope.launch { drawerState.close() }
                 },
                 onOpenDotEnvExport = {
                     viewModel.openDialog(VaultDialogState.DotEnvExport)
+                    coroutineScope.launch { drawerState.close() }
                 },
                 onCycleTheme = { viewModel.cycleThemeMode() },
                 onToggleLockOrPinSettings = {
                     if (isPinConfigured) viewModel.lockVault() else viewModel.openDialog(VaultDialogState.PinSettings)
+                    coroutineScope.launch { drawerState.close() }
                 }
             )
         }
@@ -258,100 +189,88 @@ fun VaultHomeScreen(
                         onSearchClick = onNavigateToSearch,
                         sortOption = sortOption,
                         onSortOptionChange = { viewModel.setSortOption(it) },
-                        onOpenDrawer = { coroutineScope.launch { rememberDrawerState.open() } },
-                        onOpenAudit = { viewModel.openDialog(VaultDialogState.SecurityAudit) }
-                    )
-                }
-
-                // Grid/List Toggle Section
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Display Mode:",
-                        fontSize = 11.sp,
-                        color = TextSecondary
-                    )
-                    ChipGroup(
-                        mutuallyExclusive = true,
-                        value = selectedChip,
-                        onValueSelected = { selectedChip ->
-                            when (selectedChip) {
-                                0 -> { selectedChip = 1; viewModel.setDisplayMode(DisplayMode.List) }
-                                1 -> { selectedChip = 0; viewModel.setDisplayMode(DisplayMode.Grid) }
-                            }
+                        onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
+                        onOpenAudit = { viewModel.openDialog(VaultDialogState.SecurityAudit) },
+                        isGridView = displayMode.isGrid,
+                        onToggleGridView = {
+                            viewModel.setDisplayMode(if (displayMode.isGrid) DisplayMode.List else DisplayMode.Grid)
                         }
-                    ) {
-                        gridListChips.forEach { chip ->
-                            it.let { addIt(it) }
-                        }
-                    }
-                }
+                    )
 
-                // Clipboard banners
-                AnimatedVisibility(
-                    visible = clipboardCopyState != null,
-                    enter = slideInVertically() + fadeIn(),
-                    exit = slideOutVertically() + fadeOut()
-                ) {
-                    clipboardCopyState?.let { state ->
-                        ClipboardAutoClearBanner(
-                            copyState = state,
-                            onClearNow = { viewModel.clearClipboard() }
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    if (filteredKeys.isEmpty()) {
+                        EmptyKeysState(
+                            hasQuery = searchQuery.isNotEmpty() || selectedCategory != "All" || selectedEnvironment != "All",
+                            onImportFromNotes = { viewModel.openDialog(VaultDialogState.DotEnvImport) }
                         )
-                    }
-                }
-
-                AnimatedVisibility(
-                    visible = clipboardDetectedKey != null,
-                    enter = slideInVertically() + fadeIn(),
-                    exit = slideOutVertically() + fadeOut()
-                ) {
-                    clipboardDetectedKey?.let { rawKey ->
-                        ClipboardDetectionBanner(
-                            detectedKey = rawKey,
-                            onSave = { viewModel.openDialog(VaultDialogState.AddKey(initialKey = rawKey)) },
-                            onDismiss = { viewModel.dismissClipboardBanner() }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                if (filteredKeys.isEmpty()) {
-                    EmptyKeysState(
-                        hasQuery = searchQuery.isNotEmpty() || selectedCategory != "All" || selectedEnvironment != "All",
-                        onImportFromNotes = { viewModel.openDialog(VaultDialogState.DotEnvImport) }
-                    )
-                } else {
-                    when (displayMode.isGrid) {
-                        LazyVerticalStaggeredGrid(
-                            columns = StaggeredGridCells.Fixed(2),
-                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 84.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalItemSpacing = 12.dp,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            itemsIndexed(filteredKeys, key = { _, it -> it.id }) { index, item ->
-                                ApiKeyCard(item = item, actions = cardActions, testTag = "card_${index}_${it.id}")
-                            }
-                        }
                     } else {
-                        LazyColumn(
-                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 84.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            itemsIndexed(filteredKeys, key = { _, it -> it.id }) { index, item ->
-                                ApiKeyCard(
-                                    item = item,
-                                    actions = cardActions,
-                                    // List mode: single column, different layout
-                                    testTag = "card_list_${index}_${it.id}"
-                                )
+                        if (displayMode.isGrid) {
+                            LazyVerticalStaggeredGrid(
+                                columns = StaggeredGridCells.Fixed(2),
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 84.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalItemSpacing = 12.dp,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                staggeredItemsIndexed(filteredKeys, key = { _, item -> item.id }) { index, item ->
+                                    ApiKeyCard(
+                                        item = item,
+                                        actions = cardActions,
+                                        modifier = Modifier.testTag("card_${index}_${item.id}")
+                                    )
+                                }
                             }
+                        } else {
+                            LazyColumn(
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 84.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                itemsIndexed(filteredKeys, key = { _, item -> item.id }) { index, item ->
+                                    ApiKeyCard(
+                                        item = item,
+                                        actions = cardActions,
+                                        modifier = Modifier.testTag("card_list_${index}_${item.id}")
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Clipboard banners positioned over top bar
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(top = 56.dp, start = 16.dp, end = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AnimatedVisibility(
+                        visible = clipboardCopyState != null,
+                        enter = slideInVertically() + fadeIn(),
+                        exit = slideOutVertically() + fadeOut()
+                    ) {
+                        clipboardCopyState?.let { state ->
+                            ClipboardAutoClearBanner(
+                                copyState = state,
+                                onClearNow = { viewModel.clearClipboard() }
+                            )
+                        }
+                    }
+
+                    AnimatedVisibility(
+                        visible = clipboardDetectedKey != null,
+                        enter = slideInVertically() + fadeIn(),
+                        exit = slideOutVertically() + fadeOut()
+                    ) {
+                        clipboardDetectedKey?.let { rawKey ->
+                            ClipboardDetectionBanner(
+                                detectedKey = rawKey,
+                                onSave = { viewModel.openDialog(VaultDialogState.AddKey(initialKey = rawKey)) },
+                                onDismiss = { viewModel.dismissClipboardBanner() }
+                            )
                         }
                     }
                 }
@@ -391,7 +310,6 @@ fun VaultHomeScreen(
                 }
             )
         }
-        // Temporarily paused KeyGenerator & SecurityAudit
         is VaultDialogState.Generator, is VaultDialogState.SecurityAudit -> Unit
         is VaultDialogState.DotEnvExport -> {
             DotEnvExportSheet(

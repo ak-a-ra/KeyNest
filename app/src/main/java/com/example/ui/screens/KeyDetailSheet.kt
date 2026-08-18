@@ -51,12 +51,15 @@ import com.example.ui.components.MaskedKeyPreview
 import com.example.ui.components.ProviderIconBadge
 import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.CyberGold
+import com.example.ui.theme.LocalKeyNestColors
 import com.example.ui.theme.ObsidianSurface
 import com.example.ui.theme.ObsidianSurfaceElevated
 import com.example.ui.theme.StatusDanger
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
+import com.example.ui.theme.VaultCardColor
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,10 +75,20 @@ fun KeyDetailSheet(
     val preset = remember(item.provider) { ProviderPresets.findByName(item.provider) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
+    val isDark = LocalKeyNestColors.current.isDark
+    val sheetBgColor = remember(item.colorHex, isDark) {
+        val matched = VaultCardColor.fromHex(item.colorHex)
+        if (matched != VaultCardColor.DEFAULT) {
+            Color(if (isDark) matched.darkBg else matched.lightBg)
+        } else {
+            if (isDark) Color(0xFF202124) else Color(0xFFFFFFFF)
+        }
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = ObsidianSurface,
+        containerColor = sheetBgColor,
         dragHandle = null
     ) {
         Column(

@@ -1,9 +1,11 @@
 package com.example.data.repository
 
+import android.content.Context
 import com.example.data.db.ApiKeyDao
 import com.example.data.model.ApiKeyItem
 import com.example.data.security.Cryptography
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.ConcurrentHashMap
 
@@ -28,16 +30,17 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
         }
     }
 
-    fun softDeleteKey(id: Long, timestamp: Long = System.currentTimeMillis()): Long {
-        return try {
+    suspend fun softDeleteKey(id: Long, timestamp: Long = System.currentTimeMillis()): Long {
+        try {
             dao.softDeleteKey(id, timestamp)
+            return id
         } catch (e: Exception) {
             // Security: Do not silently fail soft-delete; propagate for UI handling
             throw RuntimeException("Soft-delete failed")
         }
     }
 
-    fun restoreKey(id: Long): Boolean {
+    suspend fun restoreKey(id: Long): Boolean {
         try {
             dao.restoreKey(id)
             return true
@@ -47,7 +50,7 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
         }
     }
 
-    fun permanentDeleteKey(id: Long): Boolean {
+    suspend fun permanentDeleteKey(id: Long): Boolean {
         try {
             dao.permanentDeleteKey(id)
             return true
@@ -91,10 +94,10 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
     // Migration support for legacy plaintext secrets
     private val MIGRATION_KEY = "keynest_migration_version"
 
-    fun isMigrationNeeded(context: Context): Boolean {
+    suspend fun isMigrationNeeded(context: Context): Boolean {
         val prefs = context.getApplicationContext().getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
         val currentVersion = prefs.getInt(MIGRATION_KEY, 0)
-        val databaseVersion = dao.getKeyCount().awaitValue().firstOrNull() ?: 0
+        val databaseVersion = dao.getKeyCount().first()
         return currentVersion < databaseVersion
     }
 
@@ -109,8 +112,7 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
      * Returns number of entries migrated, or -1 if migration was skipped/aborted.
      */
     suspend fun migrateLegacyPlaintextSecrets(context: Context): Int {
-        val db = dao.getAllKeys().awaitValue().firstOrNull() ?: return -1
-        val allKeys = db
+        val allKeys = dao.getAllKeys().first()
         val plaintextKeys = allKeys.filter { it.apiKey.isNotEmpty() && !it.apiKey.startsWith("enc:") }
 
         if (plaintextKeys.isEmpty()) {

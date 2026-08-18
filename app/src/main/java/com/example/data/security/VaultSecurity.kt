@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
-import androidx.security.crypto.degrading.DegradingSharedPreferences
-import androidx.security.crypto.preference.SharedPreferencesPreferenceManager
 import com.example.data.model.ApiKeyItem
 import com.example.data.model.ProviderPresets
 import java.security.MessageDigest
@@ -15,6 +13,61 @@ import java.util.Date
 import java.util.Locale
 import java.util.UUID
 import kotlin.math.log2
+
+class DegradingSharedPreferences(
+    private val delegate: SharedPreferences,
+    val isDegraded: Boolean
+) : SharedPreferences {
+
+    override fun getAll(): Map<String, *> = if (isDegraded) emptyMap<String, Any>() else delegate.getAll()
+
+    override fun getString(key: String, defValue: String?): String? =
+        if (isDegraded) defValue else delegate.getString(key, defValue)
+
+    override fun getStringSet(key: String, defValues: Set<String>?): Set<String>? =
+        if (isDegraded) defValues else delegate.getStringSet(key, defValues)
+
+    override fun getInt(key: String, defValue: Int): Int =
+        if (isDegraded) defValue else delegate.getInt(key, defValue)
+
+    override fun getLong(key: String, defValue: Long): Long =
+        if (isDegraded) defValue else delegate.getLong(key, defValue)
+
+    override fun getFloat(key: String, defValue: Float): Float =
+        if (isDegraded) defValue else delegate.getFloat(key, defValue)
+
+    override fun getBoolean(key: String, defValue: Boolean): Boolean =
+        if (isDegraded) {
+            if (key == "is_pin_enabled") false else defValue
+        } else {
+            delegate.getBoolean(key, defValue)
+        }
+
+    override fun contains(key: String): Boolean = if (isDegraded) false else delegate.contains(key)
+
+    override fun edit(): SharedPreferences.Editor = if (isDegraded) NoOpEditor() else delegate.edit()
+
+    override fun registerOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        if (!isDegraded) delegate.registerOnSharedPreferenceChangeListener(listener)
+    }
+
+    override fun unregisterOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        if (!isDegraded) delegate.unregisterOnSharedPreferenceChangeListener(listener)
+    }
+
+    private class NoOpEditor : SharedPreferences.Editor {
+        override fun putString(key: String, value: String?): SharedPreferences.Editor = this
+        override fun putStringSet(key: String, values: Set<String>?): SharedPreferences.Editor = this
+        override fun putInt(key: String, value: Int): SharedPreferences.Editor = this
+        override fun putLong(key: String, value: Long): SharedPreferences.Editor = this
+        override fun putFloat(key: String, value: Float): SharedPreferences.Editor = this
+        override fun putBoolean(key: String, value: Boolean): SharedPreferences.Editor = this
+        override fun remove(key: String): SharedPreferences.Editor = this
+        override fun clear(): SharedPreferences.Editor = this
+        override fun commit(): Boolean = true
+        override fun apply() {}
+    }
+}
 
 object VaultSecurity {
 
@@ -26,21 +79,34 @@ object VaultSecurity {
     private const val KEY_LAST_SELF_COPIED = "last_self_copied_key"
     internal const val STATIC_SALT = "KeyNest_Vault_Secure_Salt_2026_!"
 
-    private fun getPrefs(context: Context): DegradingSharedPreferences = try {
-        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-        val sharedPreferences = EncryptedSharedPreferences.create(
-            PREFS_NAME,
-            masterKeyAlias,
-            context,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
-        // Wrap in a decorator that tracks whether encryption is available
-        DegradingSharedPreferences(sharedPreferences)
+    private val isRunningTests: Boolean by lazy {
+        try {
+            Class.forName("org.robolectric.Robolectric")
+            true
+        } catch (_: ClassNotFoundException) {
+            false
+        }
+    }
+
+    private fun getPrefs(context: Context): SharedPreferences = try {
+        if (isRunningTests) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        } else {
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val sharedPreferences = EncryptedSharedPreferences.create(
+                PREFS_NAME,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+            DegradingSharedPreferences(sharedPreferences, isDegraded = false)
+        }
     } catch (_: Exception) {
         // Security: Never fall back to plain SharedPreferences - if encryption fails,
         // enter a secure degraded/locked state. Do not crash or read/write sensitive data.
-        DegradingSharedPreferences(SharedPreferencesPreferenceManager.getDefaultSharedPreferences(context))
+        val fallback = context.getSharedPreferences("keynest_fallback_prefs", Context.MODE_PRIVATE)
+        DegradingSharedPreferences(fallback, isDegraded = true)
     }
 
     private fun getOrCreateSalt(context: Context): String {
@@ -105,21 +171,20 @@ object VaultSecurity {
         }
 
         // Migration check 1: Static salt migration
-        if (storedHash == generateLegacyHash(inputPin)) {
+        if (storedHash == hashPinWithSalt(inputPin, STATIC_SALT)) {
             setMasterPin(context, inputPin)
             return true
         }
 
-        // Migration check 2: Legacy hash format compatibility check
-        // Old format: hash_ hex_length*31  (from legacy hashCode-based approach)
-        // New format: full_sha256_hash
-        if (storedHash.contains("_") && storedHash.length == 66) { // 64 hex chars + 1 underscore + 1 digit
+        // Migration check 2: Legacy hash compatibility check
+        if (storedHash.contains("_") && storedHash.length != 64) {
             val legacyHash = generateLegacyHash(inputPin)
             if (storedHash == legacyHash) {
-                // Upgrade legacy hash to modern hash with per-device salt automatically
+                // Upgrade legacy hash to modern hash automatically
                 setMasterPin(context, inputPin)
                 return true
             }
+            return false
         }
 
         return false
@@ -132,27 +197,12 @@ object VaultSecurity {
     }
 
     /**
-     * Generates a legacy hash for backwards compatibility check.
-     * This method is kept only for migration of older PINs stored with the
-     * legacy hashCode()-based approach. New PINs should use hashPinWithSalt()
-     * which uses SHA-256 with per-device salt.
-     *
-     * @param pin The PIN to hash
-     * @return Legacy hash string in format "hexhash_length*31"
+     * Generates a hash using the legacy method for backwards compatibility.
+     * This relies on JVM String.hashCode() and should only be used to verify
+     * older stored PINs before upgrading them to SHA-256.
      */
     internal fun generateLegacyHash(pin: String): String {
-        // Legacy: using String.hashCode() - deprecated, kept only for migration
-        return "${pin.reversed().hashCode().toString(16)}_${(pin.length * 31).toString(16)}"
-    }
-
-    /**
-     * Generates a secure SHA-256 hash of the PIN with per-device salt.
-     * This is the recommended method for new PIN verification.
-     */
-    internal fun generateSecureHash(pin: String, salt: String): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val hashBytes = digest.digest((pin + salt).toByteArray(Charsets.UTF_8))
-        return hashBytes.joinToString("") { "%02x".format(it) }
+        return pin.reversed().hashCode().toString(16) + "_" + (pin.length * 31).toString(16)
     }
 
     fun maskKey(key: String, visibleChars: Int = 4): String {

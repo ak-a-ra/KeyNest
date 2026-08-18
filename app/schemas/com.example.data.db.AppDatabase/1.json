@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c17f7aa6f0e0931a7533d82686ad8062",
+    "identityHash": "5779f07ce3ffe915f4f84e154cbe0b9e",
     "entities": [
       {
         "tableName": "api_keys",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `apiKey` TEXT NOT NULL, `secretKey` TEXT NOT NULL, `provider` TEXT NOT NULL, `category` TEXT NOT NULL, `environment` TEXT NOT NULL, `endpointUrl` TEXT NOT NULL, `organizationId` TEXT NOT NULL, `modelOrProject` TEXT NOT NULL, `notes` TEXT NOT NULL, `tags` TEXT NOT NULL, `isPinned` INTEGER NOT NULL, `copyCount` INTEGER NOT NULL, `lastCopiedAt` INTEGER, `createdAt` INTEGER NOT NULL, `expiresAt` INTEGER, `rotationDays` INTEGER, `colorHex` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `apiKey` TEXT NOT NULL, `secretKey` TEXT NOT NULL, `provider` TEXT NOT NULL, `category` TEXT NOT NULL, `environment` TEXT NOT NULL, `endpointUrl` TEXT NOT NULL, `organizationId` TEXT NOT NULL, `modelOrProject` TEXT NOT NULL, `notes` TEXT NOT NULL, `tags` TEXT NOT NULL, `isPinned` INTEGER NOT NULL, `isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `copyCount` INTEGER NOT NULL, `lastCopiedAt` INTEGER, `createdAt` INTEGER NOT NULL, `expiresAt` INTEGER, `rotationDays` INTEGER, `colorHex` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -87,6 +87,17 @@
             "notNull": true
           },
           {
+            "fieldPath": "isDeleted",
+            "columnName": "isDeleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
             "fieldPath": "copyCount",
             "columnName": "copyCount",
             "affinity": "INTEGER",
@@ -130,7 +141,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c17f7aa6f0e0931a7533d82686ad8062')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5779f07ce3ffe915f4f84e154cbe0b9e')"
     ]
   }
 }

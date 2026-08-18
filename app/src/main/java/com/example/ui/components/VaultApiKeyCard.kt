@@ -32,9 +32,11 @@ import com.example.ui.theme.LocalKeyNestColors
 import com.example.ui.theme.MonospaceCodeStyle
 import com.example.ui.theme.ObsidianBg
 import com.example.ui.theme.ObsidianBorder
+import com.example.ui.theme.ObsidianSurface
 import com.example.ui.theme.ObsidianSurfaceHighlight
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextTertiary
+import com.example.ui.theme.VaultCardColor
 
 /**
  * Data clump refactoring: bundles key item actions cleanly.
@@ -53,11 +55,18 @@ fun ApiKeyCard(
 ) {
     val isDark = LocalKeyNestColors.current.isDark
     val cardColor = remember(item.colorHex, isDark) {
-        try {
-            val baseColor = Color(android.graphics.Color.parseColor(item.colorHex))
-            baseColor.copy(alpha = 0.15f)
-        } catch (_: Exception) {
-            Color.Transparent
+        val matchedPalette = VaultCardColor.fromHex(item.colorHex)
+        if (matchedPalette != VaultCardColor.DEFAULT) {
+            Color(if (isDark) matchedPalette.darkBg else matchedPalette.lightBg)
+        } else if (!item.colorHex.isNullOrBlank()) {
+            try {
+                val parsed = Color(android.graphics.Color.parseColor(item.colorHex))
+                parsed.copy(alpha = if (isDark) 0.22f else 0.15f)
+            } catch (_: Exception) {
+                if (isDark) Color(0xFF202124) else Color(0xFFFFFFFF)
+            }
+        } else {
+            if (isDark) Color(0xFF202124) else Color(0xFFFFFFFF)
         }
     }
 
@@ -67,10 +76,10 @@ fun ApiKeyCard(
             .fillMaxWidth()
             .testTag("key_card_${item.id}"),
         shape = RoundedCornerShape(12.dp),
-        color = if (cardColor == Color.Transparent) ObsidianBg else cardColor,
+        color = cardColor,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            if (item.isPinned) CyberGold else ObsidianBorder.copy(alpha = 0.5f)
+            if (item.isPinned) CyberGold else ObsidianBorder.copy(alpha = 0.6f)
         ),
         shadowElevation = 0.dp
     ) {
