@@ -34,3 +34,5 @@
 
 - 2026-08-16: Fixed test suite failures by adding test-mode support to Cryptography and VaultSecurity (utilizing a lazy `isRunningTests` check under Robolectric environment). This restored 100% test pass rate while keeping production storage fully encrypted, secure, and resilient via DegradingSharedPreferences fallback. No other doc updates needed.
 - 2026-08-16: Implemented Google Keep 1-Tap Grid/List view toggle with persisted preferences and added Keep pastel color dot picker (Coral, Sand, Sage, Fog, Storm, Dusk, Blossom) across Add/Edit and Key Detail sheets. Verified 100% build & test pass.
+- 2026-08-18: Fixed syntax and import errors in DeveloperCodeExporterScreen.kt and ApiKeyFormatting.kt. Verified 100% build and test pass. No other doc updates needed.
+- 2026-08-18: Implemented Archive & Soft-Delete Trash Bin in navigation drawer with live count badge, VaultTrashView, 1-tap key restore, and permanent purge dialogs. Verified 100% build & test pass.

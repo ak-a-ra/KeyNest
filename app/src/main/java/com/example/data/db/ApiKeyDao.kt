@@ -58,4 +58,7 @@ interface ApiKeyDao {
 
     @Query("DELETE FROM api_keys WHERE id = :id")
     suspend fun permanentDeleteKey(id: Long)
+
+    @Query("DELETE FROM api_keys WHERE isDeleted = true")
+    suspend fun emptyTrash()
 }

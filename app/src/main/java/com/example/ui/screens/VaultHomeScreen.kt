@@ -66,6 +66,9 @@ import com.example.ui.viewmodel.VaultDialogState
 import com.example.ui.viewmodel.DisplayMode
 import kotlinx.coroutines.launch
 
+import com.example.ui.components.VaultTrashView
+import com.example.ui.viewmodel.VaultViewMode
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VaultHomeScreen(
@@ -74,6 +77,9 @@ fun VaultHomeScreen(
     modifier: Modifier = Modifier
 ) {
     val allKeys by viewModel.allKeys.collectAsStateWithLifecycle()
+    val trashedKeys by viewModel.trashedKeys.collectAsStateWithLifecycle()
+    val trashCount by viewModel.trashCount.collectAsStateWithLifecycle()
+    val currentViewMode by viewModel.currentViewMode.collectAsStateWithLifecycle()
     val filteredKeys by viewModel.filteredKeys.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
@@ -105,20 +111,29 @@ fun VaultHomeScreen(
         drawerContent = {
             VaultDrawerSheetContent(
                 totalKeysCount = allKeys.size,
+                trashCount = trashCount,
+                currentViewMode = currentViewMode,
                 selectedCategory = selectedCategory,
                 selectedEnvironment = selectedEnvironment,
                 themeMode = themeMode,
                 isPinConfigured = isPinConfigured,
                 onSelectAllSecrets = {
+                    viewModel.setViewMode(VaultViewMode.ALL_SECRETS)
                     viewModel.setSelectedCategory("All")
                     viewModel.setSelectedEnvironment("All")
                     coroutineScope.launch { drawerState.close() }
                 },
+                onSelectTrash = {
+                    viewModel.setViewMode(VaultViewMode.TRASH)
+                    coroutineScope.launch { drawerState.close() }
+                },
                 onSelectCategory = { category ->
+                    viewModel.setViewMode(VaultViewMode.ALL_SECRETS)
                     viewModel.setSelectedCategory(category)
                     coroutineScope.launch { drawerState.close() }
                 },
                 onSelectEnvironment = { env ->
+                    viewModel.setViewMode(VaultViewMode.ALL_SECRETS)
                     viewModel.setSelectedEnvironment(env)
                     coroutineScope.launch { drawerState.close() }
                 },
@@ -147,27 +162,29 @@ fun VaultHomeScreen(
             containerColor = ObsidianBg,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = { viewModel.openDialog(VaultDialogState.AddKey()) },
-                    containerColor = ObsidianSurfaceElevated,
-                    contentColor = TextPrimary,
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 2.dp,
-                        pressedElevation = 4.dp
-                    ),
-                    modifier = Modifier
-                        .navigationBarsPadding()
-                        .padding(end = 6.dp, bottom = 6.dp)
-                        .testTag("fab_add_key")
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                if (currentViewMode == VaultViewMode.ALL_SECRETS) {
+                    FloatingActionButton(
+                        onClick = { viewModel.openDialog(VaultDialogState.AddKey()) },
+                        containerColor = ObsidianSurfaceElevated,
+                        contentColor = TextPrimary,
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = FloatingActionButtonDefaults.elevation(
+                            defaultElevation = 2.dp,
+                            pressedElevation = 4.dp
+                        ),
+                        modifier = Modifier
+                            .navigationBarsPadding()
+                            .padding(end = 6.dp, bottom = 6.dp)
+                            .testTag("fab_add_key")
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Key", tint = TextPrimary, modifier = Modifier.size(22.dp))
-                        Text("Add Secret", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+                        Row(
+                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Add Key", tint = TextPrimary, modifier = Modifier.size(22.dp))
+                            Text("Add Secret", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+                        }
                     }
                 }
             }
@@ -183,56 +200,67 @@ fun VaultHomeScreen(
                         .statusBarsPadding()
                         .padding(bottom = innerPadding.calculateBottomPadding())
                 ) {
-                    GoogleKeepTopSearchBar(
-                        searchQuery = searchQuery,
-                        onSearchQueryChange = { viewModel.setSearchQuery(it) },
-                        onSearchClick = onNavigateToSearch,
-                        sortOption = sortOption,
-                        onSortOptionChange = { viewModel.setSortOption(it) },
-                        onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
-                        onOpenAudit = { viewModel.openDialog(VaultDialogState.SecurityAudit) },
-                        isGridView = displayMode.isGrid,
-                        onToggleGridView = {
-                            viewModel.setDisplayMode(if (displayMode.isGrid) DisplayMode.List else DisplayMode.Grid)
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    if (filteredKeys.isEmpty()) {
-                        EmptyKeysState(
-                            hasQuery = searchQuery.isNotEmpty() || selectedCategory != "All" || selectedEnvironment != "All",
-                            onImportFromNotes = { viewModel.openDialog(VaultDialogState.DotEnvImport) }
+                    if (currentViewMode == VaultViewMode.TRASH) {
+                        VaultTrashView(
+                            trashedKeys = trashedKeys,
+                            onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
+                            onBackToSecrets = { viewModel.setViewMode(VaultViewMode.ALL_SECRETS) },
+                            onRestoreKey = { viewModel.restoreKey(it) },
+                            onPermanentDeleteKey = { viewModel.permanentDeleteKey(it) },
+                            onEmptyTrash = { viewModel.emptyTrash() }
                         )
                     } else {
-                        if (displayMode.isGrid) {
-                            LazyVerticalStaggeredGrid(
-                                columns = StaggeredGridCells.Fixed(2),
-                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 84.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalItemSpacing = 12.dp,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                staggeredItemsIndexed(filteredKeys, key = { _, item -> item.id }) { index, item ->
-                                    ApiKeyCard(
-                                        item = item,
-                                        actions = cardActions,
-                                        modifier = Modifier.testTag("card_${index}_${item.id}")
-                                    )
-                                }
+                        GoogleKeepTopSearchBar(
+                            searchQuery = searchQuery,
+                            onSearchQueryChange = { viewModel.setSearchQuery(it) },
+                            onSearchClick = onNavigateToSearch,
+                            sortOption = sortOption,
+                            onSortOptionChange = { viewModel.setSortOption(it) },
+                            onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
+                            onOpenAudit = { viewModel.openDialog(VaultDialogState.SecurityAudit) },
+                            isGridView = displayMode.isGrid,
+                            onToggleGridView = {
+                                viewModel.setDisplayMode(if (displayMode.isGrid) DisplayMode.List else DisplayMode.Grid)
                             }
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        if (filteredKeys.isEmpty()) {
+                            EmptyKeysState(
+                                hasQuery = searchQuery.isNotEmpty() || selectedCategory != "All" || selectedEnvironment != "All",
+                                onImportFromNotes = { viewModel.openDialog(VaultDialogState.DotEnvImport) }
+                            )
                         } else {
-                            LazyColumn(
-                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 84.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                itemsIndexed(filteredKeys, key = { _, item -> item.id }) { index, item ->
-                                    ApiKeyCard(
-                                        item = item,
-                                        actions = cardActions,
-                                        modifier = Modifier.testTag("card_list_${index}_${item.id}")
-                                    )
+                            if (displayMode.isGrid) {
+                                LazyVerticalStaggeredGrid(
+                                    columns = StaggeredGridCells.Fixed(2),
+                                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 84.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalItemSpacing = 12.dp,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    staggeredItemsIndexed(filteredKeys, key = { _, item -> item.id }) { index, item ->
+                                        ApiKeyCard(
+                                            item = item,
+                                            actions = cardActions,
+                                            modifier = Modifier.testTag("card_${index}_${item.id}")
+                                        )
+                                    }
+                                }
+                            } else {
+                                LazyColumn(
+                                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 84.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    itemsIndexed(filteredKeys, key = { _, item -> item.id }) { index, item ->
+                                        ApiKeyCard(
+                                            item = item,
+                                            actions = cardActions,
+                                            modifier = Modifier.testTag("card_list_${index}_${item.id}")
+                                        )
+                                    }
                                 }
                             }
                         }

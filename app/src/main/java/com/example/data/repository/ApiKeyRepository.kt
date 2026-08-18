@@ -71,6 +71,16 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
     )
 
     val allKeys: Flow<List<ApiKeyItem>> = dao.getAllKeys().map { list -> list.map { it.decrypted() } }
+    val trashedKeys: Flow<List<ApiKeyItem>> = dao.getTrashedKeys().map { list -> list.map { it.decrypted() } }
+    val trashCount: Flow<Int> = dao.getTrashCount()
+
+    suspend fun emptyTrash() {
+        try {
+            dao.emptyTrash()
+        } catch (e: Exception) {
+            throw RuntimeException("Empty trash failed")
+        }
+    }
 
     fun searchKeys(query: String): Flow<List<ApiKeyItem>> = dao.searchKeys(query).map { list -> list.map { it.decrypted() } }
 

@@ -57,14 +57,22 @@ import com.example.ui.theme.VibrantAvatarBg
 import com.example.ui.theme.VibrantPillBg
 import com.example.ui.viewmodel.ThemeMode
 
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
+import com.example.ui.viewmodel.VaultViewMode
+import com.example.ui.theme.StatusDanger
+
 @Composable
 fun VaultDrawerSheetContent(
     totalKeysCount: Int,
+    trashCount: Int = 0,
+    currentViewMode: VaultViewMode = VaultViewMode.ALL_SECRETS,
     selectedCategory: String,
     selectedEnvironment: String,
     themeMode: ThemeMode,
     isPinConfigured: Boolean,
     onSelectAllSecrets: () -> Unit,
+    onSelectTrash: () -> Unit,
     onSelectCategory: (String) -> Unit,
     onSelectEnvironment: (String) -> Unit,
     onOpenSecurityAudit: () -> Unit,
@@ -113,7 +121,7 @@ fun VaultDrawerSheetContent(
 
             // All Secrets Navigation Item
             item {
-                val isAllSelected = selectedCategory == "All" && selectedEnvironment == "All"
+                val isAllSelected = currentViewMode == VaultViewMode.ALL_SECRETS && selectedCategory == "All" && selectedEnvironment == "All"
                 NavigationDrawerItem(
                     label = { Text("All Secrets", fontWeight = FontWeight.SemiBold) },
                     selected = isAllSelected,
@@ -130,6 +138,35 @@ fun VaultDrawerSheetContent(
                     colors = NavigationDrawerItemDefaults.colors(
                         selectedContainerColor = CyberGoldLight,
                         selectedIconColor = CyberGold,
+                        selectedTextColor = TextPrimary,
+                        unselectedContainerColor = Color.Transparent,
+                        unselectedTextColor = TextSecondary
+                    ),
+                    shape = RoundedCornerShape(24.dp)
+                )
+            }
+
+            // Trash Navigation Item
+            item {
+                val isTrashSelected = currentViewMode == VaultViewMode.TRASH
+                NavigationDrawerItem(
+                    label = { Text("Trash", fontWeight = FontWeight.SemiBold) },
+                    selected = isTrashSelected,
+                    onClick = onSelectTrash,
+                    icon = { Icon(if (isTrashSelected) Icons.Default.Delete else Icons.Default.DeleteOutline, contentDescription = null, tint = if (isTrashSelected) StatusDanger else TextSecondary) },
+                    badge = {
+                        if (trashCount > 0) {
+                            Text(
+                                text = "$trashCount",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = StatusDanger
+                            )
+                        }
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(
+                        selectedContainerColor = VibrantPillBg,
+                        selectedIconColor = StatusDanger,
                         selectedTextColor = TextPrimary,
                         unselectedContainerColor = Color.Transparent,
                         unselectedTextColor = TextSecondary

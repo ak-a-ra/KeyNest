@@ -42,6 +42,7 @@ class FakeApiKeyDao : ApiKeyDao {
     override suspend fun softDeleteKey(id: Long, timestamp: Long) {}
     override suspend fun restoreKey(id: Long) {}
     override suspend fun permanentDeleteKey(id: Long) {}
+    override suspend fun emptyTrash() {}
 }
 
 @RunWith(RobolectricTestRunner::class)

@@ -42,6 +42,11 @@ enum class ThemeMode(val label: String) {
     DARK("Dark")
 }
 
+enum class VaultViewMode {
+    ALL_SECRETS,
+    TRASH
+}
+
 sealed interface VaultDialogState {
     object None : VaultDialogState
     data class AddKey(val preset: ProviderPreset? = null, val initialKey: String = "") : VaultDialogState
@@ -103,6 +108,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     val allKeys: StateFlow<List<ApiKeyItem>>
+    val trashedKeys: StateFlow<List<ApiKeyItem>>
+    val trashCount: StateFlow<Int>
+
+    private val _currentViewMode = MutableStateFlow(VaultViewMode.ALL_SECRETS)
+    val currentViewMode: StateFlow<VaultViewMode> = _currentViewMode.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -167,6 +177,20 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
+            )
+
+        trashedKeys = repository.trashedKeys
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
+
+        trashCount = repository.trashCount
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = 0
             )
 
         // Restore saved preferences
@@ -341,13 +365,39 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun deleteKey(item: ApiKeyItem) {
+    fun setViewMode(mode: VaultViewMode) {
+        _currentViewMode.value = mode
+    }
+
+    fun moveToTrash(item: ApiKeyItem) {
         viewModelScope.launch {
-            repository.deleteKey(item)
+            repository.softDeleteKey(item.id)
             if (_dialogState.value is VaultDialogState.KeyDetail || _dialogState.value is VaultDialogState.EditKey) {
                 closeDialog()
             }
         }
+    }
+
+    fun restoreKey(item: ApiKeyItem) {
+        viewModelScope.launch {
+            repository.restoreKey(item.id)
+        }
+    }
+
+    fun permanentDeleteKey(item: ApiKeyItem) {
+        viewModelScope.launch {
+            repository.permanentDeleteKey(item.id)
+        }
+    }
+
+    fun emptyTrash() {
+        viewModelScope.launch {
+            repository.emptyTrash()
+        }
+    }
+
+    fun deleteKey(item: ApiKeyItem) {
+        moveToTrash(item)
     }
 
     fun togglePin(item: ApiKeyItem) {

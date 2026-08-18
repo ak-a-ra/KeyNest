@@ -264,8 +264,8 @@ fun KeyDetailSheet(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete Key?", color = TextPrimary, fontWeight = FontWeight.Bold) },
-            text = { Text("Are you sure you want to permanently delete \"${item.title}\"? This action cannot be undone.", color = TextSecondary) },
+            title = { Text("Move to Trash?", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = { Text("Move \"${item.title}\" to Trash? You can restore it anytime from the drawer menu.", color = TextSecondary) },
             containerColor = ObsidianSurface,
             confirmButton = {
                 Button(
@@ -275,7 +275,7 @@ fun KeyDetailSheet(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = StatusDanger)
                 ) {
-                    Text("Delete", fontWeight = FontWeight.Bold)
+                    Text("Move to Trash", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
