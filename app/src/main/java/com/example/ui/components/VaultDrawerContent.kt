@@ -108,7 +108,7 @@ fun VaultDrawerSheetContent(
                         .padding(horizontal = 12.dp, vertical = 14.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.app_logo_pink_cat),
+                        painter = painterResource(id = R.drawable.app_logo_red_cat),
                         contentDescription = "KeyNest Mascot",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier

@@ -132,7 +132,7 @@ fun PinLockScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.app_logo_pink_cat),
+                    painter = painterResource(id = R.drawable.app_logo_red_cat),
                     contentDescription = "KeyNest Mascot",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
