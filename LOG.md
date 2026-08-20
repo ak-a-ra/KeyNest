@@ -36,3 +36,9 @@
 - 2026-08-16: Implemented Google Keep 1-Tap Grid/List view toggle with persisted preferences and added Keep pastel color dot picker (Coral, Sand, Sage, Fog, Storm, Dusk, Blossom) across Add/Edit and Key Detail sheets. Verified 100% build & test pass.
 - 2026-08-18: Fixed syntax and import errors in DeveloperCodeExporterScreen.kt and ApiKeyFormatting.kt. Verified 100% build and test pass. No other doc updates needed.
 - 2026-08-18: Implemented Archive & Soft-Delete Trash Bin in navigation drawer with live count badge, VaultTrashView, 1-tap key restore, and permanent purge dialogs. Verified 100% build & test pass.
+- 2026-08-18: Added App Icon & Logo Redesign milestone item to ROADMAP.md Phase 2. No other doc updates needed.
+- 2026-08-18: Implemented file export to user-selected folder via Android Storage Access Framework CreateDocument contract across .env and Developer Code Exporter sheets. Verified 100% build & test pass. No other doc updates needed.
+- 2026-08-18: Implemented auto-correcting .env and environment variable import engine (handling export prefixes, quotes, inline comments, companion secret pairing, SAF file picking, and preview cards). Verified 100% build & test pass. No other doc updates needed.
+- 2026-08-20: Created GitHub issues #23 (duplicate & conflict resolution strategy for .env import) and #24 (encrypted single-file .vault export and restore container) via GitHub CLI. No other doc updates needed.
+- 2026-08-20: Redesigned app icon and mascot logo using ip-as-logo-skill methodology with zoomed-out character framing, generating custom adaptive foreground layer and integrating into Navigation Drawer and PIN lock screen. No other doc updates needed.
+- 2026-08-20: Redesigned cat IP logo and adaptive launcher background with warm crimson red background and clasped praying pose per user reference and skill guidelines. Verified 100% build & test pass. No other doc updates needed.

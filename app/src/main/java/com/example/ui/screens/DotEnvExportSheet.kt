@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -12,18 +15,26 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,6 +42,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -51,6 +63,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -81,6 +95,7 @@ fun DotEnvExportSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
     var activeTab by remember { mutableIntStateOf(if (isImportMode) 1 else 0) }
     var selectedEnvFilter by remember { mutableStateOf("All") }
@@ -92,7 +107,38 @@ fun DotEnvExportSheet(
         VaultSecurity.exportToDotEnv(filteredKeys)
     }
 
+    val saveFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/plain")
+    ) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.openOutputStream(uri)?.use { stream ->
+                    stream.write(generatedDotEnv.toByteArray(Charsets.UTF_8))
+                }
+                Toast.makeText(context, "Saved .env file successfully", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error saving file: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     var rawImportText by remember { mutableStateOf("") }
+
+    val openFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.openInputStream(uri)?.use { stream ->
+                    rawImportText = stream.bufferedReader().readText()
+                }
+                Toast.makeText(context, "Loaded .env file successfully", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error reading file: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     val parsedCandidateKeys = remember(rawImportText) {
         if (rawImportText.isNotBlank()) VaultSecurity.parseDotEnv(rawImportText) else emptyList()
     }
@@ -225,11 +271,33 @@ fun DotEnvExportSheet(
                     }
                 }
 
-                TactileCopyButton(
-                    onCopy = { onCopyAll(generatedDotEnv) },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    label = "Copy Full .env Configuration"
-                )
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = { saveFileLauncher.launch(".env") },
+                        enabled = generatedDotEnv.isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .testTag("save_dotenv_button")
+                    ) {
+                        Icon(Icons.Default.SaveAlt, contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Save .env File", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.Black)
+                    }
+
+                    Box(modifier = Modifier.weight(1f)) {
+                        TactileCopyButton(
+                            onCopy = { onCopyAll(generatedDotEnv) },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = "Copy .env"
+                        )
+                    }
+                }
             } else {
                 // Import View
                 Row(
@@ -237,28 +305,77 @@ fun DotEnvExportSheet(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Paste raw .env or notes content:", fontSize = 12.sp, color = TextSecondary)
-                    Button(
-                        onClick = {
-                            val clipText = clipboardManager.getText()?.text
-                            if (!clipText.isNullOrEmpty()) rawImportText = clipText
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = ObsidianSurfaceElevated, contentColor = CyberGold),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.height(32.dp)
-                    ) {
-                        Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Text("Paste Clipboard", fontSize = 11.sp, modifier = Modifier.padding(start = 4.dp))
+                    Text("Auto-Correct .env & Variables:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Surface(
+                            onClick = {
+                                rawImportText = """
+                                    # Production AI & Cloud Configuration
+                                    export NEXT_PUBLIC_OPENAI_API_KEY="sk-proj-prod987654321" # Primary model key
+                                    OPENAI_BASE_URL="https://api.openai.com/v1"
+                                    export ANTHROPIC_KEY='sk-ant-api03-sample-claude';
+                                    STRIPE_TEST_KEY: "sk_test_stripe_auto_correct_sample"
+                                    AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+                                    AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+                                """.trimIndent()
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            color = ObsidianSurfaceElevated,
+                            border = BorderStroke(1.dp, ObsidianBorder)
+                        ) {
+                            Text("Sample", fontSize = 11.sp, color = CyberCyan, modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp))
+                        }
+
+                        Surface(
+                            onClick = { openFileLauncher.launch(arrayOf("text/plain", "*/*")) },
+                            shape = RoundedCornerShape(8.dp),
+                            color = ObsidianSurfaceElevated,
+                            border = BorderStroke(1.dp, ObsidianBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(Icons.Default.FolderOpen, contentDescription = null, tint = CyberGold, modifier = Modifier.size(13.dp))
+                                Text("Pick File", fontSize = 11.sp, color = CyberGold)
+                            }
+                        }
+
+                        Surface(
+                            onClick = {
+                                val clipText = clipboardManager.getText()?.text
+                                if (!clipText.isNullOrEmpty()) rawImportText = clipText
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            color = ObsidianSurfaceElevated,
+                            border = BorderStroke(1.dp, ObsidianBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(Icons.Default.ContentPaste, contentDescription = null, tint = TextPrimary, modifier = Modifier.size(13.dp))
+                                Text("Paste", fontSize = 11.sp, color = TextPrimary)
+                            }
+                        }
                     }
                 }
 
                 OutlinedTextField(
                     value = rawImportText,
                     onValueChange = { rawImportText = it },
-                    placeholder = { Text("OPENAI_API_KEY=\"sk-proj-...\"\nANTHROPIC_KEY=\"sk-ant-...\"", color = TextTertiary, fontSize = 12.sp) },
+                    placeholder = {
+                        Text(
+                            text = "Paste .env, bash exports, or docker vars:\nexport OPENAI_API_KEY=\"sk-proj-...\"\nANTHROPIC_DEV_KEY='sk-ant-...';\nSTRIPE_KEY: \"sk_live_...\"\nAWS_ACCESS_KEY_ID=AKIA...\nAWS_SECRET_ACCESS_KEY=...",
+                            color = TextTertiary,
+                            fontSize = 11.sp
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(160.dp),
+                        .height(140.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = CyberGold,
                         unfocusedBorderColor = ObsidianBorder,
@@ -266,28 +383,102 @@ fun DotEnvExportSheet(
                         unfocusedTextColor = TextPrimary
                     ),
                     shape = RoundedCornerShape(10.dp),
-                    textStyle = MonospaceCodeStyle.copy(fontSize = 12.sp)
+                    textStyle = MonospaceCodeStyle.copy(fontSize = 11.sp)
                 )
 
                 AnimatedVisibility(visible = parsedCandidateKeys.isNotEmpty()) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp),
-                        color = CyberEmerald.copy(alpha = 0.12f),
-                        border = BorderStroke(1.dp, CyberEmerald.copy(alpha = 0.3f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            color = CyberEmerald.copy(alpha = 0.12f),
+                            border = BorderStroke(1.dp, CyberEmerald.copy(alpha = 0.3f))
                         ) {
-                            Icon(Icons.Default.FileUpload, contentDescription = null, tint = CyberEmerald)
-                            Text(
-                                text = "Found ${parsedCandidateKeys.size} valid key(s) ready to import into encrypted vault",
-                                color = CyberEmerald,
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Default.AutoFixHigh, contentDescription = null, tint = CyberEmerald, modifier = Modifier.size(18.dp))
+                                Column {
+                                    Text(
+                                        text = "Auto-Corrected ${parsedCandidateKeys.size} Key(s) Successfully",
+                                        color = CyberEmerald,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Cleaned quotes, stripped 'export' keywords, paired companion secrets, and resolved provider categories.",
+                                        color = TextSecondary,
+                                        fontSize = 10.5.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        // Preview Cards
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 180.dp)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            parsedCandidateKeys.forEach { item ->
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = ObsidianSurfaceElevated,
+                                    border = BorderStroke(1.dp, ObsidianBorderLight)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(10.dp)
+                                                    .clip(RoundedCornerShape(5.dp))
+                                                    .background(try { Color(android.graphics.Color.parseColor(item.colorHex)) } catch (_: Exception) { CyberGold })
+                                            )
+                                            Column {
+                                                Text(item.title, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                                Text(
+                                                    text = VaultSecurity.maskKey(item.apiKey),
+                                                    style = MonospaceCodeStyle.copy(fontSize = 10.sp, color = CyberCyan)
+                                                )
+                                            }
+                                        }
+
+                                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            if (item.secretKey.isNotBlank()) {
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = CyberEmerald.copy(alpha = 0.15f),
+                                                    border = BorderStroke(0.5.dp, CyberEmerald)
+                                                ) {
+                                                    Text("+Secret", fontSize = 9.sp, color = CyberEmerald, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                                                }
+                                            }
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = ObsidianBorder,
+                                                border = BorderStroke(0.5.dp, ObsidianBorderLight)
+                                            ) {
+                                                Text(item.environment, fontSize = 9.sp, color = TextSecondary, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -300,12 +491,17 @@ fun DotEnvExportSheet(
                         }
                     },
                     enabled = parsedCandidateKeys.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth().height(46.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp)
+                        .testTag("import_dotenv_submit_button"),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = CyberEmerald, contentColor = Color(0xFF002211))
                 ) {
+                    Icon(Icons.Default.FileUpload, contentDescription = null, tint = Color(0xFF002211), modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (parsedCandidateKeys.isEmpty()) "Enter valid .env lines above" else "Import ${parsedCandidateKeys.size} Key(s) to Vault",
+                        text = if (parsedCandidateKeys.isEmpty()) "Enter or paste .env above" else "Import ${parsedCandidateKeys.size} Key(s) to Vault",
                         fontWeight = FontWeight.Bold
                     )
                 }

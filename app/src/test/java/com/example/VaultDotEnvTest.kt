@@ -71,4 +71,40 @@ class VaultDotEnvTest {
         assertEquals("gsk_plain_groq_key", parsed[2].apiKey)
         assertEquals("Groq", parsed[2].provider)
     }
+
+    @Test
+    fun `test dotEnv parser auto-corrects messy exports, keywords, comments, colons, and companion secrets`() {
+        val messyInput = """
+            # Messy Docker and Shell export syntax
+            export NEXT_PUBLIC_OPENAI_API_KEY="sk-proj-sample-openai-key" # inline comment
+            export const ANTHROPIC_DEV_KEY='sk-ant-api03-sample-claude';
+            STRIPE_TEST_KEY: "sk_test_stripe_secret_12345",
+            AWS_ACCESS_KEY_ID = AKIAIOSFODNN7EXAMPLE
+            AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            AWS_ENDPOINT_URL = "https://s3.us-east-1.amazonaws.com"
+        """.trimIndent()
+
+        val parsed = VaultSecurity.parseDotEnv(messyInput)
+        
+        // OpenAI Key
+        val openai = parsed.find { it.provider == "OpenAI" }
+        assertEquals("sk-proj-sample-openai-key", openai?.apiKey)
+        assertEquals("AI & LLMs", openai?.category)
+
+        // Anthropic Claude
+        val claude = parsed.find { it.provider == "Anthropic Claude" }
+        assertEquals("sk-ant-api03-sample-claude", claude?.apiKey)
+        assertEquals("Development", claude?.environment)
+
+        // Stripe
+        val stripe = parsed.find { it.provider == "Stripe" }
+        assertEquals("sk_test_stripe_secret_12345", stripe?.apiKey)
+        assertEquals("Test", stripe?.environment)
+
+        // AWS with companion secret and endpoint auto-pairing
+        val aws = parsed.find { it.provider == "AWS" }
+        assertEquals("AKIAIOSFODNN7EXAMPLE", aws?.apiKey)
+        assertEquals("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", aws?.secretKey)
+        assertEquals("https://s3.us-east-1.amazonaws.com", aws?.endpointUrl)
+    }
 }

@@ -3,6 +3,7 @@ package com.example.ui.screens
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -46,11 +47,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.CyberGold
 import com.example.ui.theme.ObsidianBg
@@ -122,25 +126,36 @@ fun PinLockScreen(
                 .widthIn(max = 420.dp)
                 .offset { IntOffset(shakeOffset.value.roundToInt(), 0) }
         ) {
-            // Lock Badge
+            // Lock Badge with Mascot
             Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(
-                            listOf(CyberGold.copy(alpha = 0.25f), Color.Transparent)
-                        )
-                    )
-                    .border(1.5.dp, CyberGold, CircleShape),
+                modifier = Modifier.size(80.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = null,
-                    tint = CyberGold,
-                    modifier = Modifier.size(36.dp)
+                Image(
+                    painter = painterResource(id = R.drawable.app_logo_pink_cat),
+                    contentDescription = "KeyNest Mascot",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(76.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, CyberGold, CircleShape)
                 )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(26.dp)
+                        .clip(CircleShape)
+                        .background(ObsidianSurfaceElevated)
+                        .border(1.dp, CyberGold, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = CyberGold,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {

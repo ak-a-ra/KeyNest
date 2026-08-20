@@ -332,42 +332,271 @@ object VaultSecurity {
         }.trim()
     }
 
-    fun parseDotEnv(dotEnvContent: String): List<ApiKeyItem> = dotEnvContent.lines().mapNotNull { line ->
-        val trimmed = line.trim()
-        if (trimmed.isEmpty() || trimmed.startsWith("#")) return@mapNotNull null
+    fun parseDotEnv(dotEnvContent: String): List<ApiKeyItem> {
+        val rawLines = dotEnvContent.lines()
+        val intermediateEntries = mutableListOf<RawEnvEntry>()
 
-        val eqIndex = trimmed.indexOf('=')
-        if (eqIndex <= 0) return@mapNotNull null
+        for (line in rawLines) {
+            val trimmed = line.trim()
+            if (trimmed.isEmpty()) continue
+            if (trimmed.startsWith("#") || trimmed.startsWith("//") || trimmed.startsWith(";")) continue
 
-        val keyName = trimmed.substring(0, eqIndex).trim()
-        var value = trimmed.substring(eqIndex + 1).trim()
-        if ((value.startsWith("\"") && value.endsWith("\"")) ||
-            (value.startsWith("'") && value.endsWith("'"))
-        ) {
-            value = value.substring(1, value.length - 1)
+            // Strip leading export / declare keywords
+            var cleanLine = trimmed
+            val leadingKeywords = listOf("export ", "export const ", "set ", "const ", "let ", "var ")
+            for (kw in leadingKeywords) {
+                if (cleanLine.startsWith(kw, ignoreCase = true)) {
+                    cleanLine = cleanLine.substring(kw.length).trim()
+                    break
+                }
+            }
+            if (cleanLine.startsWith("$ ") || cleanLine.startsWith("> ")) {
+                cleanLine = cleanLine.substring(2).trim()
+            }
+
+            // Find key-value delimiter (=, :=, :, ->)
+            var eqIndex = -1
+            var delimiterLen = 1
+            if (cleanLine.contains(":=")) {
+                eqIndex = cleanLine.indexOf(":=")
+                delimiterLen = 2
+            } else if (cleanLine.contains(" -> ")) {
+                eqIndex = cleanLine.indexOf(" -> ")
+                delimiterLen = 4
+            } else if (cleanLine.contains("=")) {
+                eqIndex = cleanLine.indexOf("=")
+                delimiterLen = 1
+            } else if (cleanLine.contains(": ")) {
+                eqIndex = cleanLine.indexOf(": ")
+                delimiterLen = 2
+            }
+
+            if (eqIndex <= 0) continue
+
+            val rawKey = cleanLine.substring(0, eqIndex).trim()
+            var rawValue = cleanLine.substring(eqIndex + delimiterLen).trim()
+
+            // Handle quoted values or unquoted values with inline comments
+            if (rawValue.startsWith("\"")) {
+                val endQuote = rawValue.indexOf('"', startIndex = 1)
+                rawValue = if (endQuote > 0) {
+                    rawValue.substring(1, endQuote)
+                } else {
+                    rawValue.removePrefix("\"")
+                }
+            } else if (rawValue.startsWith("'")) {
+                val endQuote = rawValue.indexOf('\'', startIndex = 1)
+                rawValue = if (endQuote > 0) {
+                    rawValue.substring(1, endQuote)
+                } else {
+                    rawValue.removePrefix("'")
+                }
+            } else if (rawValue.startsWith("`")) {
+                val endQuote = rawValue.indexOf('`', startIndex = 1)
+                rawValue = if (endQuote > 0) {
+                    rawValue.substring(1, endQuote)
+                } else {
+                    rawValue.removePrefix("`")
+                }
+            } else {
+                val hashIdx = rawValue.indexOf('#')
+                if (hashIdx >= 0) rawValue = rawValue.substring(0, hashIdx).trim()
+                val slashIdx = rawValue.indexOf("//")
+                if (slashIdx >= 0) rawValue = rawValue.substring(0, slashIdx).trim()
+            }
+
+            // Strip trailing semicolons or commas
+            if (rawValue.endsWith(";") || rawValue.endsWith(",")) {
+                rawValue = rawValue.dropLast(1).trim()
+            }
+
+            // Unquote if still surrounded by quotes
+            if ((rawValue.startsWith("\"") && rawValue.endsWith("\"")) ||
+                (rawValue.startsWith("'") && rawValue.endsWith("'")) ||
+                (rawValue.startsWith("`") && rawValue.endsWith("`"))
+            ) {
+                if (rawValue.length >= 2) {
+                    rawValue = rawValue.substring(1, rawValue.length - 1)
+                }
+            }
+
+            // Unescape escaped characters
+            rawValue = rawValue
+                .replace("\\n", "\n")
+                .replace("\\r", "\r")
+                .replace("\\t", "\t")
+                .replace("\\\"", "\"")
+                .replace("\\'", "'")
+                .replace("\\\\", "\\")
+
+            if (rawKey.isBlank() || rawValue.isBlank()) continue
+
+            // Framework prefix stripping for normalized matching
+            val normalizedKey = rawKey
+                .removePrefix("NEXT_PUBLIC_")
+                .removePrefix("REACT_APP_")
+                .removePrefix("VITE_")
+                .removePrefix("EXPO_PUBLIC_")
+                .removePrefix("NUXT_")
+                .removePrefix("PUBLIC_")
+                .removePrefix("GATSBY_")
+
+            // Provider detection by key name first, then fallback to key value
+            val detectedProvider = detectProviderByNameOrValue(normalizedKey, rawValue)
+            val detectedEnvironment = when {
+                rawKey.contains("DEV", ignoreCase = true) || rawKey.contains("LOCAL", ignoreCase = true) || rawKey.contains("SANDBOX", ignoreCase = true) -> "Development"
+                rawKey.contains("STAGING", ignoreCase = true) || rawKey.contains("STAGE", ignoreCase = true) || rawKey.contains("PREVIEW", ignoreCase = true) -> "Staging"
+                rawKey.contains("TEST", ignoreCase = true) || rawKey.contains("QA", ignoreCase = true) || rawKey.contains("CI", ignoreCase = true) -> "Test"
+                rawKey.contains("PERSONAL", ignoreCase = true) -> "Personal"
+                else -> "Production"
+            }
+
+            intermediateEntries.add(
+                RawEnvEntry(
+                    originalKey = rawKey,
+                    normalizedKey = normalizedKey,
+                    value = rawValue,
+                    provider = detectedProvider,
+                    environment = detectedEnvironment
+                )
+            )
         }
 
-        if (value.isEmpty()) return@mapNotNull null
+        // Group companion entries (e.g. SECRET / BASE_URL)
+        val resultItems = mutableListOf<ApiKeyItem>()
+        val processedKeys = mutableSetOf<String>()
 
-        val detectedProvider = detectProviderFromKey(value)
-        val preset = ProviderPresets.findByName(detectedProvider)
-        val cleanTitle = keyName.replace("_", " ").lowercase()
+        for (entry in intermediateEntries) {
+            if (entry.originalKey in processedKeys) continue
+
+            val isSecretOnly = entry.normalizedKey.endsWith("_SECRET") ||
+                    entry.normalizedKey.endsWith("_SECRET_KEY") ||
+                    entry.normalizedKey.endsWith("_SECRET_ACCESS_KEY")
+            val isUrlOnly = entry.normalizedKey.endsWith("_URL") ||
+                    entry.normalizedKey.endsWith("_BASE_URL") ||
+                    entry.normalizedKey.endsWith("_ENDPOINT")
+
+            // Look for paired primary entry if this is a secondary attribute
+            val basePrefix = entry.normalizedKey
+                .removeSuffix("_SECRET")
+                .removeSuffix("_SECRET_KEY")
+                .removeSuffix("_SECRET_ACCESS_KEY")
+                .removeSuffix("_BASE_URL")
+                .removeSuffix("_URL")
+                .removeSuffix("_ENDPOINT")
+                .removeSuffix("_KEY")
+                .removeSuffix("_TOKEN")
+
+            val matchingPrimary = intermediateEntries.find { other ->
+                other != entry &&
+                        other.originalKey !in processedKeys &&
+                        other.environment == entry.environment &&
+                        (other.normalizedKey.startsWith(basePrefix) || other.provider == entry.provider) &&
+                        !other.normalizedKey.endsWith("_SECRET") &&
+                        !other.normalizedKey.endsWith("_BASE_URL")
+            }
+
+            if (isSecretOnly && matchingPrimary != null) {
+                // Will be picked up when processing primary
+                continue
+            }
+
+            // Look for companion secret or URL for this primary
+            val companionSecret = intermediateEntries.find { other ->
+                other != entry &&
+                        other.environment == entry.environment &&
+                        (other.normalizedKey == "${entry.normalizedKey}_SECRET" ||
+                                other.normalizedKey == "${entry.normalizedKey}_SECRET_KEY" ||
+                                other.normalizedKey == "${basePrefix}_SECRET_ACCESS_KEY" ||
+                                other.normalizedKey == "${basePrefix}_SECRET_KEY" ||
+                                other.normalizedKey == "${basePrefix}_SECRET" ||
+                                (other.provider == entry.provider && other.normalizedKey.contains("SECRET", ignoreCase = true)))
+            }
+
+            val companionUrl = intermediateEntries.find { other ->
+                other != entry &&
+                        other.environment == entry.environment &&
+                        (other.normalizedKey == "${entry.normalizedKey}_BASE_URL" ||
+                                other.normalizedKey == "${entry.normalizedKey}_URL" ||
+                                other.normalizedKey == "${basePrefix}_BASE_URL" ||
+                                other.normalizedKey == "${basePrefix}_URL" ||
+                                other.normalizedKey == "${basePrefix}_ENDPOINT" ||
+                                (other.provider == entry.provider && (other.normalizedKey.contains("URL", ignoreCase = true) || other.normalizedKey.contains("ENDPOINT", ignoreCase = true))))
+            }
+
+            val preset = ProviderPresets.findByName(entry.provider)
+            val cleanTitle = buildCleanTitle(entry.normalizedKey, entry.provider)
+
+            resultItems.add(
+                ApiKeyItem(
+                    title = cleanTitle,
+                    apiKey = entry.value,
+                    secretKey = companionSecret?.value ?: "",
+                    endpointUrl = companionUrl?.value ?: (if (preset.defaultEndpoint.isNotEmpty() && entry.provider != "Other" && entry.provider != "Custom / Other") preset.defaultEndpoint else ""),
+                    provider = entry.provider,
+                    category = preset.category,
+                    environment = entry.environment,
+                    colorHex = preset.defaultColorHex,
+                    notes = "Auto-imported from .env (${entry.originalKey})"
+                )
+            )
+
+            processedKeys.add(entry.originalKey)
+            companionSecret?.let { processedKeys.add(it.originalKey) }
+            companionUrl?.let { processedKeys.add(it.originalKey) }
+        }
+
+        return resultItems
+    }
+
+    private data class RawEnvEntry(
+        val originalKey: String,
+        val normalizedKey: String,
+        val value: String,
+        val provider: String,
+        val environment: String
+    )
+
+    private fun detectProviderByNameOrValue(keyName: String, value: String): String {
+        val upperKey = keyName.uppercase()
+        return when {
+            upperKey.contains("OPENAI") || upperKey.contains("CHATGPT") -> "OpenAI"
+            upperKey.contains("GEMINI") || upperKey.contains("GOOGLE_AI") || upperKey.contains("BARD") -> "Google Gemini"
+            upperKey.contains("ANTHROPIC") || upperKey.contains("CLAUDE") -> "Anthropic Claude"
+            upperKey.contains("DEEPSEEK") -> "DeepSeek"
+            upperKey.contains("GROQ") -> "Groq"
+            upperKey.contains("MISTRAL") -> "Mistral AI"
+            upperKey.contains("OPENROUTER") -> "OpenRouter"
+            upperKey.contains("PERPLEXITY") || upperKey.contains("PPLX") -> "Perplexity"
+            upperKey.contains("HUGGINGFACE") || upperKey.contains("HUGGING_FACE") || upperKey.startsWith("HF_") -> "Hugging Face"
+            upperKey.contains("ELEVENLABS") || upperKey.contains("ELEVEN_LABS") -> "ElevenLabs"
+            upperKey.contains("PINECONE") -> "Pinecone"
+            upperKey.contains("GITHUB") || upperKey.startsWith("GH_") || upperKey.startsWith("GIT_") -> "GitHub"
+            upperKey.contains("STRIPE") -> "Stripe"
+            upperKey.contains("AWS") || upperKey.contains("AMAZON") || upperKey.startsWith("S3_") -> "AWS"
+            upperKey.contains("SUPABASE") -> "Supabase"
+            upperKey.contains("FIREBASE") -> "Firebase"
+            upperKey.contains("RESEND") -> "Resend"
+            upperKey.contains("VERCEL") -> "Vercel"
+            upperKey.contains("DISCORD") -> "Discord Bot"
+            upperKey.contains("TELEGRAM") -> "Telegram Bot"
+            else -> detectProviderFromKey(value)
+        }
+    }
+
+    private fun buildCleanTitle(keyName: String, provider: String): String {
+        val stripped = keyName
+            .replace("_", " ")
+            .trim()
+            .lowercase()
             .split(" ")
-            .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+            .filter { it.isNotBlank() }
+            .joinToString(" ") { word -> word.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() } }
 
-        ApiKeyItem(
-            title = cleanTitle,
-            apiKey = value,
-            provider = detectedProvider,
-            category = preset.category,
-            environment = when {
-                keyName.contains("DEV", ignoreCase = true) -> "Development"
-                keyName.contains("STAGING", ignoreCase = true) || keyName.contains("STAGE", ignoreCase = true) -> "Staging"
-                keyName.contains("TEST", ignoreCase = true) -> "Test"
-                else -> "Production"
-            },
-            colorHex = preset.defaultColorHex,
-            notes = "Imported from .env"
-        )
+        return if (stripped.isBlank() || stripped.equals("Key", ignoreCase = true) || stripped.equals("Api Key", ignoreCase = true)) {
+            "$provider Key"
+        } else {
+            stripped
+        }
     }
 }
