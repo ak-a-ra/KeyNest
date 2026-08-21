@@ -36,7 +36,7 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
 
 ---
 
-### Phase 2: Enhanced Biometrics & Secret Operations (🔄 Q3 2026)
+### Phase 2: Enhanced Visuals & Secret Operations (🔄 Q3 2026)
 - [x] **Google Keep 1-Tap Grid / List Toggle**: Seamless dynamic switching between 2-column staggered masonry and single-column detailed list feeds, with persisted layout preference in encrypted settings.
 - [x] **Google Keep Pastel Color Palette Picker**: Keep-style bottom color-dot selector (Coral, Sand, Sage, Fog, Dusk, Storm, Blossom) for custom note card pastel tints.
 - [x] **Developer Code Exporter Action Sheet**: 1-tap quick code snippet copy for `.env`, Shell `export`, `Authorization: Bearer <key>`, cURL, and Python `requests` headers.
@@ -46,10 +46,8 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
   - [ ] **Semantic Status Accents**: Color-coded key health indicators (expiring warning accents, cyan active indicators) over decorative ambient background glows.
   - [ ] **Utility-Driven Empty States**: Quick 1-tap preset sample importer in empty vault view (e.g., "Import AWS / OpenAI Template").
   - [ ] **Technical Microcopy Precision**: Direct, action-oriented developer microcopy across empty states and security dialogs ("AES-256 KeyStore Vault • Zero Plaintext Logs").
-- [ ] **Native BiometricPrompt Integration**: Fingerprint and Face Unlock support integrated with Android BiometricManager.
-- [ ] **Per-Key Biometric Gate**: Require explicit biometric auth before revealing or copying high-risk production keys.
-- [ ] **Auto-Lock Timeout**: Configurable background timeout lock (Instant, 30s, 1m, 5m).
-- [ ] **Rotation Reminders**: Android system notifications when API keys exceed their configured rotation period (e.g., 30/60/90 days).
+- [ ] **Search Query Loading Indicator**: Subtle progress indicator / pulse animation while query filters large vaults to provide clear feedback during high-volume secret queries.
+- [ ] **Dedicated SearchViewModel**: Dedicated SearchViewModel to handle real-time filter logic, debounced input pipelines, and manage the state of the secrets list as the user types.
 - [ ] **Secure QR Code Sharing**: Ephemeral, encrypted QR code generation for quick peer-to-peer secret transfer between devices.
 
 ---
@@ -60,6 +58,13 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
 - [ ] **CLI / ADB Companion Sync**: Lightweight local pairing to pipe secrets into development workstations over secure local channel without cloud reliance.
 - [ ] **Tagging & Advanced Search**: Multi-tag filtering and regex-based search indexing.
 - [ ] **Detailed Security Audit Log**: Historical log of key reveal/copy timestamps and secret age analytics.
+
+---
+
+### Later / Backlog (⏳ Future)
+- [ ] **Biometric Security**: App lock gate + per-key biometric reveal (`BiometricPrompt` & `BiometricManager` integration).
+- [ ] **Auto-Lock Timeout**: Immediate, 30s, 1m, 5m configurable background lock settings.
+- [ ] **Secret Health & Rotation**: Expiration countdowns, weak key detector, aging alerts, and rotation notifications.
 
 ---
 

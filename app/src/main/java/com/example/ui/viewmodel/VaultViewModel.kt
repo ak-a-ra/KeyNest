@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -164,6 +165,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _autoLockTimeoutPreferenceKey = "auto_lock_timeout_preference"
 
     val filteredKeys: StateFlow<List<ApiKeyItem>>
+    val availableTags: StateFlow<List<String>>
 
     init {
         val database = AppDatabase.getDatabase(application, viewModelScope)
@@ -173,6 +175,20 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         } catch (_: Exception) { }
 
         allKeys = repository.allKeys
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
+
+        availableTags = allKeys
+            .map { keys ->
+                keys.flatMap { it.tags.split(",") }
+                    .map { it.trim().removePrefix("#") }
+                    .filter { it.isNotBlank() }
+                    .distinct()
+                    .sorted()
+            }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
@@ -213,11 +229,20 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 .filter { item ->
                     if (query.isBlank()) true else {
                         val q = query.trim().lowercase()
+                        val masked = VaultSecurity.maskKey(item.apiKey).lowercase()
                         item.title.lowercase().contains(q) ||
                                 item.provider.lowercase().contains(q) ||
+                                item.category.lowercase().contains(q) ||
                                 item.tags.lowercase().contains(q) ||
                                 item.environment.lowercase().contains(q) ||
-                                item.notes.lowercase().contains(q)
+                                item.endpointUrl.lowercase().contains(q) ||
+                                item.modelOrProject.lowercase().contains(q) ||
+                                item.organizationId.lowercase().contains(q) ||
+                                item.notes.lowercase().contains(q) ||
+                                masked.contains(q) ||
+                                (q.startsWith("#") && item.tags.lowercase().contains(q.removePrefix("#"))) ||
+                                (q.startsWith("tag:") && item.tags.lowercase().contains(q.removePrefix("tag:"))) ||
+                                (q.startsWith("env:") && item.environment.lowercase().contains(q.removePrefix("env:")))
                     }
                 }
                 .filter { category == "All" || it.category.equals(category, ignoreCase = true) }
@@ -253,6 +278,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
+    }
+
+    fun clearSearch() {
+        _searchQuery.value = ""
     }
 
     fun setSelectedCategory(category: String) {

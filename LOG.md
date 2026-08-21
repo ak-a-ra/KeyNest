@@ -45,3 +45,8 @@
 - 2026-08-21: Fixed Room schema verification startup crash by bumping database version to 2 and adding fallbackToDestructiveMigration in AppDatabase. No other doc updates needed.
 - 2026-08-21: Fixed launcher adaptive icon configuration by linking red background and cute cat IP mascot logo into ic_launcher_foreground.xml and ic_launcher_background.xml, plus updated drawer header & top bar avatar icons. No other doc updates needed.
 - 2026-08-21: Cleaned up app/build.gradle.kts dependencies block by removing unused commented-out library blocks. No other doc updates needed.
+- 2026-08-21: Moved Biometric Security, Auto-Lock Timeout, and Secret Health & Rotation features to Later / Backlog section in ROADMAP.md.
+- 2026-08-21: Created comprehensive development PLAN.md breaking down Search, Tags, Favorites, Grid/List toggle, and Keep-style pastel tints into granular tasks.
+- 2026-08-21: Implemented Real-Time Deep Search with reactive multi-field matching (titles, providers, categories, environments, tags, endpoints, notes, masked preview tokens), Google Keep-style explore hub (Categories, Labels, Dynamic Vault Tags, Color Tints), query count badge, and clean empty state with 1-tap query clearing.
+- 2026-08-21: Added search query loading indicator item to Phase 2 in ROADMAP.md for feedback during high-volume secret queries.
+- 2026-08-21: Added dedicated SearchViewModel item to Phase 2 in ROADMAP.md for real-time filter logic and secret list state management.
