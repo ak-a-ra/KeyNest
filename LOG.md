@@ -50,3 +50,4 @@
 - 2026-08-21: Implemented Real-Time Deep Search with reactive multi-field matching (titles, providers, categories, environments, tags, endpoints, notes, masked preview tokens), Google Keep-style explore hub (Categories, Labels, Dynamic Vault Tags, Color Tints), query count badge, and clean empty state with 1-tap query clearing.
 - 2026-08-21: Added search query loading indicator item to Phase 2 in ROADMAP.md for feedback during high-volume secret queries.
 - 2026-08-21: Added dedicated SearchViewModel item to Phase 2 in ROADMAP.md for real-time filter logic and secret list state management.
+- 2026-08-21: Added Architecture Realignment (Obsidian-Scale) roadmap items to Phase 2 in ROADMAP.md (Package by Feature, Material 3 Adaptive UI, Dedicated File Subsystem, Strict UDF, DataStore). No other doc updates needed.
