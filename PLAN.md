@@ -81,6 +81,7 @@
 
 - [ ] **Task 5.3: Contrast-Aware Surface & Border Styling**
   - **Description**: Compute adaptive borders (`color.copy(alpha = 0.35f)`) and high-contrast typography so all text (`TextPrimary`, `CyberCyan`) remains strictly WCAG AAA compliant against tinted cards.
--e 
+
 ### Architecture Update
 - [x] Package by Feature Restructuring completed.
+- [x] Material 3 Adaptive UI integrated (`ListDetailPaneScaffold`).

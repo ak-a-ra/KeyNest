@@ -52,3 +52,4 @@
 - 2026-08-21: Added dedicated SearchViewModel item to Phase 2 in ROADMAP.md for real-time filter logic and secret list state management.
 - 2026-08-21: Added Architecture Realignment (Obsidian-Scale) roadmap items to Phase 2 in ROADMAP.md (Package by Feature, Material 3 Adaptive UI, Dedicated File Subsystem, Strict UDF, DataStore). No other doc updates needed.
 - 2026-08-21: Re-architected codebase into Obsidian-grade feature-based packages (core & feature modules).
+- 2026-08-21: Successfully implemented Material 3 Adaptive UI using `ListDetailPaneScaffold` for responsive tablet/phone pane layouts in VaultHomeScreen.

@@ -3,6 +3,15 @@ import com.example.feature.settings.PinSettingsSheet
 import com.example.feature.export.DotEnvExportSheet
 import com.example.feature.keymanagement.KeyDetailSheet
 import com.example.feature.keymanagement.AddEditKeySheet
+import androidx.activity.compose.BackHandler
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
+import com.example.feature.keymanagement.KeyDetailPane
+import com.example.core.model.ProviderPresets
+
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -73,7 +82,7 @@ import kotlinx.coroutines.launch
 import com.example.feature.vault.VaultTrashView
 import com.example.feature.vault.VaultViewMode
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun VaultHomeScreen(
     viewModel: VaultViewModel,
@@ -96,12 +105,19 @@ fun VaultHomeScreen(
     val clipboardCopyState by viewModel.clipboardCopyState.collectAsStateWithLifecycle()
     val displayMode by viewModel.displayMode.collectAsStateWithLifecycle()
 
+
     val coroutineScope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val navigator = rememberListDetailPaneScaffoldNavigator<Long>()
+
+    BackHandler(navigator.canNavigateBack()) {
+        navigator.navigateBack()
+    }
+
 
     val cardActions = remember(viewModel) {
         KeyCardActions(
-            onClick = { item -> viewModel.openDialog(VaultDialogState.KeyDetail(item)) },
+            onClick = { item -> navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, item.id) },
             onCopy = { item ->
                 viewModel.copyToClipboard(item.apiKey, "${item.title} API Key", isSecret = true, itemId = item.id)
             },
@@ -161,8 +177,14 @@ fun VaultHomeScreen(
             )
         }
     ) {
-        Scaffold(
+        ListDetailPaneScaffold(
+            directive = navigator.scaffoldDirective,
+            value = navigator.scaffoldValue,
             modifier = modifier.fillMaxSize(),
+            listPane = {
+                AnimatedPane {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
             containerColor = ObsidianBg,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             floatingActionButton = {
@@ -308,6 +330,45 @@ fun VaultHomeScreen(
                 }
             }
         }
+                }
+            },
+            detailPane = {
+                AnimatedPane {
+                    val currentId = navigator.currentDestination?.content
+                    val item = allKeys.find { it.id == currentId }
+                    if (item != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(ObsidianBg)
+                        ) {
+                            KeyDetailPane(
+                                item = item,
+                                preset = ProviderPresets.findByName(item.provider),
+                                onEdit = { viewModel.openDialog(VaultDialogState.EditKey(it)) },
+                                onDelete = {
+                                    viewModel.deleteKey(item)
+                                    if (navigator.canNavigateBack()) {
+                                        navigator.navigateBack()
+                                    }
+                                },
+                                onTogglePin = { viewModel.togglePin(it) },
+                                onCopyKey = { text, label, id ->
+                                    viewModel.copyToClipboard(text, label, isSecret = true, itemId = id)
+                                },
+                                onClose = {
+                                    if (navigator.canNavigateBack()) {
+                                        navigator.navigateBack()
+                                    }
+                                }
+                            )
+                        }
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize().background(ObsidianBg))
+                    }
+                }
+            }
+        )
     }
 
     // Dialogs & Sheets
@@ -331,16 +392,9 @@ fun VaultHomeScreen(
             )
         }
         is VaultDialogState.KeyDetail -> {
-            KeyDetailSheet(
-                item = state.item,
-                onDismiss = { viewModel.closeDialog() },
-                onEdit = { viewModel.openDialog(VaultDialogState.EditKey(it)) },
-                onDelete = { viewModel.deleteKey(it) },
-                onTogglePin = { viewModel.togglePin(it) },
-                onCopyKey = { text, label, id ->
-                    viewModel.copyToClipboard(text, label, isSecret = true, itemId = id)
-                }
-            )
+            // Migrated to adaptive detail pane
+            viewModel.closeDialog()
+            navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, state.item.id)
         }
         is VaultDialogState.Generator, is VaultDialogState.SecurityAudit -> Unit
         is VaultDialogState.DotEnvExport -> {
