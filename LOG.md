@@ -43,3 +43,5 @@
 - 2026-08-21: Added KeyNestApplication with standard Log tags (`KeyNestApp`) for startup sequence tracking and uncaught exception crash logging. Registered application class in AndroidManifest.xml. No other doc updates needed.
 - 2026-08-21: Integrated Timber (5.0.1) with DebugTree in KeyNestApplication onCreate to log lifecycle events during startup. No other doc updates needed.
 - 2026-08-21: Fixed Room schema verification startup crash by bumping database version to 2 and adding fallbackToDestructiveMigration in AppDatabase. No other doc updates needed.
+- 2026-08-21: Fixed launcher adaptive icon configuration by linking red background and cute cat IP mascot logo into ic_launcher_foreground.xml and ic_launcher_background.xml, plus updated drawer header & top bar avatar icons. No other doc updates needed.
+- 2026-08-21: Cleaned up app/build.gradle.kts dependencies block by removing unused commented-out library blocks. No other doc updates needed.

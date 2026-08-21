@@ -1,5 +1,6 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,9 +42,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.CyberGold
@@ -104,12 +108,19 @@ fun VaultDrawerSheetContent(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
+                            .size(46.dp)
                             .clip(CircleShape)
-                            .background(VibrantAvatarBg),
+                            .background(Color(0xFFE53935)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("V", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
+                        Image(
+                            painter = painterResource(id = R.drawable.img_cat_ip_logo_1787319466857),
+                            contentDescription = "KeyNest Cat Mascot Logo",
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
                     }
                     Column {
                         Text("KeyNest Vault", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
