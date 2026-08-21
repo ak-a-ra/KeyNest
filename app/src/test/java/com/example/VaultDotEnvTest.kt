@@ -1,7 +1,7 @@
 package com.example
 
-import com.example.data.model.ApiKeyItem
-import com.example.data.security.VaultSecurity
+import com.example.core.model.ApiKeyItem
+import com.example.core.security.VaultSecurity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

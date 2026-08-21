@@ -41,16 +41,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.ui.screens.PinLockScreen
-import com.example.ui.screens.SearchScreen
-import com.example.ui.screens.VaultHomeScreen
-import com.example.ui.theme.CyberEmerald
-import com.example.ui.theme.KeyNestTheme
-import com.example.ui.theme.ObsidianSurfaceElevated
-import com.example.ui.theme.TextPrimary
-import com.example.ui.viewmodel.CopyFeedback
-import com.example.ui.viewmodel.ThemeMode
-import com.example.ui.viewmodel.VaultViewModel
+import com.example.feature.settings.PinLockScreen
+import com.example.feature.search.SearchScreen
+import com.example.feature.vault.VaultHomeScreen
+import com.example.core.designsystem.CyberEmerald
+import com.example.core.designsystem.KeyNestTheme
+import com.example.core.designsystem.ObsidianSurfaceElevated
+import com.example.core.designsystem.TextPrimary
+import com.example.feature.vault.CopyFeedback
+import com.example.feature.vault.ThemeMode
+import com.example.feature.vault.VaultViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 

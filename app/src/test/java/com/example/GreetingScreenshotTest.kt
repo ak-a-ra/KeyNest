@@ -2,8 +2,8 @@ package com.example
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
-import com.example.ui.components.ProviderIconBadge
-import com.example.ui.theme.KeyNestTheme
+import com.example.feature.vault.ProviderIconBadge
+import com.example.core.designsystem.KeyNestTheme
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule

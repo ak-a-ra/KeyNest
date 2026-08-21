@@ -41,8 +41,8 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
 - [x] **Google Keep Pastel Color Palette Picker**: Keep-style bottom color-dot selector (Coral, Sand, Sage, Fog, Dusk, Storm, Blossom) for custom note card pastel tints.
 - [x] **Developer Code Exporter Action Sheet**: 1-tap quick code snippet copy for `.env`, Shell `export`, `Authorization: Bearer <key>`, cURL, and Python `requests` headers.
 - [x] **Archive & Soft-Delete Trash Bin**: Archive inactive keys and provide a 30-day recoverable Trash bin in navigation drawer with restore and permanent purge protection.
-- [ ] **Architecture Realignment (Obsidian-Scale)**:
-  - [ ] **Package by Feature Restructuring**: Migrate from monolithic layers to strict feature modules (`feature.vault`, `feature.export`, `core.security`).
+- [x] **Architecture Realignment (Obsidian-Scale)**:
+  - [x] **Package by Feature Restructuring**: Migrate from monolithic layers to strict feature modules (`feature.vault`, `feature.export`, `core.security`).
   - [ ] **Material 3 Adaptive UI**: Implement `ListDetailPaneScaffold` for responsive two-pane tablet and desktop layouts.
   - [ ] **Dedicated File Subsystem**: Isolate Storage Access Framework (SAF), URI permissions, and MIME handling into a strict `core.files` subsystem.
   - [ ] **Strict Unidirectional Data Flow (UDF)**: Rigid `UiState` and `UiAction` classes per feature for predictable, testable state management.
