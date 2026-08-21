@@ -102,7 +102,7 @@ object VaultSecurity {
             )
             DegradingSharedPreferences(sharedPreferences, isDegraded = false)
         }
-    } catch (_: Throwable) {
+    } catch (_: Exception) {
         // Security: Never fall back to plain SharedPreferences - if encryption fails,
         // enter a secure degraded/locked state. Do not crash or read/write sensitive data.
         val fallback = context.getSharedPreferences("keynest_fallback_prefs", Context.MODE_PRIVATE)

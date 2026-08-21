@@ -1,8 +1,6 @@
 package com.example.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,12 +41,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.R
 import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.CyberEmerald
 import com.example.ui.theme.CyberGold
@@ -107,15 +102,15 @@ fun VaultDrawerSheetContent(
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 14.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.app_logo_red_cat),
-                        contentDescription = "KeyNest Mascot",
-                        contentScale = ContentScale.Crop,
+                    Box(
                         modifier = Modifier
-                            .size(46.dp)
+                            .size(42.dp)
                             .clip(CircleShape)
-                            .border(1.5.dp, CyberCyan.copy(alpha = 0.6f), CircleShape)
-                    )
+                            .background(VibrantAvatarBg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("V", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary)
+                    }
                     Column {
                         Text("KeyNest Vault", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
                         Text("Encrypted Secrets • $totalKeysCount items", fontSize = 12.sp, color = TextSecondary)

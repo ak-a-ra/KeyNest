@@ -8,7 +8,7 @@ import com.example.data.model.ApiKeyItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
-@Database(entities = [ApiKeyItem::class], version = 1, exportSchema = true)
+@Database(entities = [ApiKeyItem::class], version = 2, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun apiKeyDao(): ApiKeyDao
 
@@ -22,7 +22,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "keynest_vault.db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
                 INSTANCE = instance
                 instance
             }

@@ -41,7 +41,7 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
 - [x] **Google Keep Pastel Color Palette Picker**: Keep-style bottom color-dot selector (Coral, Sand, Sage, Fog, Dusk, Storm, Blossom) for custom note card pastel tints.
 - [x] **Developer Code Exporter Action Sheet**: 1-tap quick code snippet copy for `.env`, Shell `export`, `Authorization: Bearer <key>`, cURL, and Python `requests` headers.
 - [x] **Archive & Soft-Delete Trash Bin**: Archive inactive keys and provide a 30-day recoverable Trash bin in navigation drawer with restore and permanent purge protection.
-- [x] **App Icon & Logo Redesign**: Custom adaptive launcher icon and mascot branding redesigned using IP-as-logo methodology with zoomed-out character framing, clean obsidian background, and safe-zone adaptive foreground layer.
+- [ ] **App Icon & Logo Redesign**: Custom adaptive launcher icon with developer-centric cybersecurity branding (AES key vault / cyberpunk obsidian aesthetic) and clean monochrome vector layer.
 - [ ] **Anti-Slop UI Craft Polish**:
   - [ ] **Semantic Status Accents**: Color-coded key health indicators (expiring warning accents, cyan active indicators) over decorative ambient background glows.
   - [ ] **Utility-Driven Empty States**: Quick 1-tap preset sample importer in empty vault view (e.g., "Import AWS / OpenAI Template").
