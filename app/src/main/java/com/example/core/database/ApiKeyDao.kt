@@ -14,6 +14,10 @@ interface ApiKeyDao {
     @Query("SELECT * FROM api_keys WHERE isDeleted = false ORDER BY isPinned DESC, createdAt DESC")
     fun getAllKeys(): Flow<List<ApiKeyItem>>
 
+    /** Includes soft-deleted rows; used by legacy plaintext migration so trashed secrets are not skipped. */
+    @Query("SELECT * FROM api_keys")
+    fun getAllKeysIncludingTrashed(): Flow<List<ApiKeyItem>>
+
     @Query("SELECT * FROM api_keys WHERE isDeleted = false AND id = :id")
     fun getKeyById(id: Long): Flow<ApiKeyItem?>
 

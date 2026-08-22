@@ -447,6 +447,28 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Auto-lock enforcement: records when the app left the foreground and re-locks
+    // when the configured inactivity/background timeout has elapsed.
+    private var lastActiveAt: Long = 0L
+
+    fun onAppBackgrounded() {
+        if (_isPinConfigured.value && !_isVaultLocked.value) {
+            lastActiveAt = System.currentTimeMillis()
+        }
+    }
+
+    fun onAppForegrounded() {
+        val backgroundedAt = lastActiveAt
+        val timeout = _autoLockTimeout.value
+        if (backgroundedAt == 0L || timeout.minutes <= 0) return
+        if (_isPinConfigured.value && !_isVaultLocked.value &&
+            System.currentTimeMillis() - backgroundedAt >= timeout.minutes * 60_000L
+        ) {
+            lockVault()
+        }
+        lastActiveAt = 0L
+    }
+
     fun unlockVault(pin: String): Boolean {
         val success = VaultSecurity.verifyPin(getApplication(), pin)
         if (success) {

@@ -22,6 +22,9 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
         if (plainText.isEmpty()) return ""
         try {
             val cipherText = Cryptography.encrypt(plainText)
+            // Security: Cryptography.encrypt returns "" on failure. Never persist an
+            // empty ciphertext for a non-empty secret; fail loudly instead.
+            if (cipherText.isEmpty()) throw RuntimeException("Encryption produced empty ciphertext")
             decryptionCache[cipherText] = plainText
             return cipherText
         } catch (e: RuntimeException) {
@@ -109,11 +112,15 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
     // Migration support for legacy plaintext secrets
     private val MIGRATION_KEY = "keynest_migration_version"
 
+    private companion object {
+        /** Current migration schema version. Bumping this re-triggers exactly one migration run. */
+        const val MIGRATION_VERSION = 1
+    }
+
     suspend fun isMigrationNeeded(context: Context): Boolean {
         val prefs = context.getApplicationContext().getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
-        val currentVersion = prefs.getInt(MIGRATION_KEY, 0)
-        val databaseVersion = dao.getKeyCount().first()
-        return currentVersion < databaseVersion
+        val completedVersion = prefs.getInt(MIGRATION_KEY, 0)
+        return completedVersion < MIGRATION_VERSION
     }
 
     fun markMigrationComplete(context: Context, version: Int) {
@@ -124,40 +131,48 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
     /**
      * One-time migration: converts any legacy plaintext secrets to encrypted form.
      * This must be called on app startup before any database operations.
-     * Returns number of entries migrated, or -1 if migration was skipped/aborted.
+     * Trashed rows are included so plaintext secrets never linger anywhere in the database.
+     * Per-item failures are skipped (never aborts the whole migration, never wipes a secret);
+     * the migration is only marked complete when every plaintext row was processed.
+     * Returns number of entries migrated.
      */
     suspend fun migrateLegacyPlaintextSecrets(context: Context): Int {
-        val allKeys = dao.getAllKeys().first()
+        val allKeys = dao.getAllKeysIncludingTrashed().first()
         val plaintextKeys = allKeys.filter { it.apiKey.isNotEmpty() && !it.apiKey.startsWith("enc:") }
 
         if (plaintextKeys.isEmpty()) {
             // Nothing to migrate, mark as done
-            markMigrationComplete(context, 1)
+            markMigrationComplete(context, MIGRATION_VERSION)
             return 0
         }
 
-        // Perform migration in a transaction
-        return try {
-            // Use Room's built-in transaction via dao
-            var migratedCount = 0
-            for (key in plaintextKeys) {
-                // Check if already encrypted (starts with "enc:" prefix)
-                if (key.apiKey.startsWith("enc:")) continue
+        var migratedCount = 0
+        var failedCount = 0
+        for (key in plaintextKeys) {
+            // Check if already encrypted (starts with "enc:" prefix)
+            if (key.apiKey.startsWith("enc:")) continue
 
-                // Treat as plaintext and re-encrypt
-                val encryptedApiKey = Cryptography.encrypt(key.apiKey)
-                // Update the item with encrypted key
-                val updatedItem = key.copy(apiKey = encryptedApiKey)
-                dao.updateKey(updatedItem)
-                migratedCount++
+            // Treat as plaintext and re-encrypt. If encryption fails, skip this key and
+            // leave its plaintext untouched rather than overwriting it with an empty value.
+            val encryptedApiKey = try {
+                encryptCached(key.apiKey)
+            } catch (e: RuntimeException) {
+                failedCount++
+                continue
             }
-            // Mark migration as complete (version 1)
-            markMigrationComplete(context, 1)
-            migratedCount
-        } catch (e: Exception) {
-            // Security: Do not silently fail migration; preserve original data
-            // Log non-sensitive error and return -1 to indicate failure
-            throw RuntimeException("Legacy migration failed - original data preserved")
+            try {
+                dao.updateKey(key.copy(apiKey = encryptedApiKey))
+                migratedCount++
+            } catch (e: Exception) {
+                failedCount++
+            }
         }
+
+        // Mark migration complete only when no plaintext rows remain; failed rows roll
+        // back to plaintext and will be retried on next startup.
+        if (failedCount == 0) {
+            markMigrationComplete(context, MIGRATION_VERSION)
+        }
+        return migratedCount
     }
 }
