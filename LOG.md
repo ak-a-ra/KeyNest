@@ -71,3 +71,4 @@
 - 2026-08-22: Updated ROADMAP.md Phase 2 with new security, performance, UI/UX, and build enhancement objectives (FLAG_SECURE, Background Locking, Clipboard Expiration, SQLite FTS4, Baseline Profiles, Flow Distinctness, Immutable Collections, Derived State, R8 Minification, Resource Stripping). No other doc updates needed.
 - 2026-08-22: Closed out current PLAN.md as tasks 7.2 and 7.3 were deferred to ROADMAP.md Phase 2. No other doc updates needed.- 2026-08-22: Removed Environment field and filtering UI completely from the application (drawer, forms, search, cards, exports) as requested. Verified 100% build pass. No other doc updates needed.
 - 2026-08-22: Created a comprehensive and well-structured README.md file inspired by GitHub examples, utilizing GFM formatting and repository assets. No other doc updates needed.
+- 2026-08-22: Generated VaultHomeScreen showcase screenshot using Roborazzi and added it to README.md. No other doc updates needed.

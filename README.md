@@ -1,6 +1,6 @@
 <!-- prettier-ignore -->
 <div align="center">
-  <img src="app/src/main/res/drawable/ic_launcher_keynest.jpg" alt="KeyNest Logo" align="center" height="96" />
+  <img src="assets/vault_showcase.png" alt="KeyNest Vault Showcase" align="center" width="600" style="border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
 
   # KeyNest
   
