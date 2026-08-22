@@ -88,3 +88,4 @@
 - [x] **Package by Feature Restructuring**: Migrated files into `feature.*` and `core.*` modules, strictly separating domain concerns.
 - [x] **Material 3 Adaptive UI**: Integrated `ListDetailPaneScaffold` into `VaultHomeScreen`, enabling a responsive two-pane layout on tablets and foldables, with intelligent back-stack handling on compact displays.
 - [x] **Dedicated File Subsystem**: Extracted all Android Storage Access Framework (SAF), I/O stream handling, and file manipulation out of the presentation layer into a dedicated, suspendable `core.files.VaultFileManager`.
+- [x] **Encrypted Database Backup & Restore Tool**: Implemented `VaultBackupCrypto` (PBKDF2-HMAC-SHA256, 100k iterations, AES-256-GCM) with `VaultBackupSheet` and Storage Access Framework (SAF) integration for cross-device migration (`.keynest`).

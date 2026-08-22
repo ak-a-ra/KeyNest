@@ -15,12 +15,15 @@ KeyNest is a single-activity Android vault for developers to store, organize, re
 
 ## Architecture
 
-- `data/db`: Room schema and DAO.
-- `data/model`: Persistent domain models and provider presets.
-- `data/repository`: Encryption-aware persistence boundary for vault items.
-- `data/security`: Android Keystore cryptography, encrypted preferences, PIN handling, and security helpers.
-- `ui/viewmodel`: StateFlow-backed presentation state and user actions.
-- `ui/screens` and `ui/components`: Compose user interface.
+- `core/database`: Room schema, entity configuration, and `ApiKeyDao`.
+- `core/model`: Persistent domain models (`ApiKeyItem`) and provider presets (`ProviderPreset`).
+- `core/repository`: Encryption-aware persistence boundary (`ApiKeyRepository`) for vault items.
+- `core/security`: Android Keystore AES-256-GCM cryptography (`Cryptography`), encrypted preferences/fallback (`VaultSecurity`), and portable PBKDF2/GCM backup crypto (`VaultBackupCrypto`).
+- `core/files`: Storage Access Framework (SAF) and file I/O operations (`VaultFileManager`).
+- `core/designsystem`: Material Design 3 tokens, colors, and typography.
+- `feature/*`: Presentation layer (`vault`, `keymanagement`, `search`, `export`, `settings`), ViewModels, and adaptive layouts.
+- **DOX Hierarchy**: Structured `AGENTS.md` contracts at root, `app/`, `core/`, `feature/`, and `docs/`.
+
 
 ## Invariants
 

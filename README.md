@@ -28,6 +28,7 @@ KeyNest is an encrypted Android vault for API keys and developer secrets. It use
 - **Expiry tracking:** Shows fresh, expiring, and overdue keys with progress indicators and a quick rotation action.
 - **Key generator:** Creates secure tokens, API keys, hex secrets, and UUIDs.
 - **`.env` import and export:** Import configuration files in bulk or export saved values as a formatted `.env` file.
+- **Encrypted vault backup & restore:** Export entire encrypted vault to portable `.keynest` files protected by PBKDF2 (100k rounds) + AES-256-GCM for cross-device migration and cold storage.
 - **Optional PIN lock:** Lock the vault with a PIN when you need extra protection from someone looking over your shoulder.
 
 ---

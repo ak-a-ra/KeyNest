@@ -82,6 +82,7 @@ fun VaultDrawerSheetContent(
     onOpenSecurityAudit: () -> Unit,
     onOpenGenerator: () -> Unit,
     onOpenDotEnvExport: () -> Unit,
+    onOpenBackupRestore: () -> Unit,
     onCycleTheme: () -> Unit,
     onToggleLockOrPinSettings: () -> Unit
 ) {
@@ -301,6 +302,17 @@ fun VaultDrawerSheetContent(
                     selected = false,
                     onClick = onOpenDotEnvExport,
                     icon = { Icon(Icons.Default.FileDownload, contentDescription = null, tint = CyberCyan) },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent, unselectedTextColor = TextSecondary)
+                )
+            }
+
+            item {
+                NavigationDrawerItem(
+                    label = { Text("Encrypted Backup (.keynest)") },
+                    selected = false,
+                    onClick = onOpenBackupRestore,
+                    icon = { Icon(Icons.Default.Shield, contentDescription = null, tint = CyberGold) },
                     shape = RoundedCornerShape(24.dp),
                     colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent, unselectedTextColor = TextSecondary)
                 )

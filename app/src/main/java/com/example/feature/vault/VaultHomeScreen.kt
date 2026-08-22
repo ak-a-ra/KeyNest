@@ -1,6 +1,7 @@
 package com.example.feature.vault
 import com.example.feature.settings.PinSettingsSheet
 import com.example.feature.export.DotEnvExportSheet
+import com.example.feature.export.VaultBackupSheet
 import com.example.feature.keymanagement.KeyDetailSheet
 import com.example.feature.keymanagement.AddEditKeySheet
 import androidx.activity.compose.BackHandler
@@ -167,6 +168,10 @@ fun VaultHomeScreen(
                 },
                 onOpenDotEnvExport = {
                     viewModel.openDialog(VaultDialogState.DotEnvExport)
+                    coroutineScope.launch { drawerState.close() }
+                },
+                onOpenBackupRestore = {
+                    viewModel.openBackupRestoreDialog(0)
                     coroutineScope.launch { drawerState.close() }
                 },
                 onCycleTheme = { viewModel.cycleThemeMode() },
@@ -427,6 +432,14 @@ fun VaultHomeScreen(
                 onDismiss = { viewModel.closeDialog() },
                 onSetPin = { pin -> viewModel.setMasterPin(pin) },
                 onRemovePin = { viewModel.removeMasterPin() }
+            )
+        }
+        is VaultDialogState.BackupRestore -> {
+            VaultBackupSheet(
+                viewModel = viewModel,
+                keys = allKeys,
+                initialTab = state.initialTab,
+                onDismiss = { viewModel.closeDialog() }
             )
         }
         VaultDialogState.None -> Unit

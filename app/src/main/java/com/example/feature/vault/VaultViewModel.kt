@@ -16,8 +16,10 @@ import com.example.core.model.ApiKeyItem
 import com.example.core.model.ProviderPreset
 import com.example.core.model.ProviderPresets
 import com.example.core.repository.ApiKeyRepository
+import com.example.core.security.VaultBackupCrypto
 import com.example.core.security.VaultSecurity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -60,6 +62,7 @@ sealed interface VaultDialogState {
     object DotEnvImport : VaultDialogState
     object SecurityAudit : VaultDialogState
     object PinSettings : VaultDialogState
+    data class BackupRestore(val initialTab: Int = 0) : VaultDialogState
 }
 
 data class CopyFeedback(
@@ -490,6 +493,56 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     suspend fun importTextFile(uri: Uri): Result<String> {
         return fileManager.importTextFile(uri)
+    }
+
+    fun openBackupRestoreDialog(initialTab: Int = 0) {
+        _dialogState.value = VaultDialogState.BackupRestore(initialTab)
+    }
+
+    suspend fun createAndExportBackup(uri: Uri, passphrase: CharArray, keys: List<ApiKeyItem>): Result<Int> {
+        return withContext(Dispatchers.IO) {
+            val backupJsonResult = VaultBackupCrypto.createEncryptedBackup(keys, passphrase)
+            if (backupJsonResult.isFailure) {
+                return@withContext Result.failure(backupJsonResult.exceptionOrNull() ?: Exception("Encryption failed"))
+            }
+            val jsonContent = backupJsonResult.getOrThrow()
+            val writeResult = fileManager.exportTextFile(uri, jsonContent)
+            if (writeResult.isFailure) {
+                return@withContext Result.failure(writeResult.exceptionOrNull() ?: Exception("Write failed"))
+            }
+            Result.success(keys.size)
+        }
+    }
+
+    suspend fun inspectBackupMetadata(uri: Uri): Result<VaultBackupCrypto.BackupMetadata> {
+        return withContext(Dispatchers.IO) {
+            val readResult = fileManager.importTextFile(uri)
+            if (readResult.isFailure) {
+                return@withContext Result.failure(readResult.exceptionOrNull() ?: Exception("Read failed"))
+            }
+            VaultBackupCrypto.peekBackupMetadata(readResult.getOrThrow())
+        }
+    }
+
+    suspend fun restoreEncryptedBackup(uri: Uri, passphrase: CharArray, replaceExisting: Boolean): Result<Int> {
+        return withContext(Dispatchers.IO) {
+            val readResult = fileManager.importTextFile(uri)
+            if (readResult.isFailure) {
+                return@withContext Result.failure(readResult.exceptionOrNull() ?: Exception("Read failed"))
+            }
+            val content = readResult.getOrThrow()
+            val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(content, passphrase)
+            if (restoreResult.isFailure) {
+                return@withContext Result.failure(restoreResult.exceptionOrNull() ?: Exception("Decryption failed"))
+            }
+            val restoredKeys = restoreResult.getOrThrow()
+            if (replaceExisting) {
+                repository.replaceAll(restoredKeys)
+            } else {
+                repository.insertAll(restoredKeys)
+            }
+            Result.success(restoredKeys.size)
+        }
     }
 }
 

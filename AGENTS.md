@@ -129,5 +129,8 @@ Update the closest owning AGENTS.md when a change affects:
 
 ### Child DOX Index
 
-- No child AGENTS.md files are needed for the current repository structure.
-- Root-owned files: `README.md`, `ROADMAP.md`, `metadata.json`, `build.gradle.kts`, `settings.gradle.kts`, `app/` hierarchy.
+- [`app/AGENTS.md`](app/AGENTS.md) — Application module, Android resources, manifest, build configurations, and test suites.
+- [`app/src/main/java/com/example/core/AGENTS.md`](app/src/main/java/com/example/core/AGENTS.md) — Database, Keystore security, models, repositories, files subsystem, and design system.
+- [`app/src/main/java/com/example/feature/AGENTS.md`](app/src/main/java/com/example/feature/AGENTS.md) — Jetpack Compose screens, ViewModels, adaptive navigation, and user interactions.
+- [`docs/AGENTS.md`](docs/AGENTS.md) — Architecture Decision Records (ADRs), agent guidelines, and setup documentation.
+- Root-owned files: `README.md`, `ROADMAP.md`, `metadata.json`, `build.gradle.kts`, `settings.gradle.kts`, `LOG.md`, `PLAN.md`, `CONTEXT.md`.

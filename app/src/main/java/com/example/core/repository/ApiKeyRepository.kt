@@ -90,6 +90,11 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
 
     suspend fun insertAll(items: List<ApiKeyItem>) = dao.insertAllKeys(items.map { it.encrypted() })
 
+    suspend fun replaceAll(items: List<ApiKeyItem>) {
+        dao.deleteAllKeys()
+        dao.insertAllKeys(items.map { it.encrypted() })
+    }
+
 
     suspend fun updateKey(item: ApiKeyItem) = dao.updateKey(item.encrypted())
 

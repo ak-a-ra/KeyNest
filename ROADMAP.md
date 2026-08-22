@@ -59,7 +59,7 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
 ---
 
 ### Phase 3: Developer Workflows & Integrations (🚀 Q4 2026)
-- [ ] **Encrypted Backup & Restore**: Encrypted single-file export (`.vault` container) protected by user-defined master passphrase.
+- [x] **Encrypted Backup & Restore**: Encrypted single-file export (`.keynest` container) protected by user-defined master passphrase using PBKDF2 (100,000 rounds) + AES-256-GCM, with multi-device migration and merge/replace capabilities.
 - [ ] **Custom Provider Presets**: Allow users to define reusable provider templates with custom URL endpoints, headers, and docs.
 - [ ] **CLI / ADB Companion Sync**: Lightweight local pairing to pipe secrets into development workstations over secure local channel without cloud reliance.
 - [ ] **Tagging & Advanced Search**: Multi-tag filtering and regex-based search indexing.
