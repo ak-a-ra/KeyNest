@@ -72,3 +72,4 @@
 - 2026-08-22: Closed out current PLAN.md as tasks 7.2 and 7.3 were deferred to ROADMAP.md Phase 2. No other doc updates needed.- 2026-08-22: Removed Environment field and filtering UI completely from the application (drawer, forms, search, cards, exports) as requested. Verified 100% build pass. No other doc updates needed.
 - 2026-08-22: Created a comprehensive and well-structured README.md file inspired by GitHub examples, utilizing GFM formatting and repository assets. No other doc updates needed.
 - 2026-08-22: Generated VaultHomeScreen showcase screenshot using Roborazzi and added it to README.md. No other doc updates needed.
+- 2026-08-22: Replaced hardcoded sample API key strings in VaultViewModel starter templates with non-secret dummy placeholders to resolve secret scanner leak warnings. No other doc updates needed.
