@@ -399,6 +399,7 @@ fun VaultHomeScreen(
         is VaultDialogState.Generator, is VaultDialogState.SecurityAudit -> Unit
         is VaultDialogState.DotEnvExport -> {
             DotEnvExportSheet(
+                viewModel = viewModel,
                 keys = allKeys,
                 isImportMode = false,
                 onDismiss = { viewModel.closeDialog() },
@@ -410,6 +411,7 @@ fun VaultHomeScreen(
         }
         is VaultDialogState.DotEnvImport -> {
             DotEnvExportSheet(
+                viewModel = viewModel,
                 keys = allKeys,
                 isImportMode = true,
                 onDismiss = { viewModel.closeDialog() },

@@ -82,6 +82,9 @@
 - [ ] **Task 5.3: Contrast-Aware Surface & Border Styling**
   - **Description**: Compute adaptive borders (`color.copy(alpha = 0.35f)`) and high-contrast typography so all text (`TextPrimary`, `CyberCyan`) remains strictly WCAG AAA compliant against tinted cards.
 
-### Architecture Update
-- [x] Package by Feature Restructuring completed.
-- [x] Material 3 Adaptive UI integrated (`ListDetailPaneScaffold`).
+### Architecture Transition: Obsidian-Scale Refactoring
+*Realigned the codebase away from a monolithic structure to a scalable, package-by-feature architecture to support robust adaptive UIs and future integrations.*
+
+- [x] **Package by Feature Restructuring**: Migrated files into `feature.*` and `core.*` modules, strictly separating domain concerns.
+- [x] **Material 3 Adaptive UI**: Integrated `ListDetailPaneScaffold` into `VaultHomeScreen`, enabling a responsive two-pane layout on tablets and foldables, with intelligent back-stack handling on compact displays.
+- [x] **Dedicated File Subsystem**: Extracted all Android Storage Access Framework (SAF), I/O stream handling, and file manipulation out of the presentation layer into a dedicated, suspendable `core.files.VaultFileManager`.

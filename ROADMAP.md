@@ -44,7 +44,7 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
 - [x] **Architecture Realignment (Obsidian-Scale)**:
   - [x] **Package by Feature Restructuring**: Migrate from monolithic layers to strict feature modules (`feature.vault`, `feature.export`, `core.security`).
   - [x] **Material 3 Adaptive UI**: Implement `ListDetailPaneScaffold` for responsive two-pane tablet and desktop layouts.
-  - [ ] **Dedicated File Subsystem**: Isolate Storage Access Framework (SAF), URI permissions, and MIME handling into a strict `core.files` subsystem.
+  - [x] **Dedicated File Subsystem**: Isolate Storage Access Framework (SAF), URI permissions, and MIME handling into a strict `core.files` subsystem.
   - [ ] **Strict Unidirectional Data Flow (UDF)**: Rigid `UiState` and `UiAction` classes per feature for predictable, testable state management.
   - [ ] **DataStore for Preferences**: Migrate UI settings (layout preference, theme) to DataStore, reserving `EncryptedSharedPreferences` strictly for cryptographic keys.
 - [ ] **App Icon & Logo Redesign**: Custom adaptive launcher icon with developer-centric cybersecurity branding (AES key vault / cyberpunk obsidian aesthetic) and clean monochrome vector layer.

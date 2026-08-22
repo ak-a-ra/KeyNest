@@ -9,7 +9,9 @@ import android.os.Build
 import android.os.PersistableBundle
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import android.net.Uri
 import com.example.core.database.AppDatabase
+import com.example.core.files.VaultFileManager
 import com.example.core.model.ApiKeyItem
 import com.example.core.model.ProviderPreset
 import com.example.core.model.ProviderPresets
@@ -163,6 +165,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     val autoLockTimeout: StateFlow<AutoLockTimeout> = _autoLockTimeout.asStateFlow()
 
     private val _autoLockTimeoutPreferenceKey = "auto_lock_timeout_preference"
+
+    private val fileManager = VaultFileManager(application)
 
     val filteredKeys: StateFlow<List<ApiKeyItem>>
     val availableTags: StateFlow<List<String>>
@@ -478,6 +482,14 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             ThemeMode.LIGHT -> ThemeMode.SYSTEM
         }
         setThemeMode(next)
+    }
+
+    suspend fun exportTextFile(uri: Uri, content: String): Result<Unit> {
+        return fileManager.exportTextFile(uri, content)
+    }
+
+    suspend fun importTextFile(uri: Uri): Result<String> {
+        return fileManager.importTextFile(uri)
     }
 }
 

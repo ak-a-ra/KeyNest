@@ -68,7 +68,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.example.core.model.ApiKeyItem
+import com.example.feature.vault.VaultViewModel
 import com.example.core.security.VaultSecurity
 import com.example.feature.vault.TactileCopyButton
 import com.example.core.designsystem.CyberCyan
@@ -87,6 +90,7 @@ import com.example.core.designsystem.TextTertiary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DotEnvExportSheet(
+    viewModel: VaultViewModel,
     keys: List<ApiKeyItem>,
     isImportMode: Boolean = false,
     onDismiss: () -> Unit,
@@ -96,6 +100,7 @@ fun DotEnvExportSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var activeTab by remember { mutableIntStateOf(if (isImportMode) 1 else 0) }
     var selectedEnvFilter by remember { mutableStateOf("All") }
@@ -111,13 +116,13 @@ fun DotEnvExportSheet(
         contract = ActivityResultContracts.CreateDocument("text/plain")
     ) { uri ->
         if (uri != null) {
-            try {
-                context.contentResolver.openOutputStream(uri)?.use { stream ->
-                    stream.write(generatedDotEnv.toByteArray(Charsets.UTF_8))
+            scope.launch {
+                val result = viewModel.exportTextFile(uri, generatedDotEnv)
+                if (result.isSuccess) {
+                    Toast.makeText(context, "Saved .env file successfully", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Error saving file: ${result.exceptionOrNull()?.localizedMessage}", Toast.LENGTH_LONG).show()
                 }
-                Toast.makeText(context, "Saved .env file successfully", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "Error saving file: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -128,13 +133,14 @@ fun DotEnvExportSheet(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
-            try {
-                context.contentResolver.openInputStream(uri)?.use { stream ->
-                    rawImportText = stream.bufferedReader().readText()
+            scope.launch {
+                val result = viewModel.importTextFile(uri)
+                if (result.isSuccess) {
+                    rawImportText = result.getOrNull() ?: ""
+                    Toast.makeText(context, "Loaded .env file successfully", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Error reading file: ${result.exceptionOrNull()?.localizedMessage}", Toast.LENGTH_LONG).show()
                 }
-                Toast.makeText(context, "Loaded .env file successfully", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "Error reading file: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
             }
         }
     }
