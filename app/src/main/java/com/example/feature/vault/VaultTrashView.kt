@@ -304,12 +304,11 @@ private fun TrashedKeyCard(
                         color = TextPrimary
                     )
                     Text(
-                        text = "${item.provider} • ${item.environment}",
+                        text = item.provider,
                         fontSize = 12.sp,
                         color = TextSecondary
                     )
                 }
-                EnvironmentTag(environment = item.environment)
             }
 
             // Deleted timestamp if available

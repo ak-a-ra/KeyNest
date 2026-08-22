@@ -97,7 +97,6 @@ fun VaultHomeScreen(
     val filteredKeys by viewModel.filteredKeys.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
-    val selectedEnvironment by viewModel.selectedEnvironment.collectAsStateWithLifecycle()
     val sortOption by viewModel.sortOption.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val clipboardDetectedKey by viewModel.clipboardDetectedKey.collectAsStateWithLifecycle()
@@ -105,6 +104,10 @@ fun VaultHomeScreen(
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val clipboardCopyState by viewModel.clipboardCopyState.collectAsStateWithLifecycle()
     val displayMode by viewModel.displayMode.collectAsStateWithLifecycle()
+    val availableTags by viewModel.availableTags.collectAsStateWithLifecycle()
+    val selectedTag by viewModel.selectedTag.collectAsStateWithLifecycle()
+    val onlyFavorites by viewModel.onlyFavorites.collectAsStateWithLifecycle()
+    val favoritesCount by viewModel.favoritesCount.collectAsStateWithLifecycle()
 
 
     val coroutineScope = rememberCoroutineScope()
@@ -122,7 +125,8 @@ fun VaultHomeScreen(
             onCopy = { item ->
                 viewModel.copyToClipboard(item.apiKey, "${item.title} API Key", isSecret = true, itemId = item.id)
             },
-            onTogglePin = { item -> viewModel.togglePin(item) }
+            onTogglePin = { item -> viewModel.togglePin(item) },
+            onTagClick = { tag -> viewModel.toggleTagFilter(tag) }
         )
     }
 
@@ -133,15 +137,21 @@ fun VaultHomeScreen(
             VaultDrawerSheetContent(
                 totalKeysCount = allKeys.size,
                 trashCount = trashCount,
+                favoritesCount = favoritesCount,
+                onlyFavorites = onlyFavorites,
                 currentViewMode = currentViewMode,
                 selectedCategory = selectedCategory,
-                selectedEnvironment = selectedEnvironment,
                 themeMode = themeMode,
                 isPinConfigured = isPinConfigured,
                 onSelectAllSecrets = {
                     viewModel.setViewMode(VaultViewMode.ALL_SECRETS)
+                    viewModel.setOnlyFavorites(false)
                     viewModel.setSelectedCategory("All")
-                    viewModel.setSelectedEnvironment("All")
+                    coroutineScope.launch { drawerState.close() }
+                },
+                onSelectFavorites = {
+                    viewModel.setViewMode(VaultViewMode.ALL_SECRETS)
+                    viewModel.setOnlyFavorites(true)
                     coroutineScope.launch { drawerState.close() }
                 },
                 onSelectTrash = {
@@ -150,12 +160,8 @@ fun VaultHomeScreen(
                 },
                 onSelectCategory = { category ->
                     viewModel.setViewMode(VaultViewMode.ALL_SECRETS)
+                    viewModel.setOnlyFavorites(false)
                     viewModel.setSelectedCategory(category)
-                    coroutineScope.launch { drawerState.close() }
-                },
-                onSelectEnvironment = { env ->
-                    viewModel.setViewMode(VaultViewMode.ALL_SECRETS)
-                    viewModel.setSelectedEnvironment(env)
                     coroutineScope.launch { drawerState.close() }
                 },
                 onOpenSecurityAudit = {
@@ -255,12 +261,24 @@ fun VaultHomeScreen(
                             }
                         )
 
+                        // Horizontal Tag Filter Carousel
+                        VaultTagFilterCarousel(
+                            tags = availableTags,
+                            selectedTag = selectedTag,
+                            onlyFavorites = onlyFavorites,
+                            favoritesCount = favoritesCount,
+                            onTagSelected = { viewModel.toggleTagFilter(it) },
+                            onClearTagFilter = { viewModel.setSelectedTag(null) },
+                            onToggleFavorites = { viewModel.toggleOnlyFavorites() }
+                        )
+
                         Spacer(modifier = Modifier.height(4.dp))
 
                         if (filteredKeys.isEmpty()) {
                             EmptyKeysState(
-                                hasQuery = searchQuery.isNotEmpty() || selectedCategory != "All" || selectedEnvironment != "All",
-                                onImportFromNotes = { viewModel.openDialog(VaultDialogState.DotEnvImport) }
+                                hasQuery = searchQuery.isNotEmpty() || selectedCategory != "All" || selectedTag != null || onlyFavorites,
+                                onImportFromNotes = { viewModel.openDialog(VaultDialogState.DotEnvImport) },
+                                onLoadSampleTemplates = { viewModel.loadStarterTemplates() }
                             )
                         } else {
                             if (displayMode.isGrid) {
@@ -384,14 +402,17 @@ fun VaultHomeScreen(
                 initialPreset = state.preset,
                 initialKeyText = state.initialKey,
                 existingTitles = allKeys.map { it.title },
+                availableTags = availableTags,
                 onDismiss = { viewModel.closeDialog() },
-                onSave = { viewModel.saveKey(it) }
+                onSave = { viewModel.saveKey(it) },
+                onBatchSave = { items -> viewModel.importKeys(items) }
             )
         }
         is VaultDialogState.EditKey -> {
             AddEditKeySheet(
                 existingItem = state.item,
                 existingTitles = allKeys.filter { it.id != state.item.id }.map { it.title },
+                availableTags = availableTags,
                 onDismiss = { viewModel.closeDialog() },
                 onSave = { viewModel.saveKey(it) }
             )

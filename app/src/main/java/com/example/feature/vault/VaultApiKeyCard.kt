@@ -2,7 +2,9 @@ package com.example.feature.vault
 import com.example.feature.keymanagement.KeyExpirationBadge
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.core.model.ApiKeyItem
 import com.example.core.security.VaultSecurity
+import com.example.core.util.ApiKeyFormatting
+import com.example.core.designsystem.CyberCyan
 import com.example.core.designsystem.CyberGold
 import com.example.core.designsystem.LocalKeyNestColors
 import com.example.core.designsystem.MonospaceCodeStyle
@@ -45,7 +49,8 @@ import com.example.core.designsystem.VaultCardColor
 data class KeyCardActions(
     val onClick: (ApiKeyItem) -> Unit,
     val onCopy: (ApiKeyItem) -> Unit,
-    val onTogglePin: (ApiKeyItem) -> Unit
+    val onTogglePin: (ApiKeyItem) -> Unit,
+    val onTagClick: ((String) -> Unit)? = null
 )
 
 @Composable
@@ -106,7 +111,7 @@ fun ApiKeyCard(
                     )
                     Column {
                         Text(
-                            text = "${item.provider.uppercase()} ${item.environment.uppercase()}",
+                            text = item.provider.uppercase(),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = CyberGold,
@@ -124,11 +129,13 @@ fun ApiKeyCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
                         onClick = { actions.onTogglePin(item) },
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier
+                            .size(32.dp)
+                            .testTag("pin_key_${item.id}")
                     ) {
                         Icon(
                             imageVector = if (item.isPinned) Icons.Default.Star else Icons.Default.StarBorder,
-                            contentDescription = "Pin Key",
+                            contentDescription = if (item.isPinned) "Unpin ${item.title}" else "Pin ${item.title}",
                             tint = if (item.isPinned) CyberGold else TextTertiary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -159,6 +166,42 @@ fun ApiKeyCard(
                     onCopy = { actions.onCopy(item) },
                     label = "Copy"
                 )
+            }
+
+            // Tags Pill Row (if tags exist)
+            val parsedTags = remember(item.tags) { ApiKeyFormatting.parseTags(item.tags) }
+            if (parsedTags.isNotEmpty()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    parsedTags.take(3).forEach { tag ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(ObsidianSurfaceHighlight)
+                                .clickable(enabled = actions.onTagClick != null) {
+                                    actions.onTagClick?.invoke(tag)
+                                }
+                                .padding(horizontal = 7.dp, vertical = 2.5.dp)
+                        ) {
+                            Text(
+                                text = "#$tag",
+                                fontSize = 10.5.sp,
+                                color = CyberCyan,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                    if (parsedTags.size > 3) {
+                        Text(
+                            text = "+${parsedTags.size - 3}",
+                            fontSize = 10.5.sp,
+                            color = TextTertiary
+                        )
+                    }
+                }
             }
 
             // Footer info (Copied X times, color-coded rotation status badge)

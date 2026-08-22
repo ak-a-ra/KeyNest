@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +43,6 @@ import com.example.core.model.ApiKeyItem
 import com.example.core.model.ProviderPreset
 import com.example.core.model.ProviderPresets
 import com.example.feature.vault.EntropyStrengthBar
-import com.example.feature.vault.EnvironmentTag
 import com.example.feature.keymanagement.KeyCodeSnippetsCard
 import com.example.feature.keymanagement.KeyDetailActivityMetricsCard
 import com.example.feature.keymanagement.KeyDetailFingerprintCard
@@ -180,9 +180,8 @@ fun KeyDetailPane(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier.padding(top = 2.dp)
                     ) {
-                        EnvironmentTag(environment = item.environment)
                         Text(
-                            text = "• ${item.provider}",
+                            text = item.provider,
                             fontSize = 12.sp,
                             color = TextSecondary
                         )
@@ -191,10 +190,13 @@ fun KeyDetailPane(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { onTogglePin(item) }) {
+                IconButton(
+                    onClick = { onTogglePin(item) },
+                    modifier = Modifier.testTag("detail_pin_key_button")
+                ) {
                     Icon(
                         imageVector = if (item.isPinned) Icons.Default.Star else Icons.Default.StarBorder,
-                        contentDescription = "Pin Key",
+                        contentDescription = if (item.isPinned) "Unpin Key" else "Pin Key",
                         tint = if (item.isPinned) CyberGold else TextTertiary
                     )
                 }

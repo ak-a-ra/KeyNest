@@ -71,11 +71,19 @@ KeyNest is an encrypted Android vault for API keys and developer secrets. It use
    ./gradlew assembleDebug
    ```
 
-### 🤖 CI/CD
+### 🤖 CI/CD & Quality Gates
 
 `.github/workflows/build-release.yml` builds a debug APK and publishes it as a GitHub release when you push a tag matching `v*`, such as `v1.0.0`. The APK is unsigned. For GitHub CLI authentication and release steps, see [docs/github-setup.md](docs/github-setup.md).
 
 OpenCode responds to `/opencode` and `/oc` from repository owners, members, and collaborators in issue or pull-request comments. It also reviews same-repository pull requests that target `main`.
+
+#### 🛡️ Local Validation Gate (`no-mistakes`)
+
+KeyNest is configured with [`no-mistakes`](https://github.com/kunchenguid/no-mistakes) via `.no-mistakes.yaml` for pre-push validation (unit tests, linting, code review, documentation sync):
+
+- Run pipeline manually: `no-mistakes axi run --intent "<goal>"`
+- Direct git push proxy: `git push no-mistakes`
+- Inspect gate status: `no-mistakes axi status`
 
 ---
 

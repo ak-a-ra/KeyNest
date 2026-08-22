@@ -275,37 +275,6 @@ fun MaskedKeyPreview(
 }
 
 @Composable
-fun EnvironmentTag(
-    environment: String,
-    modifier: Modifier = Modifier
-) {
-    val (bgColor, textColor, borderColor) = when (environment.lowercase()) {
-        "production" -> Triple(CyberGold.copy(alpha = 0.12f), CyberGold, CyberGold.copy(alpha = 0.25f))
-        "staging" -> Triple(CyberCyan.copy(alpha = 0.12f), CyberCyan, CyberCyan.copy(alpha = 0.25f))
-        "development" -> Triple(CyberEmerald.copy(alpha = 0.12f), CyberEmerald, CyberEmerald.copy(alpha = 0.25f))
-        "test" -> Triple(CyberPurple.copy(alpha = 0.12f), CyberPurple, CyberPurple.copy(alpha = 0.25f))
-        "personal" -> Triple(CyberRose.copy(alpha = 0.12f), CyberRose, CyberRose.copy(alpha = 0.25f))
-        else -> Triple(VibrantPillBg, TextSecondary, ObsidianBorder)
-    }
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(bgColor)
-            .border(0.8.dp, borderColor, RoundedCornerShape(8.dp))
-            .padding(horizontal = 8.dp, vertical = 3.dp)
-    ) {
-        Text(
-            text = environment.uppercase(),
-            color = textColor,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.6.sp
-        )
-    }
-}
-
-@Composable
 fun EntropyStrengthBar(
     apiKey: String,
     modifier: Modifier = Modifier

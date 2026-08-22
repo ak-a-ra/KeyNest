@@ -104,7 +104,8 @@ fun SearchScreen(
             onCopy = { item ->
                 viewModel.copyToClipboard(item.apiKey, "${item.title} API Key", isSecret = true, itemId = item.id)
             },
-            onTogglePin = { item -> viewModel.togglePin(item) }
+            onTogglePin = { item -> viewModel.togglePin(item) },
+            onTagClick = { tag -> viewModel.toggleTagFilter(tag) }
         )
     }
 
@@ -264,7 +265,7 @@ fun SearchScreen(
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "No keys match \"$searchQuery\". Try searching by title, provider name, tag (#tag), or environment.",
+                            text = "No keys match \"$searchQuery\". Try searching by title, provider name, or tag (#tag).",
                             color = TextSecondary,
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
@@ -320,27 +321,6 @@ fun SearchScreen(
                                     icon = getCategoryIcon(category),
                                     onClick = {
                                         viewModel.setSearchQuery(category)
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Environments / Labels
-                item {
-                    Column {
-                        SearchSectionHeader(title = "Environments & Labels")
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            items(listOf("Production", "Staging", "Development", "Personal", "Test")) { env ->
-                                SearchCategoryItem(
-                                    label = env,
-                                    icon = Icons.Default.DataUsage,
-                                    onClick = {
-                                        viewModel.setSearchQuery(env)
                                     }
                                 )
                             }
@@ -465,6 +445,7 @@ fun SearchScreen(
             AddEditKeySheet(
                 existingItem = state.item,
                 existingTitles = allKeys.filter { it.id != state.item.id }.map { it.title },
+                availableTags = availableTags,
                 onDismiss = { viewModel.closeDialog() },
                 onSave = { viewModel.saveKey(it) }
             )

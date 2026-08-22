@@ -103,10 +103,9 @@ fun DotEnvExportSheet(
     val scope = rememberCoroutineScope()
 
     var activeTab by remember { mutableIntStateOf(if (isImportMode) 1 else 0) }
-    var selectedEnvFilter by remember { mutableStateOf("All") }
 
-    val filteredKeys = remember(keys, selectedEnvFilter) {
-        if (selectedEnvFilter == "All") keys else keys.filter { it.environment.equals(selectedEnvFilter, ignoreCase = true) }
+    val filteredKeys = remember(keys) {
+        keys
     }
     val generatedDotEnv = remember(filteredKeys) {
         VaultSecurity.exportToDotEnv(filteredKeys)
@@ -232,29 +231,6 @@ fun DotEnvExportSheet(
 
             if (activeTab == 0) {
                 // Export View
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf("All", "Production", "Staging", "Development").forEach { env ->
-                        val isSelected = selectedEnvFilter == env
-                        Surface(
-                            onClick = { selectedEnvFilter = env },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isSelected) CyberGold.copy(alpha = 0.15f) else ObsidianSurfaceElevated,
-                            border = BorderStroke(1.dp, if (isSelected) CyberGold else ObsidianBorder)
-                        ) {
-                            Text(
-                                text = env,
-                                fontSize = 11.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) CyberGold else TextSecondary,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                            )
-                        }
-                    }
-                }
-
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -479,7 +455,7 @@ fun DotEnvExportSheet(
                                                 color = ObsidianBorder,
                                                 border = BorderStroke(0.5.dp, ObsidianBorderLight)
                                             ) {
-                                                Text(item.environment, fontSize = 9.sp, color = TextSecondary, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                                                Text(item.provider, fontSize = 9.sp, color = TextSecondary, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
                                             }
                                         }
                                     }

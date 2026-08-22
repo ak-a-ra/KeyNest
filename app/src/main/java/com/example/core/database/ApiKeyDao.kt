@@ -14,14 +14,10 @@ interface ApiKeyDao {
     @Query("SELECT * FROM api_keys WHERE isDeleted = false ORDER BY isPinned DESC, createdAt DESC")
     fun getAllKeys(): Flow<List<ApiKeyItem>>
 
-    /** Includes soft-deleted rows; used by legacy plaintext migration so trashed secrets are not skipped. */
-    @Query("SELECT * FROM api_keys")
-    fun getAllKeysIncludingTrashed(): Flow<List<ApiKeyItem>>
-
     @Query("SELECT * FROM api_keys WHERE isDeleted = false AND id = :id")
     fun getKeyById(id: Long): Flow<ApiKeyItem?>
 
-    @Query("SELECT * FROM api_keys WHERE isDeleted = false AND (title LIKE '%' || :query || '%' OR provider LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%' OR environment LIKE '%' || :query || '%') ORDER BY isPinned DESC, createdAt DESC")
+    @Query("SELECT * FROM api_keys WHERE isDeleted = false AND (title LIKE '%' || :query || '%' OR provider LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%') ORDER BY isPinned DESC, createdAt DESC")
     fun searchKeys(query: String): Flow<List<ApiKeyItem>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

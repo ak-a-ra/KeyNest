@@ -27,6 +27,26 @@ Before adding code, in order: does this need to exist? → already in the codeba
 - **Visual Assets:** `generate_image` for banners/illustrations/icons — `lowercase_snake_case` naming.
 - **Web Search:** `search_web` to verify library syntax/API changes before acting.
 
+## 🛑 Verify Before You Build (Three-Layer Approach)
+
+To ensure accurate, complete, and resilient changes, **always** execute this three-layer validation sequence before declaring a task finished:
+
+1. **Layer 1: Update MD (Documentation Sync)**
+   - Before executing builds, synchronize the 6 core DOX files (`README.md`, `PLAN.md`, `ROADMAP.md`, `LOG.md`, `AGENTS.md`, `CONTEXT.md`) with the intended changes.
+   - Update `PLAN.md` with current status and `LOG.md` with action records.
+2. **Layer 2: Enable Tools (Automated Verification)**
+   - **Build:** Run `compile_applet` to ensure compilation success.
+   - **Test:** Run `./gradlew test` to ensure unit & Robolectric tests pass.
+   - **Lint:** Run `lint_applet` or `./gradlew lint` if static analysis is required.
+   - **Gate:** Use the `no-mistakes` pre-push pipeline to ensure codebase constraints are met.
+3. **Layer 3: Human Validation Zones (Mandatory Stops)**
+   - Stop and explicitly ask the user for confirmation when touching these zones:
+     - Introducing breaking API or architecture changes.
+     - Modifying `VaultSecurity` or Keystore implementations.
+     - Adding new 3rd-party dependencies.
+     - Deleting >20 lines of code.
+     - Making significant shifts to data schemas (Room DB migrations).
+
 ## 🔐 Security Invariants (Crucial)
 
 - Never log plain text secrets or API keys.
@@ -98,6 +118,29 @@ This is a single-context repository with root `CONTEXT.md` and ADRs under `docs/
 
 - **UI/UX Pro Max**: [/.agents/skills/ui-ux-pro-max/SKILL.md](/.agents/skills/ui-ux-pro-max/SKILL.md) (Design intelligence database & search script `scripts/search.py`)
 - **Ponytail Suite**: [/.agents/skills/ponytail/SKILL.md](/.agents/skills/ponytail/SKILL.md) (`ponytail`, `ponytail-audit`, `ponytail-debt`, `ponytail-gain`, `ponytail-help`, `ponytail-review`)
+- **no-mistakes**: [/.agents/skills/no-mistakes/SKILL.md](/.agents/skills/no-mistakes/SKILL.md) (Pre-push validation pipeline proxy & gate engine via `.no-mistakes.yaml`)
+
+### 🛡️ No-Mistakes Pre-Push Gate Workflow
+
+The repository enforces pre-push quality gates via `no-mistakes` (`.no-mistakes.yaml`).
+
+1. **Pipeline Execution Sequence:**
+   - **Intent Validation:** Parse work objective & create isolated disposable git worktree.
+   - **Rebase:** Rebase feature branch cleanly against target default branch.
+   - **Review:** Automated code quality & security review (blocks secrets, bad practices, or unvalidated code).
+   - **Test:** Run `./gradlew test` test suite (unit + Robolectric tests).
+   - **Document:** Validate and sync the 6 core documentation files (`README.md`, `PLAN.md`, `ROADMAP.md`, `LOG.md`, `AGENTS.md`, `CONTEXT.md`).
+   - **Lint:** Run `./gradlew lint` across Android sources.
+   - **Push & PR:** Forward clean commits to upstream remote and open Pull Request.
+   - **CI Monitoring:** Monitor GitHub Actions workflows to green status.
+
+2. **Triggering Workflows:**
+   - **Git Proxy Push:** `git push no-mistakes` (intercepts push, runs full validation pipeline before forwarding to origin).
+   - **Explicit Intent Run:** `no-mistakes axi run --intent "<task description>"`
+   - **Interactive TUI Mode:** `no-mistakes` (guided wizard for branching, committing, gating, and reviewing).
+   - **Automated Non-Interactive:** `no-mistakes -y`
+   - **Agent Command:** `/no-mistakes <task>`
+   - **Check Gate Status:** `no-mistakes axi status`
 
 ## DOX framework
 

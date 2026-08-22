@@ -61,6 +61,7 @@ import com.example.core.designsystem.VibrantAvatarBg
 import com.example.core.designsystem.VibrantPillBg
 import com.example.feature.vault.ThemeMode
 
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
 import com.example.feature.vault.VaultViewMode
@@ -70,15 +71,16 @@ import com.example.core.designsystem.StatusDanger
 fun VaultDrawerSheetContent(
     totalKeysCount: Int,
     trashCount: Int = 0,
+    favoritesCount: Int = 0,
+    onlyFavorites: Boolean = false,
     currentViewMode: VaultViewMode = VaultViewMode.ALL_SECRETS,
     selectedCategory: String,
-    selectedEnvironment: String,
     themeMode: ThemeMode,
     isPinConfigured: Boolean,
     onSelectAllSecrets: () -> Unit,
+    onSelectFavorites: () -> Unit,
     onSelectTrash: () -> Unit,
     onSelectCategory: (String) -> Unit,
-    onSelectEnvironment: (String) -> Unit,
     onOpenSecurityAudit: () -> Unit,
     onOpenGenerator: () -> Unit,
     onOpenDotEnvExport: () -> Unit,
@@ -133,7 +135,7 @@ fun VaultDrawerSheetContent(
 
             // All Secrets Navigation Item
             item {
-                val isAllSelected = currentViewMode == VaultViewMode.ALL_SECRETS && selectedCategory == "All" && selectedEnvironment == "All"
+                val isAllSelected = currentViewMode == VaultViewMode.ALL_SECRETS && !onlyFavorites && selectedCategory == "All"
                 NavigationDrawerItem(
                     label = { Text("All Secrets", fontWeight = FontWeight.SemiBold) },
                     selected = isAllSelected,
@@ -146,6 +148,35 @@ fun VaultDrawerSheetContent(
                             fontWeight = FontWeight.Bold,
                             color = TextSecondary
                         )
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(
+                        selectedContainerColor = CyberGoldLight,
+                        selectedIconColor = CyberGold,
+                        selectedTextColor = TextPrimary,
+                        unselectedContainerColor = Color.Transparent,
+                        unselectedTextColor = TextSecondary
+                    ),
+                    shape = RoundedCornerShape(24.dp)
+                )
+            }
+
+            // Favorites & Pinned Navigation Item
+            item {
+                val isFavoritesSelected = currentViewMode == VaultViewMode.ALL_SECRETS && onlyFavorites
+                NavigationDrawerItem(
+                    label = { Text("Favorites & Pinned", fontWeight = FontWeight.SemiBold) },
+                    selected = isFavoritesSelected,
+                    onClick = onSelectFavorites,
+                    icon = { Icon(Icons.Default.Star, contentDescription = null, tint = CyberGold) },
+                    badge = {
+                        if (favoritesCount > 0) {
+                            Text(
+                                text = "$favoritesCount",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = CyberGold
+                            )
+                        }
                     },
                     colors = NavigationDrawerItemDefaults.colors(
                         selectedContainerColor = CyberGoldLight,
@@ -218,42 +249,6 @@ fun VaultDrawerSheetContent(
                     colors = NavigationDrawerItemDefaults.colors(
                         selectedContainerColor = VibrantPillBg,
                         selectedIconColor = CyberCyan,
-                        selectedTextColor = TextPrimary,
-                        unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = TextSecondary
-                    ),
-                    shape = RoundedCornerShape(24.dp)
-                )
-            }
-
-            // ENVIRONMENTS Section Label
-            item {
-                Text(
-                    text = "ENVIRONMENTS",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextMuted,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 4.dp)
-                )
-            }
-
-            val environments = listOf(
-                "All" to Icons.Default.Layers,
-                "Production" to Icons.Default.Shield,
-                "Staging" to Icons.Default.Build,
-                "Development" to Icons.Default.Terminal
-            )
-
-            items(environments) { (env, icon) ->
-                val isSelected = selectedEnvironment == env
-                NavigationDrawerItem(
-                    label = { Text(env) },
-                    selected = isSelected,
-                    onClick = { onSelectEnvironment(env) },
-                    icon = { Icon(icon, contentDescription = null, tint = if (isSelected) CyberGold else TextSecondary) },
-                    colors = NavigationDrawerItemDefaults.colors(
-                        selectedContainerColor = VibrantPillBg,
-                        selectedIconColor = CyberGold,
                         selectedTextColor = TextPrimary,
                         unselectedContainerColor = Color.Transparent,
                         unselectedTextColor = TextSecondary

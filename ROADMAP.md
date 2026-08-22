@@ -48,18 +48,39 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
   - [ ] **Strict Unidirectional Data Flow (UDF)**: Rigid `UiState` and `UiAction` classes per feature for predictable, testable state management.
   - [ ] **DataStore for Preferences**: Migrate UI settings (layout preference, theme) to DataStore, reserving `EncryptedSharedPreferences` strictly for cryptographic keys.
 - [ ] **App Icon & Logo Redesign**: Custom adaptive launcher icon with developer-centric cybersecurity branding (AES key vault / cyberpunk obsidian aesthetic) and clean monochrome vector layer.
-- [ ] **Anti-Slop UI Craft Polish**:
-  - [ ] **Semantic Status Accents**: Color-coded key health indicators (expiring warning accents, cyan active indicators) over decorative ambient background glows.
-  - [ ] **Utility-Driven Empty States**: Quick 1-tap preset sample importer in empty vault view (e.g., "Import AWS / OpenAI Template").
-  - [ ] **Technical Microcopy Precision**: Direct, action-oriented developer microcopy across empty states and security dialogs ("AES-256 KeyStore Vault • Zero Plaintext Logs").
+- [x] **Anti-Slop UI Craft Polish**:
+  - [x] **Semantic Status Accents**: Color-coded key health indicators (expiring warning accents, cyan active indicators, card tag pills) over decorative ambient background glows.
+  - [x] **Utility-Driven Empty States**: Quick 1-tap preset sample importer in empty vault view ("Load Starter Dev Keys" with OpenAI, Gemini, GitHub, Stripe templates).
+  - [x] **Technical Microcopy Precision**: Direct, action-oriented developer microcopy across empty states and security dialogs ("AES-256 KeyStore Vault • Zero Plaintext Logs • Sensitive Memory Protection").
+  - [x] **Bottom Sheet Form Ergonomics**: Replaced inline horizontal-scroll selectors for Provider, Environment, and Category with full-screen context `ModalBottomSheet` dropdowns for a robust native feel.
+- [x] **Multi-Box API Key Addition (Batch Mode & Extra Secret Fields)**: Added segment switcher tab for Single Key + Extra Secret Boxes (Client Secret, Webhook, Private Key) and Batch Multi-Key Boxes with auto-provider detection and batch room insertion.
 - [ ] **Search Query Loading Indicator**: Subtle progress indicator / pulse animation while query filters large vaults to provide clear feedback during high-volume secret queries.
 - [ ] **Dedicated SearchViewModel**: Dedicated SearchViewModel to handle real-time filter logic, debounced input pipelines, and manage the state of the secrets list as the user types.
 - [ ] **Secure QR Code Sharing**: Ephemeral, encrypted QR code generation for quick peer-to-peer secret transfer between devices.
+
+#### 1. 🔐 Security & Privacy (Crucial for a Vault)
+- [ ] **FLAG_SECURE**: Prevent users and background apps from taking screenshots, recording the screen, or seeing the app preview in the recent apps switcher.
+- [ ] **Automatic Background Locking**: Detect when the app enters the background (via ProcessLifecycleOwner) and automatically lock the vault if the user leaves it unattended.
+- [ ] **Clipboard Expiration**: Automatically clear sensitive API keys from the Android clipboard after a short timeout.
+
+#### 2. ⚡ Performance & Search
+- [ ] **SQLite FTS4**: Upgrade the current `LIKE '%query%'` search implementation to Room's Full-Text Search (`@Fts4`). This turns O(N) table scans into O(1) index lookups, guaranteeing zero-latency filtering as the vault grows.
+- [ ] **Baseline Profiles**: Generate a baseline profile to pre-compile critical user journeys (CUJs), reducing startup time and initial scroll jank.
+- [ ] **Flow Distinctness**: Apply `.distinctUntilChanged()` to Room database flows to prevent unnecessary UI updates when background operations occur (like updating copy counts).
+
+#### 3. 🎨 UI/UX & Compose Recomposition
+- [ ] **Immutable Collections**: Adopt `kotlinx-collections-immutable` to enforce stability on list states, allowing Jetpack Compose to skip recomposition for unaffected cards.
+- [ ] **Derived State**: Wrap scroll offset calculations in `derivedStateOf {}` to stop the entire screen from recomposing on every scroll frame.
+
+#### 4. 📦 Build & APK Size
+- [ ] **R8 Minification**: Ensure `isMinifyEnabled` and `isShrinkResources` are enabled to strip unused code and obfuscate the security logic.
+- [ ] **Resource Stripping**: Exclude unused Android framework translation strings to reduce the final APK size.
 
 ---
 
 ### Phase 3: Developer Workflows & Integrations (🚀 Q4 2026)
 - [x] **Encrypted Backup & Restore**: Encrypted single-file export (`.keynest` container) protected by user-defined master passphrase using PBKDF2 (100,000 rounds) + AES-256-GCM, with multi-device migration and merge/replace capabilities.
+- [x] **No-Mistakes Local Quality Gate**: Integrated `.no-mistakes.yaml` pre-push validation pipeline (tests, linter, code reviews, automated PR, documentation sync).
 - [ ] **Custom Provider Presets**: Allow users to define reusable provider templates with custom URL endpoints, headers, and docs.
 - [ ] **CLI / ADB Companion Sync**: Lightweight local pairing to pipe secrets into development workstations over secure local channel without cloud reliance.
 - [ ] **Tagging & Advanced Search**: Multi-tag filtering and regex-based search indexing.

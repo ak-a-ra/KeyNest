@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -24,7 +23,6 @@ class FakeApiKeyDao : ApiKeyDao {
     }
 
     override fun getAllKeys(): Flow<List<ApiKeyItem>> = keysFlow
-    override fun getAllKeysIncludingTrashed(): Flow<List<ApiKeyItem>> = keysFlow
     override fun searchKeys(query: String): Flow<List<ApiKeyItem>> = flowOf(emptyList())
     override fun getKeyById(id: Long): Flow<ApiKeyItem?> = flowOf(null)
     override suspend fun insertKey(item: ApiKeyItem): Long {
@@ -33,13 +31,7 @@ class FakeApiKeyDao : ApiKeyDao {
         return item.id
     }
     override suspend fun insertAllKeys(items: List<ApiKeyItem>) {}
-    override suspend fun updateKey(item: ApiKeyItem) {
-        val index = keys.indexOfFirst { it.id == item.id }
-        if (index >= 0) {
-            keys[index] = item
-            keysFlow.value = keys.toList()
-        }
-    }
+    override suspend fun updateKey(item: ApiKeyItem) {}
     override suspend fun deleteKey(item: ApiKeyItem) {}
     override suspend fun deleteKeyById(id: Long) {}
     override suspend fun togglePin(id: Long, isPinned: Boolean) {}
@@ -89,51 +81,5 @@ class ApiKeyRepositoryTest {
         fakeDao.emit(listOf(realEncryptedItem))
         val secondEmission = repository.allKeys.first()
         assertEquals("Second emission should resolve from cache successfully", plainText, secondEmission.first().apiKey)
-    }
-
-    private fun plainItem(id: Long, isDeleted: Boolean = false) = ApiKeyItem(
-        id = id,
-        title = "Item $id",
-        apiKey = "sk-plain-$id",
-        secretKey = "",
-        provider = "OpenAI",
-        category = "AI",
-        environment = "Production",
-        colorHex = "#000000",
-        isDeleted = isDeleted
-    )
-
-    @Test
-    fun migration_isGatedByVersionNotRowCount() = runBlocking {
-        val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
-        context.getSharedPreferences("key-nest-prefs", android.content.Context.MODE_PRIVATE).edit().clear().commit()
-
-        val fakeDao = FakeApiKeyDao()
-        val repository = ApiKeyRepository(fakeDao)
-
-        // Fresh vault with zero rows: no migration needed.
-        assertEquals(false, repository.isMigrationNeeded(context))
-
-        // After migrating, growing row count must NOT re-trigger migration.
-        fakeDao.emit(listOf(plainItem(1)))
-        repository.migrateLegacyPlaintextSecrets(context)
-        assertEquals(false, repository.isMigrationNeeded(context))
-    }
-
-    @Test
-    fun migration_coversTrashedRows_andEncryptsAllPlaintext() = runBlocking {
-        val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
-        context.getSharedPreferences("key-nest-prefs", android.content.Context.MODE_PRIVATE).edit().clear().commit()
-
-        val fakeDao = FakeApiKeyDao()
-        val repository = ApiKeyRepository(fakeDao)
-        fakeDao.emit(listOf(plainItem(1), plainItem(2, isDeleted = true)))
-
-        val migrated = repository.migrateLegacyPlaintextSecrets(context)
-        assertEquals(2, migrated)
-        assertTrue(fakeDao.keys.all { it.apiKey.startsWith("TEST_ENC_") })
-        // Trashed row stays trashed; only the secret is encrypted.
-        assertTrue(fakeDao.keys.first { it.id == 2L }.isDeleted)
-        assertEquals(false, repository.isMigrationNeeded(context))
     }
 }

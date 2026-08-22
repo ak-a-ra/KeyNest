@@ -18,6 +18,7 @@ import com.example.core.model.ProviderPresets
 import com.example.core.repository.ApiKeyRepository
 import com.example.core.security.VaultBackupCrypto
 import com.example.core.security.VaultSecurity
+import com.example.core.util.ApiKeyFormatting
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Job
@@ -34,11 +35,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+private data class FilterCriteria(
+    val query: String,
+    val category: String,
+    val tag: String?,
+    val onlyFavorites: Boolean
+)
+
 enum class SortOption(val label: String) {
     RECENT("Recently Added"),
     MOST_USED("Most Copied"),
     ALPHABETICAL("A to Z"),
-    EXPIRING_SOON("Rotation Due")
+    EXPIRING_SOON("Rotation Due"),
+    PINNED_FIRST("Pinned / Favorites First")
 }
 
 enum class ThemeMode(val label: String) {
@@ -126,8 +135,13 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedCategory = MutableStateFlow("All")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
-    private val _selectedEnvironment = MutableStateFlow("All")
-    val selectedEnvironment: StateFlow<String> = _selectedEnvironment.asStateFlow()
+    private val _selectedTag = MutableStateFlow<String?>(null)
+    val selectedTag: StateFlow<String?> = _selectedTag.asStateFlow()
+
+    private val _onlyFavorites = MutableStateFlow(false)
+    val onlyFavorites: StateFlow<Boolean> = _onlyFavorites.asStateFlow()
+
+    val favoritesCount: StateFlow<Int>
 
     private val _sortOption = MutableStateFlow(SortOption.RECENT)
     val sortOption: StateFlow<SortOption> = _sortOption.asStateFlow()
@@ -190,9 +204,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
         availableTags = allKeys
             .map { keys ->
-                keys.flatMap { it.tags.split(",") }
-                    .map { it.trim().removePrefix("#") }
-                    .filter { it.isNotBlank() }
+                keys.flatMap { ApiKeyFormatting.parseTags(it.tags) }
                     .distinct()
                     .sorted()
             }
@@ -216,6 +228,14 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 initialValue = 0
             )
 
+        favoritesCount = allKeys
+            .map { list -> list.count { it.isPinned } }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = 0
+            )
+
         // Restore saved preferences
         val prefs = application.getApplicationContext().getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
         val savedMode = prefs.getString(_displayModePreferenceKey, "Grid")
@@ -225,13 +245,19 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         val savedTimeout = prefs.getString(_autoLockTimeoutPreferenceKey, "15 min")
         _autoLockTimeout.value = AutoLockTimeout.presets.firstOrNull { it.label == savedTimeout } ?: AutoLockTimeout.Minutes15
 
+        val searchFilterFlow = combine(_searchQuery, _selectedCategory, _selectedTag, _onlyFavorites) { q, cat, tag, fav ->
+            FilterCriteria(q, cat, tag, fav)
+        }
+
         filteredKeys = combine(
             allKeys,
-            _searchQuery,
-            _selectedCategory,
-            _selectedEnvironment,
+            searchFilterFlow,
             _sortOption
-        ) { keys, query, category, environment, sort ->
+        ) { keys, criteria, sort ->
+            val query = criteria.query
+            val category = criteria.category
+            val tagFilter = criteria.tag
+            val onlyFavs = criteria.onlyFavorites
             keys.asSequence()
                 .filter { item ->
                     if (query.isBlank()) true else {
@@ -241,19 +267,18 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                                 item.provider.lowercase().contains(q) ||
                                 item.category.lowercase().contains(q) ||
                                 item.tags.lowercase().contains(q) ||
-                                item.environment.lowercase().contains(q) ||
                                 item.endpointUrl.lowercase().contains(q) ||
                                 item.modelOrProject.lowercase().contains(q) ||
                                 item.organizationId.lowercase().contains(q) ||
                                 item.notes.lowercase().contains(q) ||
                                 masked.contains(q) ||
                                 (q.startsWith("#") && item.tags.lowercase().contains(q.removePrefix("#"))) ||
-                                (q.startsWith("tag:") && item.tags.lowercase().contains(q.removePrefix("tag:"))) ||
-                                (q.startsWith("env:") && item.environment.lowercase().contains(q.removePrefix("env:")))
+                                (q.startsWith("tag:") && item.tags.lowercase().contains(q.removePrefix("tag:")))
                     }
                 }
                 .filter { category == "All" || it.category.equals(category, ignoreCase = true) }
-                .filter { environment == "All" || it.environment.equals(environment, ignoreCase = true) }
+                .filter { tagFilter == null || ApiKeyFormatting.parseTags(it.tags).any { tag -> tag.equals(tagFilter, ignoreCase = true) } }
+                .filter { !onlyFavs || it.isPinned }
                 .toList()
                 .sortedWithOption(sort)
         }.flowOn(Dispatchers.Default)
@@ -295,8 +320,20 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _selectedCategory.value = category
     }
 
-    fun setSelectedEnvironment(env: String) {
-        _selectedEnvironment.value = env
+    fun setSelectedTag(tag: String?) {
+        _selectedTag.value = tag
+    }
+
+    fun toggleTagFilter(tag: String) {
+        _selectedTag.value = if (_selectedTag.value.equals(tag, ignoreCase = true)) null else tag
+    }
+
+    fun setOnlyFavorites(only: Boolean) {
+        _onlyFavorites.value = only
+    }
+
+    fun toggleOnlyFavorites() {
+        _onlyFavorites.value = !_onlyFavorites.value
     }
 
     fun setSortOption(sort: SortOption) {
@@ -437,7 +474,14 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun togglePin(item: ApiKeyItem) {
-        viewModelScope.launch { repository.togglePin(item.id, !item.isPinned) }
+        val newPinnedState = !item.isPinned
+        viewModelScope.launch {
+            repository.togglePin(item.id, newPinnedState)
+            val currentDialog = _dialogState.value
+            if (currentDialog is VaultDialogState.KeyDetail && currentDialog.item.id == item.id) {
+                _dialogState.value = VaultDialogState.KeyDetail(item.copy(isPinned = newPinnedState))
+            }
+        }
     }
 
     fun importKeys(items: List<ApiKeyItem>) {
@@ -447,26 +491,61 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Auto-lock enforcement: records when the app left the foreground and re-locks
-    // when the configured inactivity/background timeout has elapsed.
-    private var lastActiveAt: Long = 0L
-
-    fun onAppBackgrounded() {
-        if (_isPinConfigured.value && !_isVaultLocked.value) {
-            lastActiveAt = System.currentTimeMillis()
+    fun loadStarterTemplates() {
+        val now = System.currentTimeMillis()
+        val sampleKeys = listOf(
+            ApiKeyItem(
+                title = "OpenAI Production GPT-4o",
+                provider = "OpenAI",
+                category = "AI & LLMs",
+                environment = "Production",
+                apiKey = "sk-proj-aB9xKl39MnQzP10vR8tYw62CdE5fGhIjKlMnOpQrStUvWxYz",
+                tags = "prod, ai, gpt4",
+                notes = "Main backend inference key for production workloads",
+                isPinned = true,
+                colorHex = "#10A37F",
+                createdAt = now
+            ),
+            ApiKeyItem(
+                title = "Google Gemini 2.0 Flash API",
+                provider = "Google Gemini",
+                category = "AI & LLMs",
+                environment = "Production",
+                apiKey = "AIzaSyD9x8K1L2m3N4o5P6q7R8s9T0u1V2w3X4y",
+                tags = "ai, gemini, multimodal",
+                notes = "Multimodal reasoning & image processing pipeline",
+                isPinned = true,
+                colorHex = "#4285F4",
+                createdAt = now - 86400000
+            ),
+            ApiKeyItem(
+                title = "GitHub CI/CD Automation",
+                provider = "GitHub",
+                category = "Developer Tools",
+                environment = "Staging",
+                apiKey = "ghp_kL9m8N7o6P5q4R3s2T1u0V9w8X7y6Z5a4B3c",
+                tags = "ci-cd, github-actions, deploy",
+                notes = "Deployment token with repo and workflow scopes",
+                isPinned = false,
+                colorHex = "#24292E",
+                createdAt = now - 172800000
+            ),
+            ApiKeyItem(
+                title = "Stripe Billing Webhook Secret",
+                provider = "Stripe",
+                category = "Payments",
+                environment = "Development",
+                apiKey = "whsec_3f8e9a2b1c4d5e6f7a8b9c0d1e2f3a4b",
+                tags = "billing, payments, webhook",
+                notes = "Local Stripe CLI test webhook signing secret",
+                isPinned = false,
+                colorHex = "#635BFF",
+                createdAt = now - 259200000
+            )
+        )
+        viewModelScope.launch {
+            repository.insertAll(sampleKeys)
         }
-    }
-
-    fun onAppForegrounded() {
-        val backgroundedAt = lastActiveAt
-        val timeout = _autoLockTimeout.value
-        if (backgroundedAt == 0L || timeout.minutes <= 0) return
-        if (_isPinConfigured.value && !_isVaultLocked.value &&
-            System.currentTimeMillis() - backgroundedAt >= timeout.minutes * 60_000L
-        ) {
-            lockVault()
-        }
-        lastActiveAt = 0L
     }
 
     fun unlockVault(pin: String): Boolean {
@@ -573,4 +652,5 @@ private fun List<ApiKeyItem>.sortedWithOption(sort: SortOption): List<ApiKeyItem
     SortOption.MOST_USED -> sortedWith(compareByDescending<ApiKeyItem> { it.isPinned }.thenByDescending { it.copyCount })
     SortOption.ALPHABETICAL -> sortedWith(compareByDescending<ApiKeyItem> { it.isPinned }.thenBy { it.title.lowercase() })
     SortOption.EXPIRING_SOON -> sortedWith(compareByDescending<ApiKeyItem> { it.isPinned }.thenBy { it.expiresAt ?: Long.MAX_VALUE })
+    SortOption.PINNED_FIRST -> sortedWith(compareByDescending<ApiKeyItem> { it.isPinned }.thenByDescending { it.createdAt })
 }

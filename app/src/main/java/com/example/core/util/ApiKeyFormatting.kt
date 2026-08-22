@@ -143,6 +143,33 @@ object ApiKeyFormatting {
         return sb.toString()
     }
 
+    /**
+     * Parse comma-separated raw tag string into normalized list of unique tags.
+     * Trims whitespace, removes leading '#' or 'tag:', enforces max 20 chars per tag, and discards blanks.
+     */
+    fun parseTags(raw: String): List<String> {
+        if (raw.isBlank()) return emptyList()
+        return raw.split(",")
+            .asSequence()
+            .map { it.trim().removePrefix("#").removePrefix("tag:").trim() }
+            .filter { it.isNotBlank() }
+            .map { it.take(20) }
+            .distinctBy { it.lowercase() }
+            .toList()
+    }
+
+    /**
+     * Format a list of tags back into a clean comma-separated string.
+     */
+    fun formatTags(tags: List<String>): String {
+        return tags.asSequence()
+            .map { it.trim().removePrefix("#").removePrefix("tag:").trim() }
+            .filter { it.isNotBlank() }
+            .map { it.take(20) }
+            .distinctBy { it.lowercase() }
+            .joinToString(", ")
+    }
+
     /** JSON string escaping */
     private fun escapeJson(s: String): String {
         return s.replace("\\", "\\\\")

@@ -1,5 +1,6 @@
 package com.example.feature.keymanagement
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -26,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -36,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
@@ -49,7 +53,6 @@ import com.example.core.model.ProviderPresets
 import com.example.core.security.VaultSecurity
 import com.example.feature.keymanagement.ApiKeyInputSection
 import com.example.feature.keymanagement.CategoryPickerRow
-import com.example.feature.keymanagement.EnvironmentPickerRow
 import com.example.feature.vault.ProviderIconBadge
 import com.example.feature.keymanagement.ProviderPresetCarousel
 import com.example.feature.keymanagement.RotationIntervalPicker
@@ -71,11 +74,15 @@ fun AddEditKeySheet(
     initialPreset: ProviderPreset? = null,
     initialKeyText: String = "",
     existingTitles: List<String> = emptyList(),
+    availableTags: List<String> = emptyList(),
     onDismiss: () -> Unit,
-    onSave: (ApiKeyItem) -> Unit
+    onSave: (ApiKeyItem) -> Unit,
+    onBatchSave: ((List<ApiKeyItem>) -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val clipboardManager = LocalClipboardManager.current
+
+    var selectedTabMode by remember { androidx.compose.runtime.mutableIntStateOf(0) } // 0 = Single Key, 1 = Batch Multi-Key
 
     val defaultProvider = when {
         existingItem != null -> existingItem.provider
@@ -99,8 +106,9 @@ fun AddEditKeySheet(
 
     var apiKey by remember { mutableStateOf(existingItem?.apiKey ?: initialKeyText) }
     var secretKey by remember { mutableStateOf(existingItem?.secretKey ?: "") }
+    var extraSecretFields by remember { mutableStateOf(listOf<ExtraSecretField>()) }
+
     var selectedCategory by remember { mutableStateOf(existingItem?.category ?: preset.category) }
-    var selectedEnvironment by remember { mutableStateOf(existingItem?.environment ?: "Production") }
     var endpointUrl by remember { mutableStateOf(existingItem?.endpointUrl ?: preset.defaultEndpoint) }
     var organizationId by remember { mutableStateOf(existingItem?.organizationId ?: "") }
     var modelOrProject by remember { mutableStateOf(existingItem?.modelOrProject ?: "") }
@@ -118,49 +126,106 @@ fun AddEditKeySheet(
     var pendingItemToSave by remember { mutableStateOf<ApiKeyItem?>(null) }
     var dismissAfterSave by remember { mutableStateOf(false) }
 
-    val handleSaveRequest: (Boolean) -> Unit = { shouldDismiss ->
-        if (title.isBlank()) {
-            errorMessage = "Please provide a name or description for this key"
-        } else if (apiKey.isBlank()) {
-            errorMessage = "Please enter or paste an API Key"
-        } else {
-            val item = ApiKeyItem(
-                id = existingItem?.id ?: 0L,
-                title = title.trim(),
-                apiKey = apiKey.trim(),
-                secretKey = secretKey.trim(),
-                provider = selectedProvider,
-                category = selectedCategory,
-                environment = selectedEnvironment,
-                endpointUrl = endpointUrl.trim(),
-                organizationId = organizationId.trim(),
-                modelOrProject = modelOrProject.trim(),
-                notes = notes.trim(),
-                tags = tags.trim(),
-                isPinned = isPinned,
-                copyCount = existingItem?.copyCount ?: 0,
-                lastCopiedAt = existingItem?.lastCopiedAt,
-                createdAt = existingItem?.createdAt ?: System.currentTimeMillis(),
-                rotationDays = rotationDays,
-                colorHex = selectedColorHex ?: preset.defaultColorHex
+    // Batch Multi-Key Entries
+    var batchEntries by remember {
+        mutableStateOf(
+            listOf(
+                BatchKeyEntry(
+                    title = if (initialKeyText.isNotBlank()) "${VaultSecurity.detectProviderFromKey(initialKeyText)} Key" else "OpenAI Key",
+                    apiKey = initialKeyText,
+                    provider = if (initialKeyText.isNotBlank()) VaultSecurity.detectProviderFromKey(initialKeyText) else "OpenAI"
+                ),
+                BatchKeyEntry(
+                    title = "Google Gemini Key",
+                    provider = "Google Gemini"
+                ),
+                BatchKeyEntry(
+                    title = "Anthropic Claude Key",
+                    provider = "Anthropic Claude"
+                )
             )
+        )
+    }
 
-            val hasDuplicate = existingTitles.any { it.equals(title.trim(), ignoreCase = true) }
-            if (hasDuplicate) {
-                pendingItemToSave = item
-                dismissAfterSave = shouldDismiss
-                showDuplicateWarning = true
+    val handleSaveRequest: (Boolean) -> Unit = { shouldDismiss ->
+        if (selectedTabMode == 1 && existingItem == null) {
+            // Batch Save
+            val validEntries = batchEntries.filter { it.apiKey.isNotBlank() }
+            if (validEntries.isEmpty()) {
+                errorMessage = "Please enter at least one API Key across the key boxes"
             } else {
-                onSave(item)
-                if (shouldDismiss) {
-                    onDismiss()
+                val now = System.currentTimeMillis()
+                val itemsToInsert = validEntries.mapIndexed { idx, entry ->
+                    val p = ProviderPresets.findByName(entry.provider)
+                    ApiKeyItem(
+                        title = entry.title.ifBlank { "${entry.provider} Key" }.trim(),
+                        apiKey = entry.apiKey.trim(),
+                        provider = entry.provider,
+                        category = entry.category,
+                        colorHex = p.defaultColorHex,
+                        createdAt = now + idx
+                    )
+                }
+                if (onBatchSave != null) {
+                    onBatchSave(itemsToInsert)
                 } else {
-                    title = ""
-                    apiKey = ""
-                    secretKey = ""
-                    notes = ""
-                    tags = ""
-                    errorMessage = null
+                    itemsToInsert.forEach { onSave(it) }
+                }
+                onDismiss()
+            }
+        } else {
+            // Single Save
+            if (title.isBlank()) {
+                errorMessage = "Please provide a name or description for this key"
+            } else if (apiKey.isBlank()) {
+                errorMessage = "Please enter or paste an API Key"
+            } else {
+                val combinedSecretKey = buildString {
+                    if (secretKey.isNotBlank()) append(secretKey.trim())
+                    extraSecretFields.filter { it.label.isNotBlank() && it.value.isNotBlank() }.forEach { field ->
+                        if (isNotEmpty()) append("\n")
+                        append("${field.label.trim()}: ${field.value.trim()}")
+                    }
+                }
+
+                val item = ApiKeyItem(
+                    id = existingItem?.id ?: 0L,
+                    title = title.trim(),
+                    apiKey = apiKey.trim(),
+                    secretKey = combinedSecretKey,
+                    provider = selectedProvider,
+                    category = selectedCategory,
+                    endpointUrl = endpointUrl.trim(),
+                    organizationId = organizationId.trim(),
+                    modelOrProject = modelOrProject.trim(),
+                    notes = notes.trim(),
+                    tags = tags.trim(),
+                    isPinned = isPinned,
+                    copyCount = existingItem?.copyCount ?: 0,
+                    lastCopiedAt = existingItem?.lastCopiedAt,
+                    createdAt = existingItem?.createdAt ?: System.currentTimeMillis(),
+                    rotationDays = rotationDays,
+                    colorHex = selectedColorHex ?: preset.defaultColorHex
+                )
+
+                val hasDuplicate = existingTitles.any { it.equals(title.trim(), ignoreCase = true) }
+                if (hasDuplicate) {
+                    pendingItemToSave = item
+                    dismissAfterSave = shouldDismiss
+                    showDuplicateWarning = true
+                } else {
+                    onSave(item)
+                    if (shouldDismiss) {
+                        onDismiss()
+                    } else {
+                        title = ""
+                        apiKey = ""
+                        secretKey = ""
+                        extraSecretFields = emptyList()
+                        notes = ""
+                        tags = ""
+                        errorMessage = null
+                    }
                 }
             }
         }
@@ -227,19 +292,23 @@ fun AddEditKeySheet(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     ProviderIconBadge(
-                        provider = selectedProvider,
+                        provider = if (selectedTabMode == 0) selectedProvider else "KeyNest Batch",
                         colorHex = preset.defaultColorHex,
                         size = 36
                     )
                     Column {
                         Text(
-                            text = if (existingItem == null) "Add Secret / API Key" else "Edit Secret",
+                            text = when {
+                                existingItem != null -> "Edit Secret"
+                                selectedTabMode == 1 -> "Add Multiple API Keys"
+                                else -> "Add Secret / API Key"
+                            },
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
                         )
                         Text(
-                            text = "Stored locally & protected",
+                            text = if (selectedTabMode == 1) "Fill multiple key boxes & save together" else "Stored locally & protected",
                             fontSize = 12.sp,
                             color = TextSecondary
                         )
@@ -250,118 +319,241 @@ fun AddEditKeySheet(
                 }
             }
 
-            // Quick Provider Preset Selector
-            ProviderPresetCarousel(
-                selectedProvider = selectedProvider,
-                onSelectProvider = { item ->
-                    selectedProvider = item.name
-                    if (title.isEmpty() || title.contains("Key", ignoreCase = true)) {
-                        title = "${item.name} Key"
+            // Mode Selector Pill Tabs (if creating new key)
+            if (existingItem == null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(ObsidianSurfaceElevated)
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Surface(
+                        onClick = { selectedTabMode = 0 },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (selectedTabMode == 0) CyberGold else Color.Transparent
+                    ) {
+                        Text(
+                            text = "Single Key + Extra Boxes",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedTabMode == 0) Color(0xFF1E1400) else TextSecondary,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .testTag("tab_mode_single")
+                        )
                     }
-                    if (existingItem == null) {
-                        selectedCategory = item.category
-                        if (endpointUrl.isEmpty() || endpointUrl == preset.defaultEndpoint) {
-                            endpointUrl = item.defaultEndpoint
-                        }
-                    }
-                }
-            )
-
-            // Title
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text("Name / Description", color = TextSecondary) },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("input_title"),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = CyberGold,
-                    unfocusedBorderColor = ObsidianBorder,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurfaceElevated,
-                    unfocusedContainerColor = ObsidianSurfaceElevated
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            // API Key Input with Live Provider Auto-Detection Badge & Paste Button & Show/Hide
-            ApiKeyInputSection(
-                apiKey = apiKey,
-                onApiKeyChange = { apiKey = it },
-                placeholderKey = preset.placeholderKey,
-                isKeyVisible = isKeyVisible,
-                onToggleVisibility = { isKeyVisible = !isKeyVisible },
-                clipboardManager = clipboardManager,
-                onProviderDetected = { detected ->
-                    selectedProvider = detected
-                    if (title.isEmpty() || title.endsWith("Key") || title.endsWith("API Key")) {
-                        title = "$detected Key"
+                    Surface(
+                        onClick = { selectedTabMode = 1 },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (selectedTabMode == 1) CyberGold else Color.Transparent
+                    ) {
+                        Text(
+                            text = "Batch Multi-Key (${batchEntries.size} Boxes)",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedTabMode == 1) Color(0xFF1E1400) else TextSecondary,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .testTag("tab_mode_batch")
+                        )
                     }
                 }
-            )
-
-            // Optional Secret / Second Key (e.g. Webhook secret, Private Key)
-            OutlinedTextField(
-                value = secretKey,
-                onValueChange = { secretKey = it },
-                label = { Text("Secret Key / Key ID / Webhook Secret (Optional)", color = TextSecondary) },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                textStyle = MonospaceCodeStyle.copy(color = TextPrimary),
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = CyberGold,
-                    unfocusedBorderColor = ObsidianBorder,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary,
-                    focusedContainerColor = ObsidianSurfaceElevated,
-                    unfocusedContainerColor = ObsidianSurfaceElevated
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            // Environment Picker
-            EnvironmentPickerRow(
-                selectedEnvironment = selectedEnvironment,
-                onEnvironmentSelect = { selectedEnvironment = it }
-            )
-
-            // Category Picker
-            CategoryPickerRow(
-                selectedCategory = selectedCategory,
-                onCategorySelect = { selectedCategory = it }
-            )
-
-            // Pastel Note Color Picker
-            VaultColorDotPicker(
-                selectedColorHex = selectedColorHex,
-                onSelectColor = { selectedColorHex = it }
-            )
-
-            androidx.compose.material3.TextButton(
-                onClick = { showAdvancedSettings = !showAdvancedSettings },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (showAdvancedSettings) "Hide Advanced Settings" else "Show Advanced Settings", color = CyberGold)
             }
 
-            androidx.compose.animation.AnimatedVisibility(visible = showAdvancedSettings) {
-                Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                    // Optional Metadata Row (Endpoint URL, Organization ID)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
+            if (selectedTabMode == 1 && existingItem == null) {
+                // Batch Multi-Key Box view
+                BatchKeyBoxList(
+                    batchEntries = batchEntries,
+                    onAddBox = {
+                        batchEntries = batchEntries + BatchKeyEntry(
+                            title = "Key #${batchEntries.size + 1}",
+                            provider = "Custom / Other"
+                        )
+                    },
+                    onRemoveBox = { boxId ->
+                        if (batchEntries.size > 1) {
+                            batchEntries = batchEntries.filter { it.id != boxId }
+                        }
+                    },
+                    onUpdateBox = { boxId, updated ->
+                        batchEntries = batchEntries.map { if (it.id == boxId) updated else it }
+                    },
+                    clipboardManager = clipboardManager
+                )
+            } else {
+                // Quick Provider Preset Selector
+                ProviderPresetCarousel(
+                    selectedProvider = selectedProvider,
+                    onSelectProvider = { item ->
+                        selectedProvider = item.name
+                        if (title.isEmpty() || title.contains("Key", ignoreCase = true)) {
+                            title = "${item.name} Key"
+                        }
+                        if (existingItem == null) {
+                            selectedCategory = item.category
+                            if (endpointUrl.isEmpty() || endpointUrl == preset.defaultEndpoint) {
+                                endpointUrl = item.defaultEndpoint
+                            }
+                        }
+                    }
+                )
+
+                // Title
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Name / Description", color = TextSecondary) },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("input_title"),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = CyberGold,
+                        unfocusedBorderColor = ObsidianBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedContainerColor = ObsidianSurfaceElevated,
+                        unfocusedContainerColor = ObsidianSurfaceElevated
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                // API Key Input with Live Provider Auto-Detection Badge & Paste Button & Show/Hide
+                ApiKeyInputSection(
+                    apiKey = apiKey,
+                    onApiKeyChange = { apiKey = it },
+                    placeholderKey = preset.placeholderKey,
+                    isKeyVisible = isKeyVisible,
+                    onToggleVisibility = { isKeyVisible = !isKeyVisible },
+                    clipboardManager = clipboardManager,
+                    onProviderDetected = { detected ->
+                        selectedProvider = detected
+                        if (title.isEmpty() || title.endsWith("Key") || title.endsWith("API Key")) {
+                            title = "$detected Key"
+                        }
+                    }
+                )
+
+                // Optional Secret / Second Key (e.g. Webhook secret, Private Key)
+                OutlinedTextField(
+                    value = secretKey,
+                    onValueChange = { secretKey = it },
+                    label = { Text("Secret Key / Key ID / Webhook Secret (Optional)", color = TextSecondary) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    textStyle = MonospaceCodeStyle.copy(color = TextPrimary),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = CyberGold,
+                        unfocusedBorderColor = ObsidianBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedContainerColor = ObsidianSurfaceElevated,
+                        unfocusedContainerColor = ObsidianSurfaceElevated
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                // Extra secret fields / boxes
+                ExtraSecretFieldsSection(
+                    extraFields = extraSecretFields,
+                    onAddField = {
+                        extraSecretFields = extraSecretFields + ExtraSecretField()
+                    },
+                    onRemoveField = { fieldId ->
+                        extraSecretFields = extraSecretFields.filter { it.id != fieldId }
+                    },
+                    onUpdateField = { fieldId, newLabel, newValue, newVis ->
+                        extraSecretFields = extraSecretFields.map {
+                            if (it.id == fieldId) it.copy(label = newLabel, value = newValue, isVisible = newVis) else it
+                        }
+                    },
+                    clipboardManager = clipboardManager
+                )
+
+                // Category Picker
+                CategoryPickerRow(
+                    selectedCategory = selectedCategory,
+                    onCategorySelect = { selectedCategory = it }
+                )
+
+                // Pastel Note Color Picker
+                VaultColorDotPicker(
+                    selectedColorHex = selectedColorHex,
+                    onSelectColor = { selectedColorHex = it }
+                )
+
+                androidx.compose.material3.TextButton(
+                    onClick = { showAdvancedSettings = !showAdvancedSettings },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (showAdvancedSettings) "Hide Advanced Settings" else "Show Advanced Settings", color = CyberGold)
+                }
+
+                androidx.compose.animation.AnimatedVisibility(visible = showAdvancedSettings) {
+                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                        // Optional Metadata Row (Endpoint URL, Organization ID)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = endpointUrl,
+                                onValueChange = { endpointUrl = it },
+                                label = { Text("Base Endpoint URL", color = TextSecondary, fontSize = 11.sp) },
+                                singleLine = true,
+                                textStyle = MonospaceCodeStyle.copy(fontSize = 11.sp, color = TextPrimary),
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = CyberGold,
+                                    unfocusedBorderColor = ObsidianBorder,
+                                    focusedTextColor = TextPrimary,
+                                    unfocusedTextColor = TextPrimary,
+                                    focusedContainerColor = ObsidianSurfaceElevated,
+                                    unfocusedContainerColor = ObsidianSurfaceElevated
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+
+                            OutlinedTextField(
+                                value = organizationId,
+                                onValueChange = { organizationId = it },
+                                label = { Text("Org / Project ID", color = TextSecondary, fontSize = 11.sp) },
+                                singleLine = true,
+                                textStyle = MonospaceCodeStyle.copy(fontSize = 11.sp, color = TextPrimary),
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = CyberGold,
+                                    unfocusedBorderColor = ObsidianBorder,
+                                    focusedTextColor = TextPrimary,
+                                    unfocusedTextColor = TextPrimary,
+                                    focusedContainerColor = ObsidianSurfaceElevated,
+                                    unfocusedContainerColor = ObsidianSurfaceElevated
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+
+                        // Tags & Notes
+                        TagInputChipField(
+                            tagsString = tags,
+                            onTagsChange = { tags = it },
+                            availableTags = availableTags
+                        )
+
                         OutlinedTextField(
-                            value = endpointUrl,
-                            onValueChange = { endpointUrl = it },
-                            label = { Text("Base Endpoint URL", color = TextSecondary, fontSize = 11.sp) },
-                            singleLine = true,
-                            textStyle = MonospaceCodeStyle.copy(fontSize = 11.sp, color = TextPrimary),
-                            modifier = Modifier.weight(1f),
+                            value = notes,
+                            onValueChange = { notes = it },
+                            label = { Text("Internal Developer Notes", color = TextSecondary) },
+                            minLines = 2,
+                            maxLines = 4,
+                            modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = CyberGold,
                                 unfocusedBorderColor = ObsidianBorder,
@@ -373,66 +565,12 @@ fun AddEditKeySheet(
                             shape = RoundedCornerShape(12.dp)
                         )
 
-                        OutlinedTextField(
-                            value = organizationId,
-                            onValueChange = { organizationId = it },
-                            label = { Text("Org / Project ID", color = TextSecondary, fontSize = 11.sp) },
-                            singleLine = true,
-                            textStyle = MonospaceCodeStyle.copy(fontSize = 11.sp, color = TextPrimary),
-                            modifier = Modifier.weight(1f),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = CyberGold,
-                                unfocusedBorderColor = ObsidianBorder,
-                                focusedTextColor = TextPrimary,
-                                unfocusedTextColor = TextPrimary,
-                                focusedContainerColor = ObsidianSurfaceElevated,
-                                unfocusedContainerColor = ObsidianSurfaceElevated
-                            ),
-                            shape = RoundedCornerShape(12.dp)
+                        // Rotation interval
+                        RotationIntervalPicker(
+                            rotationDays = rotationDays,
+                            onRotationDaysChange = { rotationDays = it }
                         )
                     }
-
-                    // Tags & Notes
-                    OutlinedTextField(
-                        value = tags,
-                        onValueChange = { tags = it },
-                        label = { Text("Tags (comma separated, e.g. client, prod, llm)", color = TextSecondary) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = CyberGold,
-                            unfocusedBorderColor = ObsidianBorder,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedContainerColor = ObsidianSurfaceElevated,
-                            unfocusedContainerColor = ObsidianSurfaceElevated
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = notes,
-                        onValueChange = { notes = it },
-                        label = { Text("Internal Developer Notes", color = TextSecondary) },
-                        minLines = 2,
-                        maxLines = 4,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = CyberGold,
-                            unfocusedBorderColor = ObsidianBorder,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedContainerColor = ObsidianSurfaceElevated,
-                            unfocusedContainerColor = ObsidianSurfaceElevated
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    // Rotation interval
-                    RotationIntervalPicker(
-                        rotationDays = rotationDays,
-                        onRotationDaysChange = { rotationDays = it }
-                    )
                 }
             }
 

@@ -1,0 +1,19 @@
+# no-mistakes repository configuration for KeyNest
+# https://github.com/kunchenguid/no-mistakes
+
+commands:
+  test: "./gradlew test"
+  lint: "./gradlew lint"
+
+auto_fix:
+  review: 0
+
+document:
+  instructions: |
+    Ensure documentation remains synchronized across all 6 core files after meaningful code edits:
+    - README.md: Setup, usage, stack, and CI/CD validation
+    - PLAN.md: Current sprint tasks and implementation status
+    - ROADMAP.md: Product milestones and feature roadmap
+    - LOG.md: Append a 1-line dated log entry
+    - AGENTS.md: DOX contracts and architecture invariants
+    - CONTEXT.md: Invariants, security rules, and architectural boundaries
