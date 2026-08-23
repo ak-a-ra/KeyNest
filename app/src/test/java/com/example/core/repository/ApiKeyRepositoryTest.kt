@@ -5,7 +5,8 @@ import androidx.room.Room
 import com.example.core.database.ApiKeyDao
 import com.example.core.database.AppDatabase
 import com.example.core.model.ApiKeyItem
-import com.example.core.security.Cryptography
+import com.example.core.security.SecretCipher
+import com.example.core.security.SecretCipherException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -36,8 +37,15 @@ class FakeApiKeyDao : ApiKeyDao {
         keysFlow.value = keys.toList()
         return item.id
     }
-    override suspend fun insertAllKeys(items: List<ApiKeyItem>) {}
-    override suspend fun updateKey(item: ApiKeyItem) {}
+    override suspend fun insertAllKeys(items: List<ApiKeyItem>) {
+        keys.addAll(items)
+        keysFlow.value = keys.toList()
+    }
+    override suspend fun updateKey(item: ApiKeyItem) {
+        val i = keys.indexOfFirst { it.id == item.id }
+        if (i >= 0) keys[i] = item else keys.add(item)
+        keysFlow.value = keys.toList()
+    }
     override suspend fun deleteKey(item: ApiKeyItem) {}
     override suspend fun deleteKeyById(id: Long) {}
     override suspend fun togglePin(id: Long, isPinned: Boolean) {}
@@ -89,8 +97,8 @@ class ApiKeyRepositoryTest {
      *  by the @Transaction on ApiKeyDao.replaceAllKeys and is not directly assertable in Robolectric. */
     @Test
     fun replaceAll_replacesAllRows() = runBlocking {
-        val repository = ApiKeyRepository(db.apiKeyDao())
-        db.apiKeyDao().insertAllKeys(listOf(item(1, Cryptography.encrypt("old1")), item(2, Cryptography.encrypt("old2"))))
+        val repository = ApiKeyRepository(db.apiKeyDao(), FakeCipher())
+        db.apiKeyDao().insertAllKeys(listOf(item(1, "enc-old1"), item(2, "enc-old2")))
 
         repository.replaceAll(listOf(item(0, "new1"), item(0, "new2"), item(0, "new3")))
 
@@ -103,10 +111,100 @@ class ApiKeyRepositoryTest {
     /** F7: decryption works directly per read without any cache layer. */
     @Test
     fun allKeys_decryptsRoundTrip() = runBlocking {
-        val repository = ApiKeyRepository(db.apiKeyDao())
-        db.apiKeyDao().insertAllKeys(listOf(item(1, Cryptography.encrypt("sk-test-12345"))))
+        val repository = ApiKeyRepository(db.apiKeyDao(), FakeCipher())
+        db.apiKeyDao().insertAllKeys(listOf(item(1, "enc-sk-test-12345")))
 
         val first = repository.allKeys.first().single()
         assertEquals("sk-test-12345", first.apiKey)
+    }
+}
+
+/** Test fake for the SecretCipher seam (F2) — no Robolectric sniffing needed. */
+class FakeCipher : SecretCipher {
+    var failEncrypt = false
+    var failDecryptFor: Set<String> = emptySet()
+
+    override fun encrypt(plainText: String): String {
+        if (failEncrypt) throw SecretCipherException("Encryption failed")
+        return "enc:$plainText"
+    }
+
+    override fun decrypt(cipherText: String): String {
+        if (cipherText in failDecryptFor) throw SecretCipherException("Decryption failed")
+        return cipherText.removePrefix("enc:")
+    }
+}
+
+class SecretCipherSeamTest {
+
+    private fun item(id: Long, key: String) = ApiKeyItem(
+        id = id,
+        title = "Test$id",
+        apiKey = key,
+        secretKey = "",
+        provider = "Stripe",
+        category = "Payments",
+        environment = "Test",
+        colorHex = "#ffffff"
+    )
+
+    /** F2: repository round-trips through an injectable cipher. */
+    @Test
+    fun cipher_roundTrip() = runBlocking {
+        val dao = FakeApiKeyDao()
+        val repository = ApiKeyRepository(dao, FakeCipher())
+
+        repository.insertKey(item(0, "sk-round-trip"))
+
+        // Stored value is encrypted, read path decrypts it back.
+        assertEquals("enc:sk-round-trip", dao.keys.single().apiKey)
+        assertEquals("sk-round-trip", repository.allKeys.first().single().apiKey)
+    }
+
+    /** F3: encrypt failure must abort before any DB write — never persist "" over the secret. */
+    @Test
+    fun updateKey_encryptFailure_leavesDbUntouched() = runBlocking {
+        val dao = FakeApiKeyDao()
+        dao.insertKey(item(1, "enc:existing"))
+        val cipher = FakeCipher().apply { failEncrypt = true }
+        val repository = ApiKeyRepository(dao, cipher)
+
+        try {
+            repository.updateKey(item(1, "sk-new-value"))
+            throw AssertionError("expected SecretCipherException")
+        } catch (_: SecretCipherException) {
+        }
+
+        assertEquals(1, dao.keys.size)
+        assertEquals("enc:existing", dao.keys.single().apiKey)
+    }
+
+    /** F3: insert path also aborts on encryption failure — nothing written at all. */
+    @Test
+    fun insertKey_encryptFailure_overwritesNothing() = runBlocking {
+        val dao = FakeApiKeyDao()
+        val cipher = FakeCipher().apply { failEncrypt = true }
+        val repository = ApiKeyRepository(dao, cipher)
+
+        try {
+            repository.insertKey(item(0, "sk-new"))
+            throw AssertionError("expected SecretCipherException")
+        } catch (_: SecretCipherException) {
+        }
+
+        assertEquals(0, dao.keys.size)
+    }
+
+    /** F3: decrypt failure degrades only the broken row — healthy entries stay listed, no silent "" vault. */
+    @Test
+    fun allKeys_decryptFailure_degradesOnlyBrokenRow() = runBlocking {
+        val dao = FakeApiKeyDao()
+        dao.insertAllKeys(listOf(item(1, "enc:healthy"), item(2, "enc:corrupt")))
+        val repository = ApiKeyRepository(dao, FakeCipher().apply { failDecryptFor = setOf("enc:corrupt") })
+
+        val rows = repository.allKeys.first().sortedBy { it.id }
+
+        assertEquals("healthy", rows[0].apiKey)
+        assertEquals(UNDECRYPTABLE_PLACEHOLDER, rows[1].apiKey)
     }
 }

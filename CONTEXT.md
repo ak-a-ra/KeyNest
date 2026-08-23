@@ -18,7 +18,7 @@ KeyNest is a single-activity Android vault for developers to store, organize, re
 - `core/database`: Room schema, entity configuration, and `ApiKeyDao`.
 - `core/model`: Persistent domain models (`ApiKeyItem`) and provider presets (`ProviderPreset`).
 - `core/repository`: Encryption-aware persistence boundary (`ApiKeyRepository`) for vault items.
-- `core/security`: Android Keystore AES-256-GCM cryptography (`Cryptography`), encrypted preferences/fallback (`VaultSecurity`), and portable PBKDF2/GCM backup crypto (`VaultBackupCrypto`).
+- `core/security`: Android Keystore AES-256-GCM cryptography (`SecretCipher`/`KeystoreCipher`), encrypted preferences/fallback (`VaultSecurity`), and portable PBKDF2/GCM backup crypto (`VaultBackupCrypto`).
 - `core/files`: Storage Access Framework (SAF) and file I/O operations (`VaultFileManager`).
 - `core/designsystem`: Material Design 3 tokens, colors, and typography.
 - `feature/*`: Presentation layer (`vault`, `keymanagement`, `search`, `export`, `settings`), ViewModels, and adaptive layouts.

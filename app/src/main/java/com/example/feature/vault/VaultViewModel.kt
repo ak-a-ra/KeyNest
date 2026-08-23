@@ -15,6 +15,7 @@ import com.example.core.files.VaultFileManager
 import com.example.core.model.ApiKeyItem
 import com.example.core.model.ProviderPreset
 import com.example.core.model.ProviderPresets
+import com.example.core.repository.UNDECRYPTABLE_PLACEHOLDER
 import com.example.core.repository.ApiKeyRepository
 import com.example.core.security.VaultBackupCrypto
 import com.example.core.security.VaultSecurity
@@ -126,6 +127,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     val trashedKeys: StateFlow<List<ApiKeyItem>>
     val trashCount: StateFlow<Int>
 
+    private val _cipherError = MutableStateFlow(false)
+
+    /** True when a row could not be decrypted (e.g. invalidated Keystore key); the vault stays usable. */
+    val cipherError: StateFlow<Boolean> = _cipherError.asStateFlow()
+
     private val _currentViewMode = MutableStateFlow(VaultViewMode.ALL_SECRETS)
     val currentViewMode: StateFlow<VaultViewMode> = _currentViewMode.asStateFlow()
 
@@ -220,6 +226,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
             )
+
+        // Repository degrades undecryptable rows to UNDECRYPTABLE_PLACEHOLDER per-row; flag it for the UI.
+        viewModelScope.launch {
+            combine(repository.allKeys, repository.trashedKeys) { keys, trashed -> keys + trashed }
+                .collect { rows ->
+                    _cipherError.value = rows.any {
+                        it.apiKey == UNDECRYPTABLE_PLACEHOLDER || it.secretKey == UNDECRYPTABLE_PLACEHOLDER
+                    }
+                }
+        }
 
         trashCount = repository.trashCount
             .stateIn(
