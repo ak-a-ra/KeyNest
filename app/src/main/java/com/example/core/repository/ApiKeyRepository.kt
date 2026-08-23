@@ -1,29 +1,22 @@
 package com.example.core.repository
 
-import android.content.Context
 import com.example.core.database.ApiKeyDao
 import com.example.core.model.ApiKeyItem
 import com.example.core.security.Cryptography
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import java.util.concurrent.ConcurrentHashMap
 
 class ApiKeyRepository(private val dao: ApiKeyDao) {
 
-    private val decryptionCache = ConcurrentHashMap<String, String>()
-
-    private fun decryptCached(cipherText: String): String {
+    private fun decrypt(cipherText: String): String {
         if (cipherText.isEmpty()) return ""
-        return decryptionCache.getOrPut(cipherText) { Cryptography.decrypt(cipherText) }
+        return Cryptography.decrypt(cipherText)
     }
 
-    private fun encryptCached(plainText: String): String {
+    private fun encrypt(plainText: String): String {
         if (plainText.isEmpty()) return ""
         try {
-            val cipherText = Cryptography.encrypt(plainText)
-            decryptionCache[cipherText] = plainText
-            return cipherText
+            return Cryptography.encrypt(plainText)
         } catch (e: RuntimeException) {
             // Security: Do not silently persist empty/replaced secret on encryption failure
             throw e
@@ -61,13 +54,13 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
     }
 
     private fun ApiKeyItem.decrypted() = copy(
-        apiKey = decryptCached(apiKey),
-        secretKey = decryptCached(secretKey)
+        apiKey = decrypt(apiKey),
+        secretKey = decrypt(secretKey)
     )
 
     private fun ApiKeyItem.encrypted() = copy(
-        apiKey = encryptCached(apiKey),
-        secretKey = encryptCached(secretKey)
+        apiKey = encrypt(apiKey),
+        secretKey = encrypt(secretKey)
     )
 
     val allKeys: Flow<List<ApiKeyItem>> = dao.getAllKeys().map { list -> list.map { it.decrypted() } }
@@ -90,11 +83,8 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
 
     suspend fun insertAll(items: List<ApiKeyItem>) = dao.insertAllKeys(items.map { it.encrypted() })
 
-    suspend fun replaceAll(items: List<ApiKeyItem>) {
-        dao.deleteAllKeys()
-        dao.insertAllKeys(items.map { it.encrypted() })
-    }
-
+    /** Atomic via @Transaction on the DAO — no window where the vault is empty. */
+    suspend fun replaceAll(items: List<ApiKeyItem>) = dao.replaceAllKeys(items.map { it.encrypted() })
 
     suspend fun updateKey(item: ApiKeyItem) = dao.updateKey(item.encrypted())
 
@@ -105,59 +95,4 @@ class ApiKeyRepository(private val dao: ApiKeyDao) {
     suspend fun togglePin(id: Long, isPinned: Boolean) = dao.togglePin(id, isPinned)
 
     suspend fun recordCopy(id: Long, timestamp: Long = System.currentTimeMillis()) = dao.recordCopy(id, timestamp)
-
-    // Migration support for legacy plaintext secrets
-    private val MIGRATION_KEY = "keynest_migration_version"
-
-    suspend fun isMigrationNeeded(context: Context): Boolean {
-        val prefs = context.getApplicationContext().getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
-        val currentVersion = prefs.getInt(MIGRATION_KEY, 0)
-        val databaseVersion = dao.getKeyCount().first()
-        return currentVersion < databaseVersion
-    }
-
-    fun markMigrationComplete(context: Context, version: Int) {
-        val prefs = context.getApplicationContext().getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
-        prefs.edit().putInt(MIGRATION_KEY, version).apply()
-    }
-
-    /**
-     * One-time migration: converts any legacy plaintext secrets to encrypted form.
-     * This must be called on app startup before any database operations.
-     * Returns number of entries migrated, or -1 if migration was skipped/aborted.
-     */
-    suspend fun migrateLegacyPlaintextSecrets(context: Context): Int {
-        val allKeys = dao.getAllKeys().first()
-        val plaintextKeys = allKeys.filter { it.apiKey.isNotEmpty() && !it.apiKey.startsWith("enc:") }
-
-        if (plaintextKeys.isEmpty()) {
-            // Nothing to migrate, mark as done
-            markMigrationComplete(context, 1)
-            return 0
-        }
-
-        // Perform migration in a transaction
-        return try {
-            // Use Room's built-in transaction via dao
-            var migratedCount = 0
-            for (key in plaintextKeys) {
-                // Check if already encrypted (starts with "enc:" prefix)
-                if (key.apiKey.startsWith("enc:")) continue
-
-                // Treat as plaintext and re-encrypt
-                val encryptedApiKey = Cryptography.encrypt(key.apiKey)
-                // Update the item with encrypted key
-                val updatedItem = key.copy(apiKey = encryptedApiKey)
-                dao.updateKey(updatedItem)
-                migratedCount++
-            }
-            // Mark migration as complete (version 1)
-            markMigrationComplete(context, 1)
-            migratedCount
-        } catch (e: Exception) {
-            // Security: Do not silently fail migration; preserve original data
-            // Log non-sensitive error and return -1 to indicate failure
-            throw RuntimeException("Legacy migration failed - original data preserved")
-        }
-    }
 }

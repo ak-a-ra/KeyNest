@@ -1,13 +1,19 @@
 package com.example.core.repository
 
+import android.content.Context
+import androidx.room.Room
 import com.example.core.database.ApiKeyDao
+import com.example.core.database.AppDatabase
 import com.example.core.model.ApiKeyItem
+import com.example.core.security.Cryptography
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -53,33 +59,54 @@ class FakeApiKeyDao : ApiKeyDao {
 @Config(sdk = [33])
 class ApiKeyRepositoryTest {
 
+    private lateinit var db: AppDatabase
+
+    @Before
+    fun setUp() {
+        val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<Context>()
+        db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+    }
+
+    @After
+    fun tearDown() {
+        db.close()
+    }
+
+    private fun item(id: Long, key: String) = ApiKeyItem(
+        id = id,
+        title = "Test$id",
+        apiKey = key,
+        secretKey = "",
+        provider = "Stripe",
+        category = "Payments",
+        environment = "Test",
+        colorHex = "#ffffff"
+    )
+
+    /** F5: verifies replaceAll replaces all rows with the new set. Atomicity itself is guaranteed
+     *  by the @Transaction on ApiKeyDao.replaceAllKeys and is not directly assertable in Robolectric. */
     @Test
-    fun decryptionCache_cachesValues_andAvoidsRedundantDecryption() = runBlocking {
-        val fakeDao = FakeApiKeyDao()
-        val repository = ApiKeyRepository(fakeDao)
-        
-        val plainText = "sk-test-12345"
-        
-        val realEncryptedItem = ApiKeyItem(
-            id = 1L,
-            title = "Test",
-            apiKey = com.example.core.security.Cryptography.encrypt(plainText),
-            secretKey = "",
-            provider = "Stripe",
-            category = "Payments",
-            environment = "Test",
-            colorHex = "#ffffff"
-        )
+    fun replaceAll_replacesAllRows() = runBlocking {
+        val repository = ApiKeyRepository(db.apiKeyDao())
+        db.apiKeyDao().insertAllKeys(listOf(item(1, Cryptography.encrypt("old1")), item(2, Cryptography.encrypt("old2"))))
 
-        // Emit first time
-        fakeDao.emit(listOf(realEncryptedItem))
+        repository.replaceAll(listOf(item(0, "new1"), item(0, "new2"), item(0, "new3")))
 
-        val firstEmission = repository.allKeys.first()
-        assertEquals("First emission should decrypt successfully", plainText, firstEmission.first().apiKey)
+        // Exactly the new set is visible in a single consistent snapshot — never an intermediate empty/partial state.
+        val observed = repository.allKeys.first()
+        assertEquals(setOf("new1", "new2", "new3"), observed.map { it.apiKey }.toSet())
+        assertEquals(3, observed.size)
+    }
 
-        // Emit again to trigger cache lookup (the identical ciphertext string is sent again)
-        fakeDao.emit(listOf(realEncryptedItem))
-        val secondEmission = repository.allKeys.first()
-        assertEquals("Second emission should resolve from cache successfully", plainText, secondEmission.first().apiKey)
+    /** F7: decryption works directly per read without any cache layer. */
+    @Test
+    fun allKeys_decryptsRoundTrip() = runBlocking {
+        val repository = ApiKeyRepository(db.apiKeyDao())
+        db.apiKeyDao().insertAllKeys(listOf(item(1, Cryptography.encrypt("sk-test-12345"))))
+
+        val first = repository.allKeys.first().single()
+        assertEquals("sk-test-12345", first.apiKey)
     }
 }

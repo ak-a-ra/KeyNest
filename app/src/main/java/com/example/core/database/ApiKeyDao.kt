@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.example.core.model.ApiKeyItem
 import kotlinx.coroutines.flow.Flow
@@ -64,4 +65,11 @@ interface ApiKeyDao {
 
     @Query("DELETE FROM api_keys")
     suspend fun deleteAllKeys()
+
+    /** Atomic replace: process death between delete and insert must never leave an empty vault. */
+    @Transaction
+    suspend fun replaceAllKeys(items: List<ApiKeyItem>) {
+        deleteAllKeys()
+        insertAllKeys(items)
+    }
 }
