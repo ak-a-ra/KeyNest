@@ -89,3 +89,4 @@ cp .env.example .env         # then fill in your values
 - [Plan](./PLAN.md) — implementation phases
 - [Optimization spec](./OPTIMIZATION_SPEC.md)
 - Architecture decision records live under [`docs/adr/`](./docs/adr/)
+- [License](./LICENSE) — Unlicense (public domain)
