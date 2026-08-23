@@ -85,9 +85,10 @@ class ApiKeyRepositoryTest {
         colorHex = "#ffffff"
     )
 
-    /** F5 regression: replaceAll is one transaction — old rows are fully replaced, no partial state. */
+    /** F5: verifies replaceAll replaces all rows with the new set. Atomicity itself is guaranteed
+     *  by the @Transaction on ApiKeyDao.replaceAllKeys and is not directly assertable in Robolectric. */
     @Test
-    fun replaceAll_replacesVaultAtomically_neverLeavesPartialOrEmptyState() = runBlocking {
+    fun replaceAll_replacesAllRows() = runBlocking {
         val repository = ApiKeyRepository(db.apiKeyDao())
         db.apiKeyDao().insertAllKeys(listOf(item(1, Cryptography.encrypt("old1")), item(2, Cryptography.encrypt("old2"))))
 
