@@ -74,3 +74,4 @@
 - 2026-08-22: Generated VaultHomeScreen showcase screenshot using Roborazzi and added it to README.md. No other doc updates needed.
 - 2026-08-22: Replaced hardcoded sample API key strings in VaultViewModel starter templates with non-secret dummy placeholders to resolve secret scanner leak warnings. No other doc updates needed.
 - 2026-08-22: Resolved startup security initialization by updating VaultSecurity to modern MasterKey.Builder API and wrapping EncryptedSharedPreferences instantiation with Throwable fallback protection. Verified 100% build & unit test pass. No other doc updates needed.
+- 2026-08-22: Re-generated high-quality hero showcase image asset at assets/vault_showcase.png for KeyNest README display. No other doc updates needed.
