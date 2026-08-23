@@ -4,37 +4,36 @@
 
 # KeyNest
 
-*Ultra-fast, encrypted API key and developer secret vault for Android.*
+*An encrypted API key vault for Android, built for developers who juggle too many secrets.*
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/ak-a-ra/KeyNest/build-release.yml?style=flat-square&label=Build)](https://github.com/ak-a-ra/KeyNest/actions)
 [![Release](https://img.shields.io/github/v/release/ak-a-ra/KeyNest?style=flat-square&label=Release)](https://github.com/ak-a-ra/KeyNest/releases)
 [![Android](https://img.shields.io/badge/Android-8.0%2B%20%7C%20API%2024%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://developer.android.com/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-Compose-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
+[![License](https://img.shields.io/badge/License-Unlicense-blue?style=flat-square)](./LICENSE)
 
 </div>
 
 ---
 
-KeyNest is an offline-first secret vault for Android developers. It stores, organizes, searches, and exports API keys, client secrets, and environment tokens — with Android Keystore AES-256-GCM field encryption and zero plaintext logging.
+If you work with LLM APIs, cloud consoles, and CI tokens, you end up with dozens of keys scattered across notes, dotfiles, and chat history. KeyNest keeps them in one offline vault on your phone. Every secret is field-encrypted with Android Keystore before it touches disk, masked until you reveal it, and never logged in plaintext.
 
 ![KeyNest Vault Showcase](./assets/vault_showcase.png)
 
-## Features
+## What it does
 
-- **Hardware-backed encryption** — AES-256-GCM via Android Keystore; values are masked by default and never logged in plaintext.
-- **Reactive search & filtering** — zero-latency search across titles, provider presets, tags, and endpoints.
-- **Live provider detection** — badges update as you type key prefixes (`sk-`, `AIza`, `gsk_`, `xai-`, `ghp_`, `AKIA`, …).
-- **Tags, colors & environments** — categorize credentials with custom tags and contrast-safe pastel cards.
-- **Multi-box secrets** — custom secret fields (client secrets, private keys) plus batch key entry.
-- **Rotation tracking** — expiration dates with 3-tier color-coded alerts (fresh / approaching / overdue).
-- **PIN lock** — master PIN screen with vault protection and a secure degraded state if crypto can't initialize (never falls back to plaintext).
-- **Import / export** — `.env` files, or portable PBKDF2 + AES-256-GCM encrypted `.keynest` vault backups.
-- **Clipboard protection** — auto-clearing clipboard with Android 13+ `EXTRA_IS_SENSITIVE` flags.
-- **Soft-delete trash** — restore or permanently purge deleted items.
-- **Random generator** — in-app secret/token generator with entropy strength analysis.
+- Stores API keys plus optional secret fields (client secrets, private keys), with batch entry for when you migrate a whole provider at once
+- Searches everything instantly: titles, providers, tags, endpoints
+- Recognizes key prefixes as you type (`sk-`, `AIza`, `gsk_`, `xai-`, `ghp_`, `AKIA`...) and shows the provider badge live
+- Tracks expiration dates with three color tiers: fresh, approaching, overdue
+- Locks behind a master PIN, and degrades safely if crypto can't initialize rather than falling back to plaintext
+- Imports and exports `.env` files, or full portable backups encrypted with PBKDF2 (100k rounds) + AES-256-GCM
+- Copies through an auto-clearing clipboard that uses Android 13+ `EXTRA_IS_SENSITIVE`
+- Soft-deletes into a trash bin you can restore from or purge
+- Generates random tokens in-app, with entropy strength analysis
 
 > [!NOTE]
-> KeyNest sets `android:allowBackup="false"` so vault data can never leak through cloud backup or ADB extraction.
+> KeyNest sets `android:allowBackup="false"` so vault data can't leak through cloud backup or ADB extraction.
 
 ## Architecture
 
@@ -65,14 +64,9 @@ com.example/
 | Testing | JUnit, Robolectric, Roborazzi screenshot tests |
 | Build | Gradle version catalogs, Secrets plugin (`.env` convention) |
 
-## Getting Started
+## Getting started
 
-### Requirements
-
-- Android SDK 36, min API 24 (Android 8.0+)
-- JDK 17+
-
-### Build & Run
+You need Android SDK 36 and JDK 17+.
 
 ```bash
 git clone https://github.com/ak-a-ra/KeyNest.git
@@ -82,8 +76,6 @@ cd KeyNest
 ```
 
 Debug builds sign with the bundled `debug.keystore`. Release builds read signing config from `KEYSTORE_PATH`, `STORE_PASSWORD`, and `KEY_PASSWORD` environment variables.
-
-### Configuration
 
 Secrets follow the web `.env` convention via the Gradle Secrets plugin:
 
