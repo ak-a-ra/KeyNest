@@ -38,3 +38,13 @@ jobs:
           prompt: |
             Review this pull request for bugs, security flaws, regressions,
             and violations of this repository's documented security invariants.
+
+            This is a read-only review. Do not edit, stage, commit, or push
+            anything — findings go in your response text only. Discovering
+            issues must never fail the job or abort the run; describe them
+            and finish normally.
+
+            End your review with exactly these three lines:
+            <!-- opencode review -->
+            **Review Score:** <score>/5
+            **Status:** Passed or Not Passed (Not Passed when score is below 4)
