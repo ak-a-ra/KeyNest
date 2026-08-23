@@ -16,6 +16,7 @@ import com.example.core.model.ApiKeyItem
 import com.example.core.model.ProviderPreset
 import com.example.core.model.ProviderPresets
 import com.example.core.repository.ApiKeyRepository
+import com.example.core.security.SecretCipherException
 import com.example.core.security.VaultBackupCrypto
 import com.example.core.security.VaultSecurity
 import com.example.core.util.ApiKeyFormatting
@@ -23,12 +24,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -126,6 +129,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     val trashedKeys: StateFlow<List<ApiKeyItem>>
     val trashCount: StateFlow<Int>
 
+    private val _cipherError = MutableStateFlow(false)
+
+    /** True when a row could not be decrypted (e.g. invalidated Keystore key); the vault stays usable. */
+    val cipherError: StateFlow<Boolean> = _cipherError.asStateFlow()
+
     private val _currentViewMode = MutableStateFlow(VaultViewMode.ALL_SECRETS)
     val currentViewMode: StateFlow<VaultViewMode> = _currentViewMode.asStateFlow()
 
@@ -183,7 +191,18 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _autoLockTimeoutPreferenceKey = "auto_lock_timeout_preference"
 
-    private val fileManager = VaultFileManager(application)
+    private     val fileManager = VaultFileManager(application)
+
+    /** One undecryptable row must not crash collectors or hide all healthy entries — flag [cipherError] instead. */
+    private fun Flow<List<ApiKeyItem>>.recoverFromCipherFailure(): Flow<List<ApiKeyItem>> =
+        catch { e ->
+            if (e is SecretCipherException) {
+                _cipherError.value = true
+                emit(emptyList())
+            } else {
+                throw e
+            }
+        }
 
     val filteredKeys: StateFlow<List<ApiKeyItem>>
     val availableTags: StateFlow<List<String>>
@@ -196,6 +215,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         } catch (_: Exception) { }
 
         allKeys = repository.allKeys
+            .recoverFromCipherFailure()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
@@ -215,6 +235,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             )
 
         trashedKeys = repository.trashedKeys
+            .recoverFromCipherFailure()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
