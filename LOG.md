@@ -80,3 +80,4 @@
 - 2026-08-22: Placed assets/vault_showcase.png directly below the intro paragraph in README.md as requested. No other doc updates needed.
 - 2026-08-23: Generated comprehensive README.md file following create-readme skill instructions with GFM formatting, architecture overview, and GitHub admonition callouts. No other doc updates needed.
 - 2026-08-23: Trimmed redundant prose, badges, and duplicated sections in README.md for a clean, non-bloated structure. No other doc updates needed.
+- 2026-08-23: Added KeyNest app icon (assets/keynest_icon.png) to centered header in README.md per create-readme skill pattern. No other doc updates needed.

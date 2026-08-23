@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./assets/keynest_icon.png" width="128" height="128" alt="KeyNest Icon" />
+
 # KeyNest
 
 *Ultra-fast, encrypted API key and developer secret vault for Android.*
