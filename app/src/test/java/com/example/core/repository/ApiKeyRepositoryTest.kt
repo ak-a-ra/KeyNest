@@ -135,64 +135,78 @@ class FakeCipher : SecretCipher {
     }
 }
 
-/** F2: repository round-trips through an injectable cipher. */
-@Test
-fun cipher_roundTrip() = runBlocking {
-    val dao = FakeApiKeyDao()
-    val repository = ApiKeyRepository(dao, FakeCipher())
+class SecretCipherSeamTest {
 
-    repository.insertKey(item(0, "sk-round-trip"))
+    private fun item(id: Long, key: String) = ApiKeyItem(
+        id = id,
+        title = "Test$id",
+        apiKey = key,
+        secretKey = "",
+        provider = "Stripe",
+        category = "Payments",
+        environment = "Test",
+        colorHex = "#ffffff"
+    )
 
-    // Stored value is encrypted, read path decrypts it back.
-    assertEquals("enc:sk-round-trip", dao.keys.single().apiKey)
-    assertEquals("sk-round-trip", repository.allKeys.first().single().apiKey)
-}
+    /** F2: repository round-trips through an injectable cipher. */
+    @Test
+    fun cipher_roundTrip() = runBlocking {
+        val dao = FakeApiKeyDao()
+        val repository = ApiKeyRepository(dao, FakeCipher())
 
-/** F3: encrypt failure must abort before any DB write — never persist "" over the secret. */
-@Test
-fun insertKey_encryptFailure_leavesDbUntouched() = runBlocking {
-    val dao = FakeApiKeyDao()
-    dao.insertKey(item(1, "enc:existing"))
-    val cipher = FakeCipher().apply { failEncrypt = true }
-    val repository = ApiKeyRepository(dao, cipher)
+        repository.insertKey(item(0, "sk-round-trip"))
 
-    try {
-        repository.updateKey(item(1, "sk-new-value"))
-        throw AssertionError("expected SecretCipherException")
-    } catch (_: SecretCipherException) {
+        // Stored value is encrypted, read path decrypts it back.
+        assertEquals("enc:sk-round-trip", dao.keys.single().apiKey)
+        assertEquals("sk-round-trip", repository.allKeys.first().single().apiKey)
     }
 
-    assertEquals(1, dao.keys.size)
-    assertEquals("enc:existing", dao.keys.single().apiKey)
-}
+    /** F3: encrypt failure must abort before any DB write — never persist "" over the secret. */
+    @Test
+    fun insertKey_encryptFailure_leavesDbUntouched() = runBlocking {
+        val dao = FakeApiKeyDao()
+        dao.insertKey(item(1, "enc:existing"))
+        val cipher = FakeCipher().apply { failEncrypt = true }
+        val repository = ApiKeyRepository(dao, cipher)
 
-/** F3: insert path also aborts on encryption failure — nothing written at all. */
-@Test
-fun updateKey_encryptFailure_overwritesNothing() = runBlocking {
-    val dao = FakeApiKeyDao()
-    val cipher = FakeCipher().apply { failEncrypt = true }
-    val repository = ApiKeyRepository(dao, cipher)
+        try {
+            repository.updateKey(item(1, "sk-new-value"))
+            throw AssertionError("expected SecretCipherException")
+        } catch (_: SecretCipherException) {
+        }
 
-    try {
-        repository.insertKey(item(0, "sk-new"))
-        throw AssertionError("expected SecretCipherException")
-    } catch (_: SecretCipherException) {
+        assertEquals(1, dao.keys.size)
+        assertEquals("enc:existing", dao.keys.single().apiKey)
     }
 
-    assertEquals(0, dao.keys.size)
-}
+    /** F3: insert path also aborts on encryption failure — nothing written at all. */
+    @Test
+    fun updateKey_encryptFailure_overwritesNothing() = runBlocking {
+        val dao = FakeApiKeyDao()
+        val cipher = FakeCipher().apply { failEncrypt = true }
+        val repository = ApiKeyRepository(dao, cipher)
 
-/** F3: decrypt failure surfaces a typed error, never a silent "". */
-@Test
-fun allKeys_decryptFailure_throwsTypedError() = runBlocking {
-    val dao = FakeApiKeyDao()
-    dao.insertAllKeys(listOf(item(1, "enc:secret")))
-    val repository = ApiKeyRepository(dao, FakeCipher().apply { failDecrypt = true })
+        try {
+            repository.insertKey(item(0, "sk-new"))
+            throw AssertionError("expected SecretCipherException")
+        } catch (_: SecretCipherException) {
+        }
 
-    try {
-        repository.allKeys.first()
-        throw AssertionError("expected SecretCipherException")
-    } catch (e: SecretCipherException) {
-        assertEquals("Decryption failed", e.message)
+        assertEquals(0, dao.keys.size)
+    }
+
+    /** F3: decrypt failure surfaces a typed error, never a silent "". */
+    @Test
+    fun allKeys_decryptFailure_throwsTypedError() = runBlocking {
+        val dao = FakeApiKeyDao()
+        dao.insertAllKeys(listOf(item(1, "enc:secret")))
+        val repository = ApiKeyRepository(dao, FakeCipher().apply { failDecrypt = true })
+
+        try {
+            repository.allKeys.first()
+            throw AssertionError("expected SecretCipherException")
+        } catch (e: SecretCipherException) {
+            assertEquals("Decryption failed", e.message)
+        }
     }
 }
