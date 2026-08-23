@@ -31,6 +31,9 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          # dedicated wrapper-validation step above owns validation (custom checksum allowlist)
+          validate-wrappers: false
 
       - name: Run Lint
         run: ./gradlew lint --no-daemon
