@@ -195,7 +195,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     val availableTags: StateFlow<List<String>>
 
     init {
-        val database = AppDatabase.getDatabase(application, viewModelScope)
+        val database = AppDatabase.getDatabase(application)
         repository = ApiKeyRepository(database.apiKeyDao())
         try {
             clipboardManager.addPrimaryClipChangedListener(clipListener)

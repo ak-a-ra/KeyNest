@@ -88,6 +88,12 @@ jobs:
       - name: Build Release APK (unsigned, catches R8 failures)
         run: gradle :app:assembleRelease --no-daemon
 
+      - name: Unit tests (Robolectric migration test)
+        run: >-
+          gradle :app:testDebugUnitTest
+          --tests "com.example.core.database.AppDatabaseMigrationTest"
+          --no-daemon
+
       - name: Prepare APK Output
         id: prepare_apk
         run: |
