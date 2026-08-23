@@ -54,6 +54,12 @@ jobs:
       - name: Build Release APK (unsigned, catches R8 failures)
         run: gradle :app:assembleRelease --no-daemon
 
+      - name: Unit tests (Robolectric migration test)
+        run: >-
+          gradle :app:testDebugUnitTest
+          --tests "com.example.core.database.AppDatabaseMigrationTest"
+          --no-daemon
+
       - name: Prepare APK Output
         id: prepare_apk
         run: |
@@ -61,12 +67,12 @@ jobs:
           if [ -z "$APK_PATH" ]; then
             APK_PATH=$(find . -name "*.apk" | head -n 1)
           fi
-          
+
           if [ -z "$APK_PATH" ]; then
             echo "Error: No APK file was generated!"
             exit 1
           fi
-          
+
           VERSION_TAG="${{ github.ref_name }}"
           if [ "${{ github.ref_type }}" != "tag" ]; then
             VERSION_TAG="ci-${{ github.sha }}"
@@ -92,7 +98,7 @@ jobs:
           name: "KeyNest ${{ github.ref_name }}"
           body: |
             ## KeyNest Vault Release ${{ github.ref_name }}
-            
+
             ### Artifacts
             - **Debug APK**: Ready to install directly on Android devices.
           draft: false

@@ -95,6 +95,7 @@ dependencies {
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.robolectric)
+  testImplementation(libs.androidx.room.testing)
   testImplementation(libs.roborazzi)
   testImplementation(libs.roborazzi.compose)
   testImplementation(libs.roborazzi.junit.rule)
@@ -106,4 +107,21 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
   "ksp"(libs.androidx.room.compiler)
+
+}
+
+// Expose exported Room schemas to Robolectric's MigrationTestHelper as test assets.
+tasks.register<Copy>("copyRoomSchemasForTests") {
+  from(layout.projectDirectory.dir("schemas"))
+  into(layout.projectDirectory.dir("src/test/assets/schemas"))
+}
+tasks.named("preBuild") { dependsOn("copyRoomSchemasForTests") }
+
+// AGP 9 Kotlin-DSL accessors for testOptions.unitTests are broken here; go through Groovy builder.
+android.withGroovyBuilder {
+  "testOptions" {
+    "unitTests" {
+      setProperty("includeAndroidResources", true)
+    }
+  }
 }
