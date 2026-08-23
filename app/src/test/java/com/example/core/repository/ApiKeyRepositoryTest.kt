@@ -97,7 +97,7 @@ class ApiKeyRepositoryTest {
      *  by the @Transaction on ApiKeyDao.replaceAllKeys and is not directly assertable in Robolectric. */
     @Test
     fun replaceAll_replacesAllRows() = runBlocking {
-        val repository = ApiKeyRepository(db.apiKeyDao())
+        val repository = ApiKeyRepository(db.apiKeyDao(), FakeCipher())
         db.apiKeyDao().insertAllKeys(listOf(item(1, "enc-old1"), item(2, "enc-old2")))
 
         repository.replaceAll(listOf(item(0, "new1"), item(0, "new2"), item(0, "new3")))
