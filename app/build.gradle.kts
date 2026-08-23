@@ -58,6 +58,8 @@ android {
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
+    // java.time used on minSdk 24 (ApiKeyFormatting, VaultTrashView) - requires desugaring
+    isCoreLibraryDesugaringEnabled = true
   }
   buildFeatures {
     compose = true
@@ -71,6 +73,7 @@ android {
 }
 
 dependencies {
+  coreLibraryDesugaring(libs.androidx.core.library.desugaring)
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.compose.material.icons.core)
