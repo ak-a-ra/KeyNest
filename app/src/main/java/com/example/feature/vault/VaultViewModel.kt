@@ -191,7 +191,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _autoLockTimeoutPreferenceKey = "auto_lock_timeout_preference"
 
-    private     val fileManager = VaultFileManager(application)
+    private val fileManager = VaultFileManager(application)
 
     /** One undecryptable row must not crash collectors or hide all healthy entries — flag [cipherError] instead. */
     private fun Flow<List<ApiKeyItem>>.recoverFromCipherFailure(): Flow<List<ApiKeyItem>> =
