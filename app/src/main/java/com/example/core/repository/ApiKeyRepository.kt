@@ -4,6 +4,12 @@ import com.example.core.database.ApiKeyDao
 import com.example.core.model.ApiKeyItem
 import com.example.core.security.KeystoreCipher
 import com.example.core.security.SecretCipher
+import com.example.core.security.SecretCipherException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+
+/** Shown in place of a secret whose ciphertext cannot be decrypted (e.g. invalidated Keystore key). */
+const val UNDECRYPTABLE_PLACEHOLDER = "<undecryptable>"
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -13,8 +19,13 @@ class ApiKeyRepository(
 ) {
 
     /** Empty stays "" (legitimate empty field); any cipher failure throws typed [com.example.core.security.SecretCipherException]. */
-    private fun decrypt(cipherText: String): String =
-        if (cipherText.isEmpty()) "" else cipher.decrypt(cipherText)
+    /** Per-field: empty stays ""; undecryptable rows degrade to a visible placeholder instead of hiding the entry. */
+    private fun String.decryptOrPlaceholder(): String =
+        if (isEmpty()) "" else try {
+            cipher.decrypt(this)
+        } catch (_: SecretCipherException) {
+            UNDECRYPTABLE_PLACEHOLDER
+        }
 
     /** Fails loudly before any DB write — a failed encryption is never persisted as "". */
     private fun encrypt(plainText: String): String =
@@ -51,8 +62,8 @@ class ApiKeyRepository(
     }
 
     private fun ApiKeyItem.decrypted() = copy(
-        apiKey = decrypt(apiKey),
-        secretKey = decrypt(secretKey)
+        apiKey = apiKey.decryptOrPlaceholder(),
+        secretKey = secretKey.decryptOrPlaceholder()
     )
 
     private fun ApiKeyItem.encrypted() = copy(

@@ -122,7 +122,7 @@ class ApiKeyRepositoryTest {
 /** Test fake for the SecretCipher seam (F2) — no Robolectric sniffing needed. */
 class FakeCipher : SecretCipher {
     var failEncrypt = false
-    var failDecrypt = false
+    var failDecryptFor: Set<String> = emptySet()
 
     override fun encrypt(plainText: String): String {
         if (failEncrypt) throw SecretCipherException("Encryption failed")
@@ -130,7 +130,7 @@ class FakeCipher : SecretCipher {
     }
 
     override fun decrypt(cipherText: String): String {
-        if (failDecrypt) throw SecretCipherException("Decryption failed")
+        if (cipherText in failDecryptFor) throw SecretCipherException("Decryption failed")
         return cipherText.removePrefix("enc:")
     }
 }
@@ -195,18 +195,16 @@ class SecretCipherSeamTest {
         assertEquals(0, dao.keys.size)
     }
 
-    /** F3: decrypt failure surfaces a typed error, never a silent "". */
+    /** F3: decrypt failure degrades only the broken row — healthy entries stay listed, no silent "" vault. */
     @Test
-    fun allKeys_decryptFailure_throwsTypedError() = runBlocking {
+    fun allKeys_decryptFailure_degradesOnlyBrokenRow() = runBlocking {
         val dao = FakeApiKeyDao()
-        dao.insertAllKeys(listOf(item(1, "enc:secret")))
-        val repository = ApiKeyRepository(dao, FakeCipher().apply { failDecrypt = true })
+        dao.insertAllKeys(listOf(item(1, "enc:healthy"), item(2, "enc:corrupt")))
+        val repository = ApiKeyRepository(dao, FakeCipher().apply { failDecryptFor = setOf("enc:corrupt") })
 
-        try {
-            repository.allKeys.first()
-            throw AssertionError("expected SecretCipherException")
-        } catch (e: SecretCipherException) {
-            assertEquals("Decryption failed", e.message)
-        }
+        val rows = repository.allKeys.first().sortedBy { it.id }
+
+        assertEquals("healthy", rows[0].apiKey)
+        assertEquals(UNDECRYPTABLE_PLACEHOLDER, rows[1].apiKey)
     }
 }
