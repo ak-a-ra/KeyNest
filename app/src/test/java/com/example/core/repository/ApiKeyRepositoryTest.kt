@@ -163,7 +163,7 @@ class SecretCipherSeamTest {
 
     /** F3: encrypt failure must abort before any DB write — never persist "" over the secret. */
     @Test
-    fun insertKey_encryptFailure_leavesDbUntouched() = runBlocking {
+    fun updateKey_encryptFailure_leavesDbUntouched() = runBlocking {
         val dao = FakeApiKeyDao()
         dao.insertKey(item(1, "enc:existing"))
         val cipher = FakeCipher().apply { failEncrypt = true }
@@ -181,7 +181,7 @@ class SecretCipherSeamTest {
 
     /** F3: insert path also aborts on encryption failure — nothing written at all. */
     @Test
-    fun updateKey_encryptFailure_overwritesNothing() = runBlocking {
+    fun insertKey_encryptFailure_overwritesNothing() = runBlocking {
         val dao = FakeApiKeyDao()
         val cipher = FakeCipher().apply { failEncrypt = true }
         val repository = ApiKeyRepository(dao, cipher)
