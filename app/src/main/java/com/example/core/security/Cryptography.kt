@@ -9,20 +9,12 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-object Cryptography {
+/** AES/GCM AndroidKeyStore implementation of [SecretCipher]. Fails loudly — no silent empty strings. */
+object KeystoreCipher : SecretCipher {
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
     private const val KEY_ALIAS = "KeyNestVaultKeyAlias"
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
     private const val IV_LENGTH = 12
-
-    private val isRunningTests: Boolean by lazy {
-        try {
-            Class.forName("org.robolectric.Robolectric")
-            true
-        } catch (_: ClassNotFoundException) {
-            false
-        }
-    }
 
     private fun getOrCreateKey(): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
@@ -42,11 +34,8 @@ object Cryptography {
         return keyGenerator.generateKey()
     }
 
-    fun encrypt(plainText: String): String {
+    override fun encrypt(plainText: String): String {
         if (plainText.isEmpty()) return ""
-        if (isRunningTests) {
-            return "TEST_ENC_" + Base64.encodeToString(plainText.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
-        }
         try {
             val key = getOrCreateKey()
             val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -56,32 +45,15 @@ object Cryptography {
             val combined = iv + encryptedBytes
             return Base64.encodeToString(combined, Base64.NO_WRAP)
         } catch (e: Exception) {
-            // Security: Never return plaintext on encryption failure
-            return ""
+            throw SecretCipherException("Encryption failed", e)
         }
     }
 
-    fun decrypt(cipherText: String): String {
+    override fun decrypt(cipherText: String): String {
         if (cipherText.isEmpty()) return ""
-        if (isRunningTests) {
-            return if (cipherText.startsWith("TEST_ENC_")) {
-                val rest = cipherText.substring("TEST_ENC_".length)
-                try {
-                    String(Base64.decode(rest, Base64.NO_WRAP), Charsets.UTF_8)
-                } catch (e: Exception) {
-                    ""
-                }
-            } else {
-                try {
-                    String(Base64.decode(cipherText, Base64.NO_WRAP), Charsets.UTF_8)
-                } catch (e: Exception) {
-                    cipherText
-                }
-            }
-        }
         try {
             val combined = Base64.decode(cipherText, Base64.NO_WRAP)
-            if (combined.size <= IV_LENGTH) return ""
+            if (combined.size <= IV_LENGTH) throw SecretCipherException("Ciphertext too short")
             val iv = combined.copyOfRange(0, IV_LENGTH)
             val encryptedBytes = combined.copyOfRange(IV_LENGTH, combined.size)
 
@@ -91,9 +63,11 @@ object Cryptography {
             cipher.init(Cipher.DECRYPT_MODE, key, spec)
             val decryptedBytes = cipher.doFinal(encryptedBytes)
             return String(decryptedBytes, Charsets.UTF_8)
+        } catch (e: SecretCipherException) {
+            throw e
         } catch (e: Exception) {
             // Security: Never return ciphertext/plaintext on decryption failure
-            return ""
+            throw SecretCipherException("Decryption failed", e)
         }
     }
 }

@@ -2,26 +2,23 @@ package com.example.core.repository
 
 import com.example.core.database.ApiKeyDao
 import com.example.core.model.ApiKeyItem
-import com.example.core.security.Cryptography
+import com.example.core.security.KeystoreCipher
+import com.example.core.security.SecretCipher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class ApiKeyRepository(private val dao: ApiKeyDao) {
+class ApiKeyRepository(
+    private val dao: ApiKeyDao,
+    private val cipher: SecretCipher = KeystoreCipher,
+) {
 
-    private fun decrypt(cipherText: String): String {
-        if (cipherText.isEmpty()) return ""
-        return Cryptography.decrypt(cipherText)
-    }
+    /** Empty stays "" (legitimate empty field); any cipher failure throws typed [com.example.core.security.SecretCipherException]. */
+    private fun decrypt(cipherText: String): String =
+        if (cipherText.isEmpty()) "" else cipher.decrypt(cipherText)
 
-    private fun encrypt(plainText: String): String {
-        if (plainText.isEmpty()) return ""
-        try {
-            return Cryptography.encrypt(plainText)
-        } catch (e: RuntimeException) {
-            // Security: Do not silently persist empty/replaced secret on encryption failure
-            throw e
-        }
-    }
+    /** Fails loudly before any DB write — a failed encryption is never persisted as "". */
+    private fun encrypt(plainText: String): String =
+        if (plainText.isEmpty()) "" else cipher.encrypt(plainText)
 
     suspend fun softDeleteKey(id: Long, timestamp: Long = System.currentTimeMillis()): Long {
         try {

@@ -81,3 +81,4 @@
 - 2026-08-23: Generated comprehensive README.md file following create-readme skill instructions with GFM formatting, architecture overview, and GitHub admonition callouts. No other doc updates needed.
 - 2026-08-23: Trimmed redundant prose, badges, and duplicated sections in README.md for a clean, non-bloated structure. No other doc updates needed.
 - 2026-08-23: Added KeyNest app icon (assets/keynest_icon.png) to centered header in README.md per create-readme skill pattern. No other doc updates needed.
+- 2026-08-24: PR-3 crypto seam: extracted SecretCipher interface (impl KeystoreCipher), constructor-injected into ApiKeyRepository; deleted Robolectric classpath-sniffing test modes; encrypt/decrypt failures now throw typed SecretCipherException instead of persisting/returning "" (CONTEXT.md invariant). Removed CryptographyTest (real Keystore untestable under Robolectric; covered by FakeCipher repo tests). Docs: CONTEXT.md + domain.md updated.
