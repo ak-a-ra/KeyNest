@@ -111,7 +111,7 @@ class ApiKeyRepositoryTest {
     /** F7: decryption works directly per read without any cache layer. */
     @Test
     fun allKeys_decryptsRoundTrip() = runBlocking {
-        val repository = ApiKeyRepository(db.apiKeyDao())
+        val repository = ApiKeyRepository(db.apiKeyDao(), FakeCipher())
         db.apiKeyDao().insertAllKeys(listOf(item(1, "enc-sk-test-12345")))
 
         val first = repository.allKeys.first().single()
