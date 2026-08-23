@@ -51,6 +51,9 @@ jobs:
       - name: Build Debug APK
         run: gradle assembleDebug --no-daemon
 
+      - name: Build Release APK (unsigned, catches R8 failures)
+        run: gradle :app:assembleRelease --no-daemon
+
       - name: Prepare APK Output
         id: prepare_apk
         run: |

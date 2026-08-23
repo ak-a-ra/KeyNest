@@ -20,6 +20,5 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# Keep data models and Room entities to prevent R8 from breaking serialization
--keep class com.example.core.model.** { *; }
+# Keep Room entities to prevent R8 from breaking serialization
 -keep @androidx.room.Entity class * { *; }
