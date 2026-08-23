@@ -76,3 +76,5 @@
 - 2026-08-22: Resolved startup security initialization by updating VaultSecurity to modern MasterKey.Builder API and wrapping EncryptedSharedPreferences instantiation with Throwable fallback protection. Verified 100% build & unit test pass. No other doc updates needed.
 - 2026-08-22: Re-generated high-quality hero showcase image asset at assets/vault_showcase.png for KeyNest README display. No other doc updates needed.
 - 2026-08-22: Converted assets/vault_showcase.png into true 8-bit RGB PNG image format via ImageMagick to eliminate header encoding mismatch. No other doc updates needed.
+- 2026-08-22: Verified README.md header description under secrets contains modern Android development practices, Jetpack Compose, Material Design 3, and Keystore-backed AES-256-GCM encryption statement. No other doc updates needed.
+- 2026-08-22: Placed assets/vault_showcase.png directly below the intro paragraph in README.md as requested. No other doc updates needed.

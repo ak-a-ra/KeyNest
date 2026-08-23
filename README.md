@@ -1,9 +1,5 @@
 <!-- prettier-ignore -->
 <div align="center">
-  <p align="center">
-    <img src="./assets/vault_showcase.png" alt="KeyNest Vault Showcase" width="600" />
-  </p>
-
   # KeyNest
   
   *Ultra-fast, encrypted API Key & Developer Secret Vault for Android*
@@ -18,6 +14,8 @@
 </div>
 
 KeyNest is a single-activity Android vault for developers to securely store, organize, reveal, copy, import, and export API keys and related secrets. It uses modern Android development practices, featuring Jetpack Compose, Material Design 3, and Keystore-backed AES-256-GCM encryption.
+
+![KeyNest Vault Showcase](./assets/vault_showcase.png)
 
 ## Overview
 
