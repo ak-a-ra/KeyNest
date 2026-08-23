@@ -19,6 +19,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Configure git identity
+        run: |
+          git config --global user.name "opencode-bot"
+          git config --global user.email "opencode-bot@users.noreply.github.com"
+
       - name: Run OpenCode review
         uses: anomalyco/opencode/github@latest
         env:
