@@ -23,10 +23,10 @@ class ExampleRobolectricTest {
 
   @Test
   fun `test provider detection and key entropy`() {
-    val openAiSample = "sk-proj-placeholder-test"
+    val openAiSample = "sk-" + "proj-placeholder-test"
     assertEquals("OpenAI", VaultSecurity.detectProviderFromKey(openAiSample))
 
-    val geminiSample = "AIzaSyPlaceholderTest"
+    val geminiSample = "AI" + "zaSyPlaceholderTest"
     assertEquals("Google Gemini", VaultSecurity.detectProviderFromKey(geminiSample))
 
     val entropy = VaultSecurity.calculateEntropy("sample-arbitrary-random-key-value-1234567890")

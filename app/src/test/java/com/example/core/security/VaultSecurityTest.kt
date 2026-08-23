@@ -81,7 +81,7 @@ class VaultSecurityTest {
 
     @Test
     fun lastSelfCopiedKey_persistsAndClearsCorrectly() {
-        val keyText = "sk-proj-test-12345"
+        val keyText = "sample-copied-test-key-12345"
         VaultSecurity.setLastSelfCopiedKey(context, keyText)
 
         org.junit.Assert.assertEquals("Should retrieve stored self copied key", keyText, VaultSecurity.getLastSelfCopiedKey(context))

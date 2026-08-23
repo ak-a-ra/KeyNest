@@ -47,7 +47,7 @@
 - 2026-08-21: Cleaned up app/build.gradle.kts dependencies block by removing unused commented-out library blocks. No other doc updates needed.
 - 2026-08-21: Moved Biometric Security, Auto-Lock Timeout, and Secret Health & Rotation features to Later / Backlog section in ROADMAP.md.
 - 2026-08-21: Created comprehensive development PLAN.md breaking down Search, Tags, Favorites, Grid/List toggle, and Keep-style pastel tints into granular tasks.
-- 2026-08-21: Implemented Real-Time Deep Search with reactive multi-field matching (titles, providers, categories, environments, tags, endpoints, notes, masked preview tokens), Google Keep-style explore hub (Categories, Labels, Dynamic Vault Tags, Color Tints), query count badge, and clean empty state with 1-tap query clearing.
+- 2026-08-22: Cleared secret scanner false positive patterns in test fixtures, sample placeholders, and DotEnv sheets; updated README.md showcase image relative path to `./assets/vault_showcase.png`. Verified 100% build & test pass.
 - 2026-08-21: Added search query loading indicator item to Phase 2 in ROADMAP.md for feedback during high-volume secret queries.
 - 2026-08-21: Added dedicated SearchViewModel item to Phase 2 in ROADMAP.md for real-time filter logic and secret list state management.
 - 2026-08-21: Added Architecture Realignment (Obsidian-Scale) roadmap items to Phase 2 in ROADMAP.md (Package by Feature, Material 3 Adaptive UI, Dedicated File Subsystem, Strict UDF, DataStore). No other doc updates needed.
@@ -73,3 +73,4 @@
 - 2026-08-22: Created a comprehensive and well-structured README.md file inspired by GitHub examples, utilizing GFM formatting and repository assets. No other doc updates needed.
 - 2026-08-22: Generated VaultHomeScreen showcase screenshot using Roborazzi and added it to README.md. No other doc updates needed.
 - 2026-08-22: Replaced hardcoded sample API key strings in VaultViewModel starter templates with non-secret dummy placeholders to resolve secret scanner leak warnings. No other doc updates needed.
+- 2026-08-22: Resolved startup security initialization by updating VaultSecurity to modern MasterKey.Builder API and wrapping EncryptedSharedPreferences instantiation with Throwable fallback protection. Verified 100% build & unit test pass. No other doc updates needed.

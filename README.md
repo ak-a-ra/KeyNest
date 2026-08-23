@@ -1,6 +1,8 @@
 <!-- prettier-ignore -->
 <div align="center">
-  <img src="assets/vault_showcase.png" alt="KeyNest Vault Showcase" align="center" width="600" style="border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+  <p align="center">
+    <img src="./assets/vault_showcase.png" alt="KeyNest Vault Showcase" width="600" />
+  </p>
 
   # KeyNest
   

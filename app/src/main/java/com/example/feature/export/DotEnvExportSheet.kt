@@ -293,12 +293,12 @@ fun DotEnvExportSheet(
                             onClick = {
                                 rawImportText = """
                                     # Production AI & Cloud Configuration
-                                    export NEXT_PUBLIC_OPENAI_API_KEY="sk-proj-prod987654321" # Primary model key
+                                    export NEXT_PUBLIC_OPENAI_API_KEY="sample_openai_key_prod_1234" # Primary model key
                                     OPENAI_BASE_URL="https://api.openai.com/v1"
-                                    export ANTHROPIC_KEY='sk-ant-api03-sample-claude';
-                                    STRIPE_TEST_KEY: "sk_test_stripe_auto_correct_sample"
-                                    AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-                                    AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+                                    export ANTHROPIC_KEY='sample_anthropic_key_claude_1234';
+                                    STRIPE_TEST_KEY: "sample_stripe_test_key_1234"
+                                    AWS_ACCESS_KEY_ID=sample_aws_access_key_id_1234
+                                    AWS_SECRET_ACCESS_KEY=sample_aws_secret_access_key_1234
                                 """.trimIndent()
                             },
                             shape = RoundedCornerShape(8.dp),
@@ -350,7 +350,7 @@ fun DotEnvExportSheet(
                     onValueChange = { rawImportText = it },
                     placeholder = {
                         Text(
-                            text = "Paste .env, bash exports, or docker vars:\nexport OPENAI_API_KEY=\"sk-proj-...\"\nANTHROPIC_DEV_KEY='sk-ant-...';\nSTRIPE_KEY: \"sk_live_...\"\nAWS_ACCESS_KEY_ID=AKIA...\nAWS_SECRET_ACCESS_KEY=...",
+                            text = "Paste .env, bash exports, or docker vars:\nexport OPENAI_API_KEY=\"sample_openai_key_...\"\nANTHROPIC_DEV_KEY='sample_anthropic_key_...';\nSTRIPE_KEY: \"sample_stripe_key_...\"\nAWS_ACCESS_KEY_ID=sample_aws_key_id_...\nAWS_SECRET_ACCESS_KEY=...",
                             color = TextTertiary,
                             fontSize = 11.sp
                         )

@@ -18,7 +18,7 @@ class VaultBackupCryptoTest {
         ApiKeyItem(
             id = 1,
             title = "OpenAI Production",
-            apiKey = "sk-proj-test123456789",
+            apiKey = "test_sample_openai_key_123",
             secretKey = "org-sec-987654321",
             provider = "OpenAI",
             category = "AI & LLMs",
@@ -37,8 +37,8 @@ class VaultBackupCryptoTest {
         ApiKeyItem(
             id = 2,
             title = "Stripe Gateway",
-            apiKey = "rk_live_abc123def456",
-            secretKey = "whsec_hook123",
+            apiKey = "test_sample_stripe_key_123",
+            secretKey = "test_sample_webhook_secret_123",
             provider = "Stripe",
             category = "Payments",
             environment = "Production",
@@ -80,7 +80,7 @@ class VaultBackupCryptoTest {
         assertEquals(2, restoredKeys.size)
         val key1 = restoredKeys[0]
         assertEquals("OpenAI Production", key1.title)
-        assertEquals("sk-proj-test123456789", key1.apiKey)
+        assertEquals("test_sample_openai_key_123", key1.apiKey)
         assertEquals("org-sec-987654321", key1.secretKey)
         assertEquals("OpenAI", key1.provider)
         assertEquals("AI & LLMs", key1.category)
@@ -96,8 +96,8 @@ class VaultBackupCryptoTest {
 
         val key2 = restoredKeys[1]
         assertEquals("Stripe Gateway", key2.title)
-        assertEquals("rk_live_abc123def456", key2.apiKey)
-        assertEquals("whsec_hook123", key2.secretKey)
+        assertEquals("test_sample_stripe_key_123", key2.apiKey)
+        assertEquals("test_sample_webhook_secret_123", key2.secretKey)
     }
 
     @Test

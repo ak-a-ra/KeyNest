@@ -3,7 +3,7 @@ package com.example.core.security
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.MasterKey
 import com.example.core.model.ApiKeyItem
 import com.example.core.model.ProviderPresets
 import java.security.MessageDigest
@@ -92,17 +92,19 @@ object VaultSecurity {
         if (isRunningTests) {
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         } else {
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
             val sharedPreferences = EncryptedSharedPreferences.create(
-                PREFS_NAME,
-                masterKeyAlias,
                 context,
+                PREFS_NAME,
+                masterKey,
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
             DegradingSharedPreferences(sharedPreferences, isDegraded = false)
         }
-    } catch (_: Exception) {
+    } catch (_: Throwable) {
         // Security: Never fall back to plain SharedPreferences - if encryption fails,
         // enter a secure degraded/locked state. Do not crash or read/write sensitive data.
         val fallback = context.getSharedPreferences("keynest_fallback_prefs", Context.MODE_PRIVATE)

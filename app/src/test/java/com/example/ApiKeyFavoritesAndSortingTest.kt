@@ -71,7 +71,7 @@ class ApiKeyFavoritesAndSortingTest {
             provider = "OpenAI",
             category = "AI & LLMs",
             environment = "Production",
-            apiKey = "sk-proj-12345",
+            apiKey = "sample-openai-key-12345",
             tags = "prod, gpt4, llm"
         )
         val tags = com.example.core.util.ApiKeyFormatting.parseTags(key.tags)
