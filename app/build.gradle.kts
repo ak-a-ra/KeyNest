@@ -66,6 +66,19 @@ android {
     buildConfig = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
+  // AGP 9 Kotlin-DSL accessor above may be unreliable here; keep the Groovy-builder form as well.
+  android.withGroovyBuilder {
+    "testOptions" {
+      "unitTests" {
+        setProperty("includeAndroidResources", true)
+      }
+    }
+  }
+  sourceSets {
+    // Robolectric migration tests read schemas from app assets via MigrationTestHelper's
+    // targetContext fallback; debug-only so release APK stays schema-free.
+    getByName("debug") { assets.srcDir("$projectDir/schemas") }
+  }
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true
@@ -117,18 +130,4 @@ dependencies {
 
 }
 
-// Expose exported Room schemas to Robolectric's MigrationTestHelper as test assets.
-tasks.register<Copy>("copyRoomSchemasForTests") {
-  from(layout.projectDirectory.dir("schemas"))
-  into(layout.projectDirectory.dir("src/test/assets/schemas"))
-}
-tasks.named("preBuild") { dependsOn("copyRoomSchemasForTests") }
 
-// AGP 9 Kotlin-DSL accessors for testOptions.unitTests are broken here; go through Groovy builder.
-android.withGroovyBuilder {
-  "testOptions" {
-    "unitTests" {
-      setProperty("includeAndroidResources", true)
-    }
-  }
-}
