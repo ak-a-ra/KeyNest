@@ -19,7 +19,7 @@ class AppDatabaseMigrationTest {
     @get:Rule
     val helper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
-        AppDatabase::class.java,
+        "schemas", // copied to test assets by copyRoomSchemasForTests
     )
 
     @Test

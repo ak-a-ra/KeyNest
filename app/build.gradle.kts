@@ -66,10 +66,6 @@ android {
     buildConfig = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
-  sourceSets {
-    // Expose exported Room schemas to unit tests as assets (MigrationTestHelper reads them)
-    getByName("test") { assets.srcDir("$projectDir/schemas") }
-  }
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true
