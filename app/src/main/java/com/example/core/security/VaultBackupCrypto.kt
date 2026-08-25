@@ -121,10 +121,19 @@ object VaultBackupCrypto {
             if (app != APP_IDENTIFIER) {
                 return Result.failure(IllegalArgumentException("File is not a valid KeyNest backup"))
             }
+            val version = json.optInt("version", -1)
+            if (version != BACKUP_VERSION) {
+                return Result.failure(IllegalArgumentException("Unsupported backup version"))
+            }
             val saltBase64 = json.getString("salt")
             val ivBase64 = json.getString("iv")
             val payloadBase64 = json.getString("payload")
-            val iterations = json.optInt("iterations", ITERATIONS)
+            // ponytail: floor at current constant; attacker-supplied lower counts weaken KDF.
+            // Allow higher counts so future stronger backups stay forward-compatible.
+            val iterations = json.getInt("iterations")
+            if (iterations < ITERATIONS) {
+                return Result.failure(SecurityException("Invalid backup parameters"))
+            }
 
             val salt = Base64.decode(saltBase64, Base64.NO_WRAP)
             val iv = Base64.decode(ivBase64, Base64.NO_WRAP)
