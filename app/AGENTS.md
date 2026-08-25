@@ -16,7 +16,7 @@ This contract governs the `/app` module: Android build configs, manifest, resour
 - **Namespace & ID:** Keep `namespace = "com.example"` unchanged; `applicationId` must stay unique.
 - **Zero Plaintext Backups:** Keep `android:allowBackup="false"` and `android:fullBackupContent="false"` in `AndroidManifest.xml`.
 - **Icon Integrity:** Custom adaptive launcher icon (`ic_launcher_foreground.xml`, `ic_launcher_background.xml`, `ic_launcher_keynest.jpg`) must remain configured.
-- **Test Integrity:** Never delete or bypass unit/Robolectric test suites. Verify `./gradlew test` passes on changes.
+- **Test Integrity:** Never delete or bypass unit/Robolectric test suites. Verify `./gradlew testDebugUnitTest` passes on changes.
 
 ## Child DOX Index
 

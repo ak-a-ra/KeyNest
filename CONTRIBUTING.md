@@ -35,7 +35,7 @@ cd KeyNest
 ./gradlew assembleDebug
 
 # Run unit tests
-./gradlew test
+./gradlew testDebugUnitTest
 ```
 
 ---
