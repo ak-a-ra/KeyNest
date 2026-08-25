@@ -7,7 +7,7 @@ Single-activity Kotlin/Compose Android app.
 
 - **Tech Stack:** Kotlin, Jetpack Compose, Android (Material Design 3)
 - **Build Command:** `./gradlew assembleDebug` or `compile_applet`
-- **Test Command:** `./gradlew test`
+- **Test Command:** `./gradlew testDebugUnitTest` (CI verify gate runs this; `./gradlew test` also covers release-variant tests)
 
 ## Code philosophy — ponytail (YAGNI-first)
 
