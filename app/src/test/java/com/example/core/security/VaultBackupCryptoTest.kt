@@ -204,6 +204,35 @@ class VaultBackupCryptoTest {
     }
 
     @Test
+    fun createBackup_zeroesPassphraseArrayOnSuccess() {
+        val password = "ZeroMe123!".toCharArray()
+        val original = password.copyOf()
+        VaultBackupCrypto.createEncryptedBackup(testKeys, password)
+        assertTrue("Passphrase must be zeroed after create", password.all { it == '\u0000' })
+        assertFalse("Original copy proves array was non-empty", original.all { it == '\u0000' })
+    }
+
+    @Test
+    fun restoreBackup_zeroesPassphraseArrayOnSuccess() {
+        val createPw = "RestoreZero123!".toCharArray()
+        val backup = VaultBackupCrypto.createEncryptedBackup(testKeys, createPw).getOrThrow()
+        val restorePw = "RestoreZero123!".toCharArray()
+        VaultBackupCrypto.restoreEncryptedBackup(backup, restorePw)
+        assertTrue("Passphrase must be zeroed after restore", restorePw.all { it == '\u0000' })
+    }
+
+    @Test
+    fun createBackup_zeroesPassphraseArrayOnFailure() {
+        val password = "ValidPassword123".toCharArray()
+        val backup = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+        // Tamper backup so restore fails via AEADBadTagException path
+        val tampered = backup.replace("payload\": \"", "payload\": \"AA==")
+        val wrong = "WrongPassword999".toCharArray()
+        VaultBackupCrypto.restoreEncryptedBackup(tampered, wrong)
+        assertTrue("Passphrase must be zeroed even on failure", wrong.all { it == '\u0000' })
+    }
+
+    @Test
     fun restoreBackup_withUnsupportedVersion_failsWithClearError() {
         val password = "ValidPassword123".toCharArray()
         val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
