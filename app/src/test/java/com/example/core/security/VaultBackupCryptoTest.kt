@@ -179,6 +179,31 @@ class VaultBackupCryptoTest {
     }
 
     @Test
+    fun restoreBackup_withMissingIterationCount_rejected() {
+        val password = "ValidPassword123".toCharArray()
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+
+        val crafted = JSONObject(backupPayload).remove("iterations").toString()
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password)
+
+        assertFalse("Missing iteration count must be rejected", restoreResult.isSuccess)
+        assertTrue(restoreResult.exceptionOrNull() is SecurityException)
+    }
+
+    @Test
+    fun restoreBackup_withExcessiveIterationCount_rejected() {
+        val password = "ValidPassword123".toCharArray()
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+
+        // KDF DoS guard: absurdly high rounds must not be derivable from the file.
+        val crafted = JSONObject(backupPayload).put("iterations", Int.MAX_VALUE).toString()
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password)
+
+        assertFalse("Over-cap iteration count must be rejected", restoreResult.isSuccess)
+        assertTrue(restoreResult.exceptionOrNull() is SecurityException)
+    }
+
+    @Test
     fun restoreBackup_withUnsupportedVersion_failsWithClearError() {
         val password = "ValidPassword123".toCharArray()
         val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
