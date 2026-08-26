@@ -16,6 +16,7 @@ object VaultBackupCrypto {
     private const val PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA256"
     private const val CIPHER_TRANSFORMATION = "AES/GCM/NoPadding"
     private const val ITERATIONS = 100_000
+    private const val MAX_ITERATIONS = 10_000_000
     private const val KEY_LENGTH_BITS = 256
     private const val SALT_LENGTH_BYTES = 16
     private const val IV_LENGTH_BYTES = 12
@@ -121,10 +122,20 @@ object VaultBackupCrypto {
             if (app != APP_IDENTIFIER) {
                 return Result.failure(IllegalArgumentException("File is not a valid KeyNest backup"))
             }
+            val version = json.optInt("version", -1)
+            if (version != BACKUP_VERSION) {
+                return Result.failure(IllegalArgumentException("Unsupported backup version"))
+            }
             val saltBase64 = json.getString("salt")
             val ivBase64 = json.getString("iv")
             val payloadBase64 = json.getString("payload")
-            val iterations = json.optInt("iterations", ITERATIONS)
+            // ponytail: floor+cap on file-supplied iterations — attacker low counts weaken
+            // KDF, absurd high counts enable DoS; generous cap keeps future stronger
+            // backups forward-compatible.
+            val iterations = json.optInt("iterations", -1)
+            if (iterations < ITERATIONS || iterations > MAX_ITERATIONS) {
+                return Result.failure(SecurityException("Invalid backup parameters"))
+            }
 
             val salt = Base64.decode(saltBase64, Base64.NO_WRAP)
             val iv = Base64.decode(ivBase64, Base64.NO_WRAP)

@@ -1,6 +1,7 @@
 package com.example.core.security
 
 import com.example.core.model.ApiKeyItem
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -128,5 +129,89 @@ class VaultBackupCryptoTest {
     fun createBackup_withEmptyPassword_fails() {
         val result = VaultBackupCrypto.createEncryptedBackup(testKeys, charArrayOf())
         assertFalse("Empty password should fail", result.isSuccess)
+    }
+
+    @Test
+    fun restoreBackup_withLowIterationCount_rejectedBeforeKeyDerivation() {
+        val password = "ValidPassword123".toCharArray()
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+
+        val crafted = JSONObject(backupPayload).put("iterations", 1000).toString()
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password)
+
+        assertFalse("Low iteration backup must be rejected", restoreResult.isSuccess)
+        assertTrue(
+            restoreResult.exceptionOrNull() is SecurityException
+        )
+    }
+
+    @Test
+    fun restoreBackup_withHigherIterationCount_stillRestores() {
+        val password = "ValidPassword123".toCharArray()
+        // Craft a backup encrypted at a higher-than-current iteration count to
+        // verify the floor check permits stronger, forward-compatible backups.
+        val salt = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
+        val iv = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+        val key = javax.crypto.spec.SecretKeySpec(
+            factory.generateSecret(
+                javax.crypto.spec.PBEKeySpec(password, salt, 200_000, 256)
+            ).encoded,
+            "AES"
+        )
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key, javax.crypto.spec.GCMParameterSpec(128, iv))
+        val payloadBytes = cipher.doFinal("[]".toByteArray())
+
+        fun enc(b: ByteArray) = android.util.Base64.encodeToString(b, android.util.Base64.NO_WRAP)
+        val crafted = JSONObject().apply {
+            put("app", VaultBackupCrypto.APP_IDENTIFIER)
+            put("version", VaultBackupCrypto.BACKUP_VERSION)
+            put("salt", enc(salt))
+            put("iv", enc(iv))
+            put("iterations", 200_000)
+            put("payload", enc(payloadBytes))
+        }.toString()
+
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password)
+        assertTrue("Higher iteration count must still restore", restoreResult.isSuccess)
+        assertEquals(0, restoreResult.getOrThrow().size)
+    }
+
+    @Test
+    fun restoreBackup_withMissingIterationCount_rejected() {
+        val password = "ValidPassword123".toCharArray()
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+
+        val crafted = JSONObject(backupPayload).apply { remove("iterations") }.toString()
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password)
+
+        assertFalse("Missing iteration count must be rejected", restoreResult.isSuccess)
+        assertTrue(restoreResult.exceptionOrNull() is SecurityException)
+    }
+
+    @Test
+    fun restoreBackup_withExcessiveIterationCount_rejected() {
+        val password = "ValidPassword123".toCharArray()
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+
+        // KDF DoS guard: absurdly high rounds must not be derivable from the file.
+        val crafted = JSONObject(backupPayload).put("iterations", Int.MAX_VALUE).toString()
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password)
+
+        assertFalse("Over-cap iteration count must be rejected", restoreResult.isSuccess)
+        assertTrue(restoreResult.exceptionOrNull() is SecurityException)
+    }
+
+    @Test
+    fun restoreBackup_withUnsupportedVersion_failsWithClearError() {
+        val password = "ValidPassword123".toCharArray()
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+
+        val future = JSONObject(backupPayload).put("version", 999).toString()
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(future, password)
+
+        assertFalse("Unsupported version must fail", restoreResult.isSuccess)
+        assertEquals("Unsupported backup version", restoreResult.exceptionOrNull()?.message)
     }
 }
