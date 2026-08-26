@@ -57,7 +57,7 @@ com.example/
 ```
 
 | Layer | Tech |
-|---|---|
+| --- | --- |
 | UI | Kotlin, Jetpack Compose, Material 3, Navigation Compose |
 | Persistence | Room (KSP), EncryptedSharedPreferences |
 | Crypto | Android Keystore AES-256-GCM, PBKDF2 (100k rounds) |
@@ -72,7 +72,7 @@ You need Android SDK 36 and JDK 17+.
 git clone https://github.com/ak-a-ra/KeyNest.git
 cd KeyNest
 ./gradlew assembleDebug      # debug APK
-./gradlew test               # unit tests
+./gradlew testDebugUnitTest  # unit tests (CI verify gate)
 ```
 
 Debug builds sign with the bundled `debug.keystore`. Release builds read signing config from `KEYSTORE_PATH`, `STORE_PASSWORD`, and `KEY_PASSWORD` environment variables.

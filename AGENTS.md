@@ -7,7 +7,7 @@ Single-activity Kotlin/Compose Android app.
 
 - **Tech Stack:** Kotlin, Jetpack Compose, Android (Material Design 3)
 - **Build Command:** `./gradlew assembleDebug` or `compile_applet`
-- **Test Command:** `./gradlew test`
+- **Test Command:** `./gradlew testDebugUnitTest` (CI verify gate runs this; `./gradlew test` also covers release-variant tests)
 
 ## Code philosophy — ponytail (YAGNI-first)
 
@@ -36,7 +36,7 @@ To ensure accurate, complete, and resilient changes, **always** execute this thr
    - Update `PLAN.md` with current status and `LOG.md` with action records.
 2. **Layer 2: Enable Tools (Automated Verification)**
    - **Build:** Run `compile_applet` to ensure compilation success.
-   - **Test:** Run `./gradlew test` to ensure unit & Robolectric tests pass.
+   - **Test:** Run `./gradlew testDebugUnitTest` to ensure unit & Robolectric tests pass.
    - **Lint:** Run `lint_applet` or `./gradlew lint` if static analysis is required.
    - **Gate:** Use the `no-mistakes` pre-push pipeline to ensure codebase constraints are met.
 3. **Layer 3: Human Validation Zones (Mandatory Stops)**
@@ -128,7 +128,7 @@ The repository enforces pre-push quality gates via `no-mistakes` (`.no-mistakes.
    - **Intent Validation:** Parse work objective & create isolated disposable git worktree.
    - **Rebase:** Rebase feature branch cleanly against target default branch.
    - **Review:** Automated code quality & security review (blocks secrets, bad practices, or unvalidated code).
-   - **Test:** Run `./gradlew test` test suite (unit + Robolectric tests).
+   - **Test:** Run `./gradlew testDebugUnitTest` test suite (unit + Robolectric tests).
    - **Document:** Validate and sync the 6 core documentation files (`README.md`, `PLAN.md`, `ROADMAP.md`, `LOG.md`, `AGENTS.md`, `CONTEXT.md`).
    - **Lint:** Run `./gradlew lint` across Android sources.
    - **Push & PR:** Forward clean commits to upstream remote and open Pull Request.
@@ -165,6 +165,7 @@ The repository enforces pre-push quality gates via `no-mistakes` (`.no-mistakes.
 
 Every meaningful change requires a DOX pass before the task is complete.
 Update the closest owning AGENTS.md when a change affects:
+
 - purpose, scope, ownership, or responsibilities
 - durable structure, contracts, workflows, or operating rules
 - required inputs, outputs, permissions, constraints, side effects, or artifacts
