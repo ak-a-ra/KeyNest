@@ -58,10 +58,11 @@ class VaultBackupCryptoTest {
 
     @Test
     fun createAndRestoreBackup_withCorrectPassword_restoresAllKeysPrecisely() {
-        val password = "SuperSecurePassword123!".toCharArray()
+        val createPassword = "SuperSecurePassword123!".toCharArray()
+        val restorePassword = "SuperSecurePassword123!".toCharArray()
 
         // 1. Create encrypted backup
-        val backupResult = VaultBackupCrypto.createEncryptedBackup(testKeys, password)
+        val backupResult = VaultBackupCrypto.createEncryptedBackup(testKeys, createPassword)
         assertTrue("Backup creation should succeed", backupResult.isSuccess)
         val backupPayload = backupResult.getOrThrow()
 
@@ -74,7 +75,7 @@ class VaultBackupCryptoTest {
         assertEquals(VaultBackupCrypto.BACKUP_VERSION, metadata.version)
 
         // 3. Restore backup
-        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(backupPayload, password)
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(backupPayload, restorePassword)
         assertTrue("Restore should succeed with correct password", restoreResult.isSuccess)
         val restoredKeys = restoreResult.getOrThrow()
 
@@ -115,13 +116,13 @@ class VaultBackupCryptoTest {
 
     @Test
     fun restoreBackup_withTamperedPayload_failsGcmAuthentication() {
-        val password = "ValidPassword123".toCharArray()
-        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+        val password = "ValidPassword123"
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password.toCharArray()).getOrThrow()
 
         // Tamper with payload by corrupting characters
         val tamperedPayload = backupPayload.replace("payload\": \"", "payload\": \"AA==")
 
-        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(tamperedPayload, password)
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(tamperedPayload, password.toCharArray())
         assertFalse("Tampered backup should fail authentication", restoreResult.isSuccess)
     }
 
@@ -133,11 +134,11 @@ class VaultBackupCryptoTest {
 
     @Test
     fun restoreBackup_withLowIterationCount_rejectedBeforeKeyDerivation() {
-        val password = "ValidPassword123".toCharArray()
-        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+        val password = "ValidPassword123"
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password.toCharArray()).getOrThrow()
 
         val crafted = JSONObject(backupPayload).put("iterations", 1000).toString()
-        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password)
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password.toCharArray())
 
         assertFalse("Low iteration backup must be rejected", restoreResult.isSuccess)
         assertTrue(
@@ -180,11 +181,11 @@ class VaultBackupCryptoTest {
 
     @Test
     fun restoreBackup_withMissingIterationCount_rejected() {
-        val password = "ValidPassword123".toCharArray()
-        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+        val password = "ValidPassword123"
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password.toCharArray()).getOrThrow()
 
         val crafted = JSONObject(backupPayload).apply { remove("iterations") }.toString()
-        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password)
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password.toCharArray())
 
         assertFalse("Missing iteration count must be rejected", restoreResult.isSuccess)
         assertTrue(restoreResult.exceptionOrNull() is SecurityException)
@@ -192,12 +193,12 @@ class VaultBackupCryptoTest {
 
     @Test
     fun restoreBackup_withExcessiveIterationCount_rejected() {
-        val password = "ValidPassword123".toCharArray()
-        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+        val password = "ValidPassword123"
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password.toCharArray()).getOrThrow()
 
         // KDF DoS guard: absurdly high rounds must not be derivable from the file.
         val crafted = JSONObject(backupPayload).put("iterations", Int.MAX_VALUE).toString()
-        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password)
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password.toCharArray())
 
         assertFalse("Over-cap iteration count must be rejected", restoreResult.isSuccess)
         assertTrue(restoreResult.exceptionOrNull() is SecurityException)
@@ -234,11 +235,11 @@ class VaultBackupCryptoTest {
 
     @Test
     fun restoreBackup_withUnsupportedVersion_failsWithClearError() {
-        val password = "ValidPassword123".toCharArray()
-        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
+        val password = "ValidPassword123"
+        val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password.toCharArray()).getOrThrow()
 
         val future = JSONObject(backupPayload).put("version", 999).toString()
-        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(future, password)
+        val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(future, password.toCharArray())
 
         assertFalse("Unsupported version must fail", restoreResult.isSuccess)
         assertEquals("Unsupported backup version", restoreResult.exceptionOrNull()?.message)
