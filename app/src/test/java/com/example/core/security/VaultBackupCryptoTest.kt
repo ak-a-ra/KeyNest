@@ -183,7 +183,7 @@ class VaultBackupCryptoTest {
         val password = "ValidPassword123".toCharArray()
         val backupPayload = VaultBackupCrypto.createEncryptedBackup(testKeys, password).getOrThrow()
 
-        val crafted = JSONObject(backupPayload).remove("iterations").toString()
+        val crafted = JSONObject(backupPayload).apply { remove("iterations") }.toString()
         val restoreResult = VaultBackupCrypto.restoreEncryptedBackup(crafted, password)
 
         assertFalse("Missing iteration count must be rejected", restoreResult.isSuccess)
