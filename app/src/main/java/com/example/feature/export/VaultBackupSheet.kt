@@ -255,6 +255,7 @@ private fun ExportBackupView(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    // ponytail: String passphrase state is immutable and cannot be zeroed after use; migrate Compose UI state to CharArray state end-to-end in #30 to allow explicit buffer wiping.
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
@@ -534,6 +535,7 @@ private fun RestoreBackupView(
 
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var backupMetadata by remember { mutableStateOf<VaultBackupCrypto.BackupMetadata?>(null) }
+    // ponytail: String passphrase state is immutable and cannot be zeroed after use; migrate Compose UI state to CharArray state end-to-end in #30 to allow explicit buffer wiping.
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
     var replaceExisting by remember { mutableStateOf(false) }

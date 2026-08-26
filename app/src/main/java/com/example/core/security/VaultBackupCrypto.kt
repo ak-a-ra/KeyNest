@@ -36,6 +36,9 @@ object VaultBackupCrypto {
         if (passphrase.isEmpty()) {
             return Result.failure(IllegalArgumentException("Passphrase cannot be empty"))
         }
+        var keySpec: PBEKeySpec? = null
+        var secretKeyBytes: ByteArray? = null
+        var plaintextBytes: ByteArray? = null
         return try {
             val salt = ByteArray(SALT_LENGTH_BYTES)
             val iv = ByteArray(IV_LENGTH_BYTES)
@@ -43,9 +46,9 @@ object VaultBackupCrypto {
             random.nextBytes(salt)
             random.nextBytes(iv)
 
-            val keySpec = PBEKeySpec(passphrase, salt, ITERATIONS, KEY_LENGTH_BITS)
+            keySpec = PBEKeySpec(passphrase, salt, ITERATIONS, KEY_LENGTH_BITS)
             val factory = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM)
-            val secretKeyBytes = factory.generateSecret(keySpec).encoded
+            secretKeyBytes = factory.generateSecret(keySpec).encoded
             val secretKey = SecretKeySpec(secretKeyBytes, "AES")
 
             val jsonArray = JSONArray()
@@ -70,7 +73,7 @@ object VaultBackupCrypto {
                 }
                 jsonArray.put(obj)
             }
-            val plaintextBytes = jsonArray.toString().toByteArray(Charsets.UTF_8)
+            plaintextBytes = jsonArray.toString().toByteArray(Charsets.UTF_8)
 
             val cipher = Cipher.getInstance(CIPHER_TRANSFORMATION)
             val gcmSpec = GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
@@ -92,6 +95,11 @@ object VaultBackupCrypto {
             Result.success(envelope.toString(2))
         } catch (e: Exception) {
             Result.failure(e)
+        } finally {
+            keySpec?.clearPassword()
+            secretKeyBytes?.fill(0)
+            plaintextBytes?.fill(0)
+            passphrase.fill('\u0000')
         }
     }
 
@@ -116,6 +124,9 @@ object VaultBackupCrypto {
         if (passphrase.isEmpty()) {
             return Result.failure(IllegalArgumentException("Passphrase cannot be empty"))
         }
+        var keySpec: PBEKeySpec? = null
+        var secretKeyBytes: ByteArray? = null
+        var decryptedBytes: ByteArray? = null
         return try {
             val json = JSONObject(backupContent)
             val app = json.optString("app", "")
@@ -141,15 +152,15 @@ object VaultBackupCrypto {
             val iv = Base64.decode(ivBase64, Base64.NO_WRAP)
             val encryptedBytes = Base64.decode(payloadBase64, Base64.NO_WRAP)
 
-            val keySpec = PBEKeySpec(passphrase, salt, iterations, KEY_LENGTH_BITS)
+            keySpec = PBEKeySpec(passphrase, salt, iterations, KEY_LENGTH_BITS)
             val factory = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM)
-            val secretKeyBytes = factory.generateSecret(keySpec).encoded
+            secretKeyBytes = factory.generateSecret(keySpec).encoded
             val secretKey = SecretKeySpec(secretKeyBytes, "AES")
 
             val cipher = Cipher.getInstance(CIPHER_TRANSFORMATION)
             val gcmSpec = GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
             cipher.init(Cipher.DECRYPT_MODE, secretKey, gcmSpec)
-            val decryptedBytes = cipher.doFinal(encryptedBytes)
+            decryptedBytes = cipher.doFinal(encryptedBytes)
             val plaintext = String(decryptedBytes, Charsets.UTF_8)
 
             val jsonArray = JSONArray(plaintext)
@@ -183,6 +194,11 @@ object VaultBackupCrypto {
             Result.failure(SecurityException("Incorrect password or corrupted backup file"))
         } catch (e: Exception) {
             Result.failure(e)
+        } finally {
+            keySpec?.clearPassword()
+            secretKeyBytes?.fill(0)
+            decryptedBytes?.fill(0)
+            passphrase.fill('\u0000')
         }
     }
 }
