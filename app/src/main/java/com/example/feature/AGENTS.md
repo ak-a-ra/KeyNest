@@ -16,3 +16,12 @@ This contract governs `com.example.feature.*`:
 - **Sensitive Clipboard:** Mask secrets by default with `PasswordVisualTransformation`; attach `EXTRA_IS_SENSITIVE` to clipboard copies.
 - **Unidirectional Data Flow (UDF):** UI screens consume `StateFlow` from `VaultViewModel` and emit events upward.
 - **Adaptive Layouts:** Support compact screens and tablet/foldable dual-pane views cleanly via `ListDetailPaneScaffold`.
+
+## Child DOX Index
+
+- [`vault/AGENTS.md`](vault/AGENTS.md) — Primary vault view, search bar, list/grid feed, drawer, trash bin, and ViewModel.
+- [`keymanagement/AGENTS.md`](keymanagement/AGENTS.md) — Add/Edit key sheet, extra secret fields, provider auto-detection, key details, and generator.
+- [`search/AGENTS.md`](search/AGENTS.md) — Real-time debounced search screen and dynamic tag filter hub.
+- [`export/AGENTS.md`](export/AGENTS.md) — Multi-language code snippet exporter, `.env` import/export sheet, and encrypted `.keynest` backup sheet.
+- [`settings/AGENTS.md`](settings/AGENTS.md) — Master PIN authentication, PIN settings sheet, and security audit sheet.
+

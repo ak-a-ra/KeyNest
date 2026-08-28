@@ -23,3 +23,13 @@ This contract governs `com.example.core.*`:
 ## Verification
 
 - Run unit tests in `app/src/test/java/com/example/core/` for any changes to repository, crypto, database, or backup logic.
+
+## Child DOX Index
+
+- [`database/AGENTS.md`](database/AGENTS.md) — Room database, migrations, and DAO flows.
+- [`security/AGENTS.md`](security/AGENTS.md) — Keystore AES-256-GCM field encryption, EncryptedSharedPreferences, PBKDF2 backup crypto.
+- [`model/AGENTS.md`](model/AGENTS.md) — Domain entities (`ApiKeyItem`) and provider presets.
+- [`repository/AGENTS.md`](repository/AGENTS.md) — Encryption persistence boundary (`ApiKeyRepository`).
+- [`files/AGENTS.md`](files/AGENTS.md) — Storage Access Framework (SAF) and file I/O operations (`VaultFileManager`).
+- [`designsystem/AGENTS.md`](designsystem/AGENTS.md) — Material 3 colors, typography, Keep card tints, and core components.
+

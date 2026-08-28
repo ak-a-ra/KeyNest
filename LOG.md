@@ -105,5 +105,7 @@
 - 2026-08-28: Removed noisy rules (empty-override, manual-loop-append) and added Compose accessibility & design system rules (text-size-dp, hardcoded-compose-color). No other doc updates needed.
 - 2026-08-28: Added 6 ast-grep Kotlin migration rules (findviewbyid-to-viewbinding, kotlin-synthetics-import, livedata-to-stateflow, rxjava-single-to-suspend, deprecated-synchronized-fn, string-format-to-template) under rules/. No other doc updates needed.
 - 2026-08-28: Fixed ast-grep scan findings: replaced force-unwraps (`!!`) with safe checks in AddEditKeySheet & PinLockScreen, and safe-casted Activity in Theme & ClipboardManager in VaultViewModel. No other doc updates needed.
+- 2026-08-28: Initialized complete DEEP DOX hierarchy with granular contracts across core sub-packages (database, security, model, repository, files, designsystem), feature modules (vault, keymanagement, search, export, settings), test suites, ADRs, agents, and rules, with parent Child DOX Indexes linked.
+
 
 

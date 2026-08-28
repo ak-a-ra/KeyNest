@@ -20,5 +20,7 @@ This contract governs the `/app` module: Android build configs, manifest, resour
 
 ## Child DOX Index
 
-- `src/main/java/com/example/core/AGENTS.md` — Database, security, models, repositories, files, util, designsystem.
-- `src/main/java/com/example/feature/AGENTS.md` — Compose screens, feature sheets, ViewModels, adaptive UI.
+- [`src/main/java/com/example/core/AGENTS.md`](src/main/java/com/example/core/AGENTS.md) — Database, security, models, repositories, files, util, designsystem.
+- [`src/main/java/com/example/feature/AGENTS.md`](src/main/java/com/example/feature/AGENTS.md) — Compose screens, feature sheets, ViewModels, adaptive UI.
+- [`src/test/AGENTS.md`](src/test/AGENTS.md) — Robolectric JVM unit tests, migration tests, crypto seam tests, Roborazzi screenshots.
+

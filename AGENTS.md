@@ -175,7 +175,23 @@ Update the closest owning AGENTS.md when a change affects:
 ### Child DOX Index
 
 - [`app/AGENTS.md`](app/AGENTS.md) — Application module, Android resources, manifest, build configurations, and test suites.
-- [`app/src/main/java/com/example/core/AGENTS.md`](app/src/main/java/com/example/core/AGENTS.md) — Database, Keystore security, models, repositories, files subsystem, and design system.
-- [`app/src/main/java/com/example/feature/AGENTS.md`](app/src/main/java/com/example/feature/AGENTS.md) — Jetpack Compose screens, ViewModels, adaptive navigation, and user interactions.
+  - [`app/src/main/java/com/example/core/AGENTS.md`](app/src/main/java/com/example/core/AGENTS.md) — Database, security, models, repositories, files subsystem, and design system.
+    - [`app/src/main/java/com/example/core/database/AGENTS.md`](app/src/main/java/com/example/core/database/AGENTS.md) — Room DB entities, migrations, and DAOs.
+    - [`app/src/main/java/com/example/core/security/AGENTS.md`](app/src/main/java/com/example/core/security/AGENTS.md) — Keystore AES-256-GCM, EncryptedSharedPreferences, backup crypto.
+    - [`app/src/main/java/com/example/core/model/AGENTS.md`](app/src/main/java/com/example/core/model/AGENTS.md) — Domain entity models and provider presets.
+    - [`app/src/main/java/com/example/core/repository/AGENTS.md`](app/src/main/java/com/example/core/repository/AGENTS.md) — Encryption persistence boundary (`ApiKeyRepository`).
+    - [`app/src/main/java/com/example/core/files/AGENTS.md`](app/src/main/java/com/example/core/files/AGENTS.md) — Storage Access Framework (SAF) and file I/O operations (`VaultFileManager`).
+    - [`app/src/main/java/com/example/core/designsystem/AGENTS.md`](app/src/main/java/com/example/core/designsystem/AGENTS.md) — Material 3 theme, Keep card tints, and design components.
+  - [`app/src/main/java/com/example/feature/AGENTS.md`](app/src/main/java/com/example/feature/AGENTS.md) — Jetpack Compose screens, ViewModels, adaptive navigation, and user interactions.
+    - [`app/src/main/java/com/example/feature/vault/AGENTS.md`](app/src/main/java/com/example/feature/vault/AGENTS.md) — Main vault view, search bar, feeds, drawer, trash bin, ViewModel.
+    - [`app/src/main/java/com/example/feature/keymanagement/AGENTS.md`](app/src/main/java/com/example/feature/keymanagement/AGENTS.md) — Add/Edit key sheets, extra secret fields, key details, generator.
+    - [`app/src/main/java/com/example/feature/search/AGENTS.md`](app/src/main/java/com/example/feature/search/AGENTS.md) — Debounced search screen and tag exploration hub.
+    - [`app/src/main/java/com/example/feature/export/AGENTS.md`](app/src/main/java/com/example/feature/export/AGENTS.md) — Snippet exporter, `.env` sheet, and encrypted `.keynest` backup sheet.
+    - [`app/src/main/java/com/example/feature/settings/AGENTS.md`](app/src/main/java/com/example/feature/settings/AGENTS.md) — Master PIN authentication and security audit.
+  - [`app/src/test/AGENTS.md`](app/src/test/AGENTS.md) — Robolectric JVM unit tests, DB migration tests, and Roborazzi screenshot tests.
 - [`docs/AGENTS.md`](docs/AGENTS.md) — Architecture Decision Records (ADRs), agent guidelines, and setup documentation.
+  - [`docs/adr/AGENTS.md`](docs/adr/AGENTS.md) — Architecture Decision Records (ADRs).
+  - [`docs/agents/AGENTS.md`](docs/agents/AGENTS.md) — Agent domain specifications and issue tracking workflows.
+- [`rules/AGENTS.md`](rules/AGENTS.md) — Custom ast-grep structural static linting rules for Kotlin.
 - Root-owned files: `README.md`, `ROADMAP.md`, `metadata.json`, `build.gradle.kts`, `settings.gradle.kts`, `LOG.md`, `PLAN.md`, `CONTEXT.md`.
+
