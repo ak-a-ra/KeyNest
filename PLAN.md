@@ -89,6 +89,8 @@
   - **Description**: Add dynamic `ExtraSecretFieldsSection` in `AddEditKeySheet` allowing users to add custom secret boxes (e.g. Client Secret, Private Key, Webhook Secret) with password masking, visibility toggles, and paste buttons.
 - [x] **Task 6.2: Batch Multi-Key Entry Mode**
   - **Description**: Add segment tab switcher in `AddEditKeySheet` for "Batch Multi-Key Boxes" with dynamic `BatchKeyBoxList`, auto-provider detection, and "Save All Keys" batch insertion via Room DB.
+- [x] **Task 6.3: Base Endpoint URL & Collapsible Advanced Settings**
+  - **Description**: Positioned Base Endpoint URL directly below API Key input field with auto-fill on provider selection/detection; restored collapsible "Advanced Settings" toggle (collapsing Org/Project ID, Tags, Developer Notes, Rotation Days) for a clean, customizable form layout.
 
 
 - [x] **Package by Feature Restructuring**: Migrated files into `feature.*` and `core.*` modules, strictly separating domain concerns.
