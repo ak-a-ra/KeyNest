@@ -110,4 +110,14 @@
 - [x] **Task 7.3: SQLite FTS4 & Compose Optimization** *(Moved to ROADMAP.md Phase 2)*
 
 ---
-**Status:** ✅ ALL TASKS IN THIS PLAN ARE COMPLETED OR DEFERRED. PLAN CLOSED.
+---
+
+### 8. 📦 Github Import Migration Task
+*Verify and finalize the imported GitHub repository to ensure seamless builds and alignment with AI Studio constraints.*
+
+- [x] **Task 8.1: Run `compile_applet` to verify compilation status.**
+- [x] **Task 8.2: Verify and align signing configurations and Gradle settings with AI Studio constraints.**
+- [x] **Task 8.3: Run unit and Robolectric tests (`./gradlew testDebugUnitTest`).**
+- [x] **Task 8.4: Sync DOX documentation files.**
+
+**Status:** ✅ ALL TASKS COMPLETED. IMPORT MIGRATION SUCCESSFUL.
