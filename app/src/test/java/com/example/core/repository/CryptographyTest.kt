@@ -1,6 +1,6 @@
 package com.example.core.repository
 
-import com.example.core.security.Cryptography
+import com.example.core.security.KeystoreCipher
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,8 +14,8 @@ class CryptographyTest {
     @Test
     fun encryptAndDecrypt_preservesText() {
         val original = "super_secret_test_key_123"
-        val encrypted = Cryptography.encrypt(original)
-        val decrypted = Cryptography.decrypt(encrypted)
+        val encrypted = KeystoreCipher.encrypt(original)
+        val decrypted = KeystoreCipher.decrypt(encrypted)
         
         assertEquals("Decrypted text must match original", original, decrypted)
     }
