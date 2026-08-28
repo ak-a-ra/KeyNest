@@ -6,7 +6,7 @@ This contract governs `com.example.feature.*`:
 - `feature/vault`: Home screen (`VaultHomeScreen`), adaptive list-detail scaffold, drawer navigation, API key cards, empty states, trash bin view (`VaultTrashView`), and `VaultViewModel`.
 - `feature/keymanagement`: Add/Edit sheet (`AddEditKeySheet`), form sections, key detail view (`KeyDetailSheet`), generator sheet (`KeyGeneratorSheet`), expiration cards.
 - `feature/search`: Real-time query screen (`SearchScreen`), category/tag/color exploration hub.
-- `feature/export`: Developer code snippet generator (`DeveloperCodeExporterScreen`), `.env` import/export sheet (`DotEnvExportSheet`), and encrypted backup sheet (`VaultBackupSheet`).
+- `feature/export`: `.env` import/export sheet (`DotEnvExportSheet`) and encrypted backup sheet (`VaultBackupSheet`).
 - `feature/settings`: PIN lock authentication screen (`PinLockScreen`), security audit sheet (`SecurityAuditSheet`).
 
 ## UI & Accessibility Rules
@@ -22,6 +22,5 @@ This contract governs `com.example.feature.*`:
 - [`vault/AGENTS.md`](vault/AGENTS.md) — Primary vault view, search bar, list/grid feed, drawer, trash bin, and ViewModel.
 - [`keymanagement/AGENTS.md`](keymanagement/AGENTS.md) — Add/Edit key sheet, extra secret fields, provider auto-detection, key details, and generator.
 - [`search/AGENTS.md`](search/AGENTS.md) — Real-time debounced search screen and dynamic tag filter hub.
-- [`export/AGENTS.md`](export/AGENTS.md) — Multi-language code snippet exporter, `.env` import/export sheet, and encrypted `.keynest` backup sheet.
+- [`export/AGENTS.md`](export/AGENTS.md) — `.env` import/export sheet and encrypted `.keynest` backup sheet.
 - [`settings/AGENTS.md`](settings/AGENTS.md) — Master PIN authentication, PIN settings sheet, and security audit sheet.
-

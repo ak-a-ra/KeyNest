@@ -1,5 +1,7 @@
 # KeyNest Development Log
 
+- 2026-08-28: Executed Ponytail audit dead-code elimination: removed unused DeveloperCodeExporterScreen (315 lines), unused core components (StateWrapper, SecureTextField, VaultButton), and legacy serialization methods from ApiKeyFormatting. Cleaned DOX contracts across designsystem and export modules. 100% build & test pass. No other doc updates needed.
+
 - 2026-08-28: Completed factual codebase audit across CONTEXT.md and LOG.md; updated ROADMAP.md to reflect verified implementations (Clipboard 30s auto-clear countdown, Flow distinctUntilChanged, and R8 minification/shrinking in release builds).
 - 2026-08-28: Audited and verified full JSON-based encrypted backup and restore engine (VaultBackupCrypto, VaultBackupSheet, VaultFileManager). Confirmed end-to-end PBKDF2-AES-GCM encryption, SAF integration, metadata inspection, and merge/replace restore strategies with 100% test pass. No other doc updates needed.
 - 2026-08-28: Resolved batch key title collision edge case in AddEditKeySheet.kt by adding automatic numerical indexing for duplicate default provider titles during batch saves.
