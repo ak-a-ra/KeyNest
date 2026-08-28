@@ -192,10 +192,21 @@ object VaultSecurity {
         return false
     }
 
+    private fun ByteArray.toHexString(): String {
+        val hexChars = "0123456789abcdef"
+        val chars = CharArray(size * 2)
+        for (i in indices) {
+            val v = this[i].toInt() and 0xFF
+            chars[i * 2] = hexChars[v ushr 4]
+            chars[i * 2 + 1] = hexChars[v and 0x0F]
+        }
+        return String(chars)
+    }
+
     private fun hashPinWithSalt(pin: String, salt: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val hashBytes = digest.digest((pin + salt).toByteArray(Charsets.UTF_8))
-        return hashBytes.joinToString("") { "%02x".format(it) }
+        return hashBytes.toHexString()
     }
 
     /**
@@ -308,9 +319,8 @@ object VaultSecurity {
         }.ifEmpty { lower + numbers }
 
         val random = SecureRandom()
-        val randomString = (1..length)
-            .map { charPool[random.nextInt(charPool.length)] }
-            .joinToString("")
+        val chars = CharArray(length) { charPool[random.nextInt(charPool.length)] }
+        val randomString = String(chars)
 
         return if (prefix.isNotEmpty()) "$prefix$randomString" else randomString
     }
@@ -321,7 +331,7 @@ object VaultSecurity {
         val random = SecureRandom()
         val bytes = ByteArray(bytesCount)
         random.nextBytes(bytes)
-        return bytes.joinToString("") { "%02x".format(it) }
+        return bytes.toHexString()
     }
 
     fun exportToDotEnv(keys: List<ApiKeyItem>): String {

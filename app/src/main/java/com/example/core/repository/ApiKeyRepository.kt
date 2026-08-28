@@ -7,6 +7,7 @@ import com.example.core.security.SecretCipher
 import com.example.core.security.SecretCipherException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.concurrent.ConcurrentHashMap
 
 /** Shown in place of a secret whose ciphertext cannot be decrypted (e.g. invalidated Keystore key). */
 const val UNDECRYPTABLE_PLACEHOLDER = "<undecryptable>"
@@ -15,15 +16,20 @@ class ApiKeyRepository(
     private val dao: ApiKeyDao,
     private val cipher: SecretCipher = KeystoreCipher,
 ) {
+    private val decryptCache = ConcurrentHashMap<String, String>()
 
     /** Empty stays "" (legitimate empty field); any cipher failure throws typed [com.example.core.security.SecretCipherException]. */
     /** Per-field: empty stays ""; undecryptable rows degrade to a visible placeholder instead of hiding the entry. */
-    private fun String.decryptOrPlaceholder(): String =
-        if (isEmpty()) "" else try {
-            cipher.decrypt(this)
-        } catch (_: SecretCipherException) {
-            UNDECRYPTABLE_PLACEHOLDER
+    private fun String.decryptOrPlaceholder(): String {
+        if (isEmpty()) return ""
+        return decryptCache.computeIfAbsent(this) { ct ->
+            try {
+                cipher.decrypt(ct)
+            } catch (_: SecretCipherException) {
+                UNDECRYPTABLE_PLACEHOLDER
+            }
         }
+    }
 
     /** Fails loudly before any DB write — a failed encryption is never persisted as "". */
     private fun encrypt(plainText: String): String =

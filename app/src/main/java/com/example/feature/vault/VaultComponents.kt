@@ -90,27 +90,27 @@ fun ProviderIconBadge(
     }
 
     val initials = remember(provider) {
-        when (provider.lowercase()) {
-            "openai" -> "AI"
-            "google gemini" -> "GM"
-            "anthropic claude" -> "CL"
-            "deepseek" -> "DS"
-            "groq" -> "GQ"
-            "mistral ai" -> "MS"
-            "perplexity" -> "PX"
-            "openrouter" -> "OR"
-            "hugging face" -> "HF"
-            "github" -> "GH"
-            "stripe" -> "ST"
-            "aws" -> "AW"
-            "supabase" -> "SB"
-            "firebase" -> "FB"
-            "resend" -> "RS"
-            "vercel" -> "VC"
-            "elevenlabs" -> "EL"
-            "pinecone" -> "PC"
-            "discord bot" -> "DC"
-            "telegram bot" -> "TG"
+        when {
+            provider.equals("openai", ignoreCase = true) -> "AI"
+            provider.equals("google gemini", ignoreCase = true) -> "GM"
+            provider.equals("anthropic claude", ignoreCase = true) -> "CL"
+            provider.equals("deepseek", ignoreCase = true) -> "DS"
+            provider.equals("groq", ignoreCase = true) -> "GQ"
+            provider.equals("mistral ai", ignoreCase = true) -> "MS"
+            provider.equals("perplexity", ignoreCase = true) -> "PX"
+            provider.equals("openrouter", ignoreCase = true) -> "OR"
+            provider.equals("hugging face", ignoreCase = true) -> "HF"
+            provider.equals("github", ignoreCase = true) -> "GH"
+            provider.equals("stripe", ignoreCase = true) -> "ST"
+            provider.equals("aws", ignoreCase = true) -> "AW"
+            provider.equals("supabase", ignoreCase = true) -> "SB"
+            provider.equals("firebase", ignoreCase = true) -> "FB"
+            provider.equals("resend", ignoreCase = true) -> "RS"
+            provider.equals("vercel", ignoreCase = true) -> "VC"
+            provider.equals("elevenlabs", ignoreCase = true) -> "EL"
+            provider.equals("pinecone", ignoreCase = true) -> "PC"
+            provider.equals("discord bot", ignoreCase = true) -> "DC"
+            provider.equals("telegram bot", ignoreCase = true) -> "TG"
             else -> provider.take(2).uppercase()
         }
     }
