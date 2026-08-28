@@ -1,5 +1,7 @@
 # KeyNest Development Log
 
+- 2026-08-28: Completed factual codebase audit across CONTEXT.md and LOG.md; updated ROADMAP.md to reflect verified implementations (Clipboard 30s auto-clear countdown, Flow distinctUntilChanged, and R8 minification/shrinking in release builds).
+- 2026-08-28: Audited and verified full JSON-based encrypted backup and restore engine (VaultBackupCrypto, VaultBackupSheet, VaultFileManager). Confirmed end-to-end PBKDF2-AES-GCM encryption, SAF integration, metadata inspection, and merge/replace restore strategies with 100% test pass. No other doc updates needed.
 - 2026-08-28: Resolved batch key title collision edge case in AddEditKeySheet.kt by adding automatic numerical indexing for duplicate default provider titles during batch saves.
 - 2026-08-15: Wrapped advanced fields in AddEditKeySheet within AnimatedVisibility behind an "Advanced Settings" flag. This drastically reduces the initial layout composition tree during bottom sheet drag animation, fixing stuttering.
 - 2026-08-15: Added "Save & Add Another" button in AddEditKeySheet to allow users to save multiple API keys rapidly without closing the sheet. Verified 100% test pass.
