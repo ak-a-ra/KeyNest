@@ -1,0 +1,7 @@
+ruleDirs:
+  - rules
+ignoringGlobs:
+  - "app/build/**"
+  - "build/**"
+  - "**/.gradle/**"
+  - "**/build/**"

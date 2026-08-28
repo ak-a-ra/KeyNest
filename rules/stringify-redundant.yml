@@ -1,0 +1,6 @@
+id: stringify-redundant
+language: kotlin
+rule:
+  pattern: "\"${$EXPR.toString()}\""
+fix: "\"${$EXPR}\""
+message: "toString() inside template is redundant"

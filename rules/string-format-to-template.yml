@@ -1,0 +1,5 @@
+id: string-format-to-template
+language: kotlin
+rule:
+  pattern: String.format("%s", $VAR)
+fix: "\"${$VAR}\""

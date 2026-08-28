@@ -546,34 +546,45 @@ fun ExtraSecretFieldsSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                 Text(
-                    text = "EXTRA SECRET FIELDS / BOXES",
+                    text = "EXTRA SECRET FIELDS",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextTertiary,
                     letterSpacing = 0.8.sp
                 )
                 Text(
-                    text = "Add custom secrets (Client Secret, Private Key, Webhook)",
+                    text = "Custom secrets (Client Secret, Private Key, Webhook)",
                     fontSize = 11.sp,
                     color = TextSecondary
                 )
             }
-            androidx.compose.material3.OutlinedButton(
+            Surface(
                 onClick = onAddField,
                 shape = RoundedCornerShape(8.dp),
+                color = ObsidianSurfaceElevated,
                 border = BorderStroke(1.dp, CyberGold.copy(alpha = 0.5f)),
                 modifier = Modifier.testTag("button_add_extra_field_box")
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    tint = CyberGold,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.size(4.dp))
-                Text("+ Add Field Box", fontSize = 11.5.sp, color = CyberGold, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Box",
+                        tint = CyberGold,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Text(
+                        text = "Add Box",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = CyberGold
+                    )
+                }
             }
         }
 

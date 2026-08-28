@@ -1,4 +1,5 @@
 package com.example.feature.vault
+import androidx.core.graphics.toColorInt
 import com.example.feature.keymanagement.KeyExpirationBadge
 
 import androidx.compose.foundation.background
@@ -66,7 +67,7 @@ fun ApiKeyCard(
             Color(if (isDark) matchedPalette.darkBg else matchedPalette.lightBg)
         } else if (!item.colorHex.isNullOrBlank()) {
             try {
-                val parsed = Color(android.graphics.Color.parseColor(item.colorHex))
+                val parsed = Color(item.colorHex.toColorInt())
                 parsed.copy(alpha = if (isDark) 0.22f else 0.15f)
             } catch (_: Exception) {
                 if (isDark) Color(0xFF202124) else Color(0xFFFFFFFF)

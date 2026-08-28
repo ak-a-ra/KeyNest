@@ -1,0 +1,9 @@
+id: verbose-single-expr-fn
+language: kotlin
+rule:
+  pattern: |
+    fun $NAME($$$ARGS): $TYPE {
+      return $EXPR
+    }
+message: "Single expression function body could use expression syntax (`= $EXPR`), but verify internal return statements before converting."
+severity: warning

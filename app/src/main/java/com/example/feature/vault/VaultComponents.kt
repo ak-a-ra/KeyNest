@@ -1,5 +1,7 @@
 package com.example.feature.vault
 
+import androidx.core.graphics.toColorInt
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -81,7 +83,7 @@ fun ProviderIconBadge(
     val fallbackColor = CyberGold
     val brandColor = remember(colorHex, fallbackColor) {
         try {
-            Color(android.graphics.Color.parseColor(colorHex))
+            Color(colorHex.toColorInt())
         } catch (_: Exception) {
             fallbackColor
         }
@@ -283,7 +285,7 @@ fun EntropyStrengthBar(
     val fallbackSuccessColor = StatusSuccess
     val barColor = remember(result.colorHex, fallbackSuccessColor) {
         try {
-            Color(android.graphics.Color.parseColor(result.colorHex))
+            Color(result.colorHex.toColorInt())
         } catch (_: Exception) {
             fallbackSuccessColor
         }

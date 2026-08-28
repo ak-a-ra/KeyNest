@@ -1,0 +1,5 @@
+id: redundant-elvis
+language: kotlin
+rule:
+  pattern: "$X ?: $X"
+message: "elvis returning same value as fallback — dead branch"

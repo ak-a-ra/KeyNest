@@ -163,7 +163,7 @@ fun PinLockScreen(
 
             if (errorMessage != null) {
                 Text(
-                    text = errorMessage!!,
+                    text = errorMessage ?: "",
                     color = StatusDanger,
                     fontSize = 12.5.sp,
                     fontWeight = FontWeight.Medium
@@ -290,7 +290,7 @@ fun PinSettingsSheet(
                     PinDotsRow(length = confirmPin.length)
 
                     if (errorMessage != null) {
-                        Text(errorMessage!!, color = StatusDanger, fontSize = 12.sp)
+                        Text(errorMessage.orEmpty(), color = StatusDanger, fontSize = 12.sp)
                     }
 
                     NumericKeypad(

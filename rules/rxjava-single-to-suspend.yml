@@ -1,0 +1,8 @@
+id: rxjava-single-usage
+language: kotlin
+rule:
+  any:
+    - pattern: "fun $NAME($$$ARGS): Single<$TYPE>"
+    - pattern: "val $NAME: Single<$TYPE>"
+message: "candidate for suspend fun migration (RxJava → Coroutines)"
+severity: hint

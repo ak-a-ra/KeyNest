@@ -1,4 +1,5 @@
 package com.example.feature.export
+import androidx.core.graphics.toColorInt
 
 import android.net.Uri
 import android.widget.Toast
@@ -403,7 +404,7 @@ private fun ExportBackupView(
                         text = "Strength: ${entropyResult.strength}",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(android.graphics.Color.parseColor(entropyResult.colorHex))
+                        color = Color(entropyResult.colorHex.toColorInt())
                     )
                     Text(
                         text = "${entropyResult.entropyBits} bits entropy",
@@ -417,7 +418,7 @@ private fun ExportBackupView(
                         .fillMaxWidth()
                         .height(4.dp)
                         .clip(RoundedCornerShape(2.dp)),
-                    color = Color(android.graphics.Color.parseColor(entropyResult.colorHex)),
+                    color = Color(entropyResult.colorHex.toColorInt()),
                     trackColor = ObsidianBorder
                 )
             }

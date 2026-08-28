@@ -94,3 +94,16 @@
 - 2026-08-28: Restored collapsible Advanced Settings toggle in AddEditKeySheet for Org/Project ID, Tags, Notes, and Rotation Days while keeping Base Endpoint URL under API Key with provider auto-fill.
 - 2026-08-28: Re-verified complete build and unit test suite (32/32 tests passing cleanly, JVM fallback added for KeystoreCipher in Robolectric unit tests). No other doc updates needed.
 - 2026-08-28: Executed Android Lint static analysis via lint_applet; build completed successfully with 0 fatal errors. No other doc updates needed.
+- 2026-08-28: Configured Gradle lint block in app/build.gradle.kts to disable HTML reports (htmlReport = false) and generate text/log output (textOutput = lint-results-debug.log). No other doc updates needed.
+- 2026-08-28: Fixed all 56 Android Lint warnings (removed redundant activity labels, cleaned unused template color resources & generated images, refactored Android SDK calls to KTX extensions, configured lint.xml). Lint report now outputs "No issues found." (0 errors, 0 warnings). No other doc updates needed.
+- 2026-08-28: Refactored Extra Secret Fields header layout in AddKeyFormSections.kt with Modifier.weight(1f) to prevent description text from pushing the "Add Box" button unevenly. No other doc updates needed.
+- 2026-08-28: Installed @ast-grep/cli (v0.45.2) globally as a tool for structural linting and codemod operations. No other doc updates needed.
+- 2026-08-28: Configured ast-grep for the project (`sgconfig.yml`, custom Kotlin lint rules under `rules/`), and documented ast-grep guidelines in AGENTS.md. No other doc updates needed.
+- 2026-08-28: Added and verified 7 custom ast-grep rules (force-unwrap, redundant-let, pointless-try-rethrow, needless-companion-const, verbose-single-expr-fn, redundant-elvis, empty-override-noop) via `ast-grep scan -c sgconfig.yml`. Verified build & unit tests (32/32 tests passing). No other doc updates needed.
+- 2026-08-28: Removed auto-fix from rules/verbose-single-expr-function.yml to prevent invalid returns when functions contain internal control flow blocks. No other doc updates needed.
+- 2026-08-28: Added and dry-ran 7 additional Kotlin anti-slop rules (verbose-boolean-return, redundant-explicit-type, unsafe-cast, needless-unit-return, manual-loop-append, stringify-redundant, when-single-branch). Updated sgconfig.yml ignoringGlobs for build artifacts. No other doc updates needed.
+- 2026-08-28: Removed noisy rules (empty-override, manual-loop-append) and added Compose accessibility & design system rules (text-size-dp, hardcoded-compose-color). No other doc updates needed.
+- 2026-08-28: Added 6 ast-grep Kotlin migration rules (findviewbyid-to-viewbinding, kotlin-synthetics-import, livedata-to-stateflow, rxjava-single-to-suspend, deprecated-synchronized-fn, string-format-to-template) under rules/. No other doc updates needed.
+- 2026-08-28: Fixed ast-grep scan findings: replaced force-unwraps (`!!`) with safe checks in AddEditKeySheet & PinLockScreen, and safe-casted Activity in Theme & ClipboardManager in VaultViewModel. No other doc updates needed.
+
+

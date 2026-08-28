@@ -1,5 +1,7 @@
 package com.example.feature.vault
 
+import androidx.core.content.edit
+
 import android.app.Application
 import android.content.ClipData
 import android.content.ClipDescription
@@ -116,8 +118,8 @@ data class AutoLockTimeout(
 
 class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: ApiKeyRepository
-    private val clipboardManager: ClipboardManager =
-        application.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    private val clipboardManager: ClipboardManager? =
+        application.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
     private var autoClearJob: Job? = null
     private var lastSelfCopiedKey: String? = null
     private val clipListener = ClipboardManager.OnPrimaryClipChangedListener {
@@ -204,7 +206,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         val database = AppDatabase.getDatabase(application)
         repository = ApiKeyRepository(database.apiKeyDao())
         try {
-            clipboardManager.addPrimaryClipChangedListener(clipListener)
+            clipboardManager?.addPrimaryClipChangedListener(clipListener)
         } catch (_: Exception) { }
 
         allKeys = repository.allKeys
@@ -324,20 +326,20 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         try {
-            clipboardManager.removePrimaryClipChangedListener(clipListener)
+            clipboardManager?.removePrimaryClipChangedListener(clipListener)
         } catch (_: Exception) { }
     }
 
     fun setDisplayMode(mode: DisplayMode) {
         _displayMode.value = mode
         val prefs = getApplication<Application>().getApplicationContext().getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
-        prefs.edit().putString(_displayModePreferenceKey, mode.label).apply()
+        prefs.edit { putString(_displayModePreferenceKey, mode.label) }
     }
 
     fun setAutoLockTimeout(timeout: AutoLockTimeout) {
         _autoLockTimeout.value = timeout
         val prefs = getApplication<Application>().getApplicationContext().getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
-        prefs.edit().putString(_autoLockTimeoutPreferenceKey, timeout.label).apply()
+        prefs.edit { putString(_autoLockTimeoutPreferenceKey, timeout.label) }
     }
 
     fun setSearchQuery(query: String) {
@@ -392,7 +394,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
             }
         }
-        clipboardManager.setPrimaryClip(clip)
+        clipboardManager?.setPrimaryClip(clip)
         if (itemId != null) {
             viewModelScope.launch { repository.recordCopy(itemId) }
         }
@@ -430,16 +432,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         VaultSecurity.setLastSelfCopiedKey(getApplication(), null)
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                clipboardManager.clearPrimaryClip()
+                clipboardManager?.clearPrimaryClip()
             } else {
-                clipboardManager.setPrimaryClip(ClipData.newPlainText("", ""))
+                clipboardManager?.setPrimaryClip(ClipData.newPlainText("", ""))
             }
         } catch (_: Exception) { }
     }
 
     fun checkClipboardForApiKey() {
         try {
-            val clip = clipboardManager.primaryClip
+            val clip = clipboardManager?.primaryClip
             if (clip != null && clip.itemCount > 0) {
                 val text = clip.getItemAt(0).text?.toString()?.trim()
                 if (!text.isNullOrEmpty() && text.length in 16..512 && !text.contains("\n") && !text.contains(" ")) {

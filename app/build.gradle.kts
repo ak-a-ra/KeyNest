@@ -10,6 +10,9 @@ android {
 
   lint {
     abortOnError = true
+    htmlReport = false
+    textReport = true
+    textOutput = file("$buildDir/reports/lint-results-debug.log")
   }
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 

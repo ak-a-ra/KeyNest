@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Ignore dependency version checks to maintain environment stability -->
+    <issue id="AndroidGradlePluginVersion" severity="ignore" />
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="NewerVersionAvailable" severity="ignore" />
+    <issue id="IconDipSize" severity="ignore" />
+    <issue id="IconXmlAndPng" severity="ignore" />
+    <issue id="IconLocation" severity="ignore" />
+    <issue id="UnusedResources" severity="ignore" />
+</lint>

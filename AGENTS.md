@@ -21,6 +21,7 @@ Before adding code, in order: does this need to exist? → already in the codeba
 ## 🔨 Tool Usage Rules & Guardrails (AI Studio Optimized)
 
 - **Build Verification:** Run `compile_applet` after `.kt`/`.kts`/`.xml` changes; report actual output before declaring complete.
+- **AST Search & Refactoring (`ast-grep`):** Use `ast-grep` (or `sg`) for structural AST search, symbol outlining (`ast-grep outline`), and automated code rewrites across Kotlin, Java, and configuration files. Prefer `ast-grep` over regex `grep` when refactoring syntax-sensitive patterns.
 - **Edit Batching:** Batch planned edits first; run `compile_applet` at end of change sequence.
 - **Smart File Ops:** `view_file` before every edit. Write complete files first pass — no empty placeholders. Prefer `list_dir` over shell `ls`.
 - **Shell Commands:** Never run `cd` (always pass `Cwd`). No `git push` unless explicitly kept local (`git add`, `git commit`).

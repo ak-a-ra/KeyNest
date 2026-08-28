@@ -1,5 +1,6 @@
 package com.example.feature.export
 
+import androidx.core.graphics.toColorInt
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -429,7 +430,7 @@ fun DotEnvExportSheet(
                                                 modifier = Modifier
                                                     .size(10.dp)
                                                     .clip(RoundedCornerShape(5.dp))
-                                                    .background(try { Color(android.graphics.Color.parseColor(item.colorHex)) } catch (_: Exception) { CyberGold })
+                                                    .background(try { Color(item.colorHex.toColorInt()) } catch (_: Exception) { CyberGold })
                                             )
                                             Column {
                                                 Text(item.title, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)

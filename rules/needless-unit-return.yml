@@ -1,0 +1,12 @@
+id: needless-unit-return
+language: kotlin
+rule:
+  pattern: |
+    fun $NAME($$$ARGS): Unit {
+      $$$BODY
+    }
+fix: |
+  fun $NAME($$$ARGS) {
+    $$$BODY
+  }
+message: "Unit return type is implicit — drop it"

@@ -1,0 +1,6 @@
+id: text-size-dp
+language: kotlin
+rule:
+  pattern: fontSize = $VAL.dp
+message: "Accessibility bug: use `.sp` instead of `.dp` for font sizes so text respects user system scaling preferences."
+severity: error

@@ -1,0 +1,10 @@
+id: pointless-try-rethrow
+language: kotlin
+rule:
+  pattern: |
+    try {
+      $BODY
+    } catch (e: Exception) {
+      throw e
+    }
+fix: $BODY

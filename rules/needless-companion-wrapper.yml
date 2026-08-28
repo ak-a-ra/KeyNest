@@ -1,0 +1,9 @@
+id: needless-companion-const
+language: kotlin
+rule:
+  pattern: |
+    companion object {
+      const val $NAME = $VAL
+    }
+message: "single const in companion — consider top-level const instead"
+severity: hint

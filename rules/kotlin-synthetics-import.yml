@@ -1,0 +1,6 @@
+id: kotlin-synthetics-import
+language: kotlin
+rule:
+  pattern: import kotlinx.android.synthetic.$$$PATH
+message: "kotlin-android-extensions removed in Kotlin 1.8+ — migrate to ViewBinding"
+severity: error

@@ -1,0 +1,6 @@
+id: findviewbyid-usage
+language: kotlin
+rule:
+  pattern: findViewById<$TYPE>($ID)
+message: "migrate to ViewBinding — findViewById is legacy Android pattern"
+severity: warning

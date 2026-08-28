@@ -1,0 +1,7 @@
+id: no-parse-color
+message: "Prefer using Kotlin KTX extension `colorHex.toColorInt()` instead of `android.graphics.Color.parseColor()`."
+severity: warning
+language: kotlin
+rule:
+  pattern: Color(android.graphics.Color.parseColor($HEX))
+fix: Color($HEX.toColorInt())

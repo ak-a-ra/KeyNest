@@ -1,0 +1,6 @@
+id: hardcoded-compose-color
+language: kotlin
+rule:
+  pattern: Color(0x$$$HEX)
+message: "Prefer using MaterialTheme.colorScheme or design system tokens over hardcoded hex colors."
+severity: warning

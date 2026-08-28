@@ -105,20 +105,21 @@ object VaultBackupCrypto {
 
     fun peekBackupMetadata(backupContent: String): Result<BackupMetadata> {
         return try {
-            val json = JSONObject(backupContent)
-            val app = json.optString("app", "")
-            if (app != APP_IDENTIFIER) {
-                return Result.failure(IllegalArgumentException("File is not a valid KeyNest backup"))
-            }
-            val version = json.optInt("version", 1)
-            val createdAt = json.optLong("createdAt", 0L)
-            val itemCount = json.optInt("itemCount", 0)
-            val algorithm = json.optString("algorithm", ALGORITHM)
-            Result.success(BackupMetadata(version, app, createdAt, itemCount, algorithm))
-        } catch (e: Exception) {
-            Result.failure(IllegalArgumentException("Failed to read backup header: corrupted format", e))
+        val json = JSONObject(backupContent)
+        val app = json.optString("app", "")
+        if (app != APP_IDENTIFIER) {
+            return Result.failure(IllegalArgumentException("File is not a valid KeyNest backup"))
         }
+        val version = json.optInt("version", 1)
+        val createdAt = json.optLong("createdAt", 0L)
+        val itemCount = json.optInt("itemCount", 0)
+        val algorithm = json.optString("algorithm", ALGORITHM)
+        Result.success(BackupMetadata(version, app, createdAt, itemCount, algorithm))
+    } catch (e: Exception) {
+        Result.failure(IllegalArgumentException("Failed to read backup header: corrupted format", e))
     }
+    }
+    
 
     fun restoreEncryptedBackup(backupContent: String, passphrase: CharArray): Result<List<ApiKeyItem>> {
         if (passphrase.isEmpty()) {

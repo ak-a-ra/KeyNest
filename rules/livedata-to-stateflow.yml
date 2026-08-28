@@ -1,0 +1,6 @@
+id: mutable-livedata-decl
+language: kotlin
+rule:
+  pattern: val $NAME = MutableLiveData<$TYPE>()
+message: "consider MutableStateFlow — LiveData is Android-only, StateFlow is coroutine-native"
+severity: hint

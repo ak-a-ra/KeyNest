@@ -1,0 +1,9 @@
+id: redundant-explicit-type
+language: kotlin
+rule:
+  pattern: "val $NAME: String = $VAL"
+constraints:
+  VAL:
+    regex: '^".*"$'
+fix: "val $NAME = $VAL"
+message: "type is inferable from string literal"

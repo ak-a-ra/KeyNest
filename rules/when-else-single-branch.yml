@@ -1,0 +1,12 @@
+id: when-else-single-branch
+language: kotlin
+rule:
+  pattern: |
+    when {
+      $COND -> $A
+      else -> $B
+    }
+fix: |
+  if ($COND) $A else $B
+message: "single-condition when — if/else is clearer"
+severity: hint

@@ -1,6 +1,7 @@
 package com.example.feature.keymanagement
 import com.example.feature.vault.TactileCopyButton
 
+import androidx.core.net.toUri
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
@@ -292,7 +293,7 @@ fun KeyDeveloperConsoleButton(
 
     Surface(
         onClick = {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(consoleUrl))
+            val intent = Intent(Intent.ACTION_VIEW, consoleUrl.toUri())
             context.startActivity(intent)
         },
         shape = RoundedCornerShape(12.dp),

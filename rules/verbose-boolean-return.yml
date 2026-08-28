@@ -1,0 +1,11 @@
+id: verbose-boolean-return
+language: kotlin
+rule:
+  pattern: |
+    if ($COND) {
+      return true
+    } else {
+      return false
+    }
+fix: |
+  return $COND

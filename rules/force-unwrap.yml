@@ -1,0 +1,6 @@
+id: force-unwrap
+language: kotlin
+rule:
+  pattern: $EXPR!!
+message: "!! crashes on null — use ?. or requireNotNull() with a message"
+severity: warning

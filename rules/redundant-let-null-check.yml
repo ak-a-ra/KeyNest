@@ -1,0 +1,9 @@
+id: redundant-let
+language: kotlin
+rule:
+  pattern: |
+    $VAR?.let { $BODY }
+constraints:
+  BODY:
+    regex: ^\$IT$
+message: "let{} that only returns it — just use $VAR directly"

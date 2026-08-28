@@ -1,0 +1,8 @@
+id: unsafe-cast
+language: kotlin
+rule:
+  pattern: $EXPR as $TYPE
+not:
+  pattern: $EXPR as? $TYPE
+message: "unchecked cast — prefer as? with null handling"
+severity: warning

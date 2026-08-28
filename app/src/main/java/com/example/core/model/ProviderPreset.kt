@@ -247,16 +247,14 @@ object ProviderPresets {
         )
     )
 
-    fun findByName(name: String): ProviderPreset {
-        return list.find { it.name.equals(name, ignoreCase = true) } ?: list.last()
-    }
+    fun findByName(name: String): ProviderPreset = list.find { it.name.equals(name, ignoreCase = true) } ?: list.last()
+    
 
     /**
      * Unified single-source-of-truth provider detector for raw keys/tokens.
      */
-    fun detectProvider(key: String): String {
-        return com.example.core.security.VaultSecurity.detectProviderFromKey(key)
-    }
+    fun detectProvider(key: String): String = com.example.core.security.VaultSecurity.detectProviderFromKey(key)
+    
 
     val categories = listOf(
         "All",

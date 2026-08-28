@@ -1,5 +1,6 @@
 package com.example.feature.keymanagement
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -239,7 +243,7 @@ fun AddEditKeySheet(
             confirmButton = {
                 androidx.compose.material3.TextButton(
                     onClick = {
-                        val item = pendingItemToSave!!
+                        val item = pendingItemToSave ?: return@TextButton
                         showDuplicateWarning = false
                         onSave(item)
                         if (dismissAfterSave) {
@@ -515,11 +519,50 @@ fun AddEditKeySheet(
                     onSelectColor = { selectedColorHex = it }
                 )
 
-                androidx.compose.material3.TextButton(
+                Surface(
                     onClick = { showAdvancedSettings = !showAdvancedSettings },
-                    modifier = Modifier.fillMaxWidth()
+                    shape = RoundedCornerShape(12.dp),
+                    color = ObsidianSurfaceElevated,
+                    border = BorderStroke(1.dp, if (showAdvancedSettings) CyberGold else ObsidianBorder),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("toggle_advanced_settings")
                 ) {
-                    Text(if (showAdvancedSettings) "Hide Advanced Settings" else "Show Advanced Settings", color = CyberGold)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Tune,
+                                contentDescription = null,
+                                tint = CyberGold,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Advanced Settings",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = if (showAdvancedSettings) "Org ID, Tags, Developer Notes & Rotation" else "Tap to configure optional metadata",
+                                    fontSize = 11.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = if (showAdvancedSettings) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = if (showAdvancedSettings) "Collapse" else "Expand",
+                            tint = CyberGold
+                        )
+                    }
                 }
 
                 androidx.compose.animation.AnimatedVisibility(visible = showAdvancedSettings) {
@@ -582,7 +625,7 @@ fun AddEditKeySheet(
 
             if (errorMessage != null) {
                 Text(
-                    text = errorMessage!!,
+                    text = errorMessage ?: "",
                     color = StatusDanger,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium

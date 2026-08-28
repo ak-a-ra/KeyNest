@@ -1,0 +1,6 @@
+id: deprecated-synchronized-fn
+language: kotlin
+rule:
+  pattern: synchronized($LOCK) { $$$BODY }
+message: "consider Mutex from kotlinx.coroutines for suspend-safe locking"
+severity: hint
