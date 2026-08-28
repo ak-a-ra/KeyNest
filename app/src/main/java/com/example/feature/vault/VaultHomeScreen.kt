@@ -101,6 +101,7 @@ fun VaultHomeScreen(
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val clipboardDetectedKey by viewModel.clipboardDetectedKey.collectAsStateWithLifecycle()
     val isPinConfigured by viewModel.isPinConfigured.collectAsStateWithLifecycle()
+    val isSearching by viewModel.isSearching.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val clipboardCopyState by viewModel.clipboardCopyState.collectAsStateWithLifecycle()
     val displayMode by viewModel.displayMode.collectAsStateWithLifecycle()
@@ -258,7 +259,8 @@ fun VaultHomeScreen(
                             isGridView = displayMode.isGrid,
                             onToggleGridView = {
                                 viewModel.setDisplayMode(if (displayMode.isGrid) DisplayMode.List else DisplayMode.Grid)
-                            }
+                            },
+                            isSearching = isSearching
                         )
 
                         // Horizontal Tag Filter Carousel

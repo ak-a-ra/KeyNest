@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -191,6 +192,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     private val fileManager = VaultFileManager(application)
 
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    private val _debouncedSearchQuery = MutableStateFlow("")
+
     val filteredKeys: StateFlow<List<ApiKeyItem>>
     val availableTags: StateFlow<List<String>>
 
@@ -261,7 +267,17 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         val savedTimeout = prefs.getString(_autoLockTimeoutPreferenceKey, "15 min")
         _autoLockTimeout.value = AutoLockTimeout.presets.firstOrNull { it.label == savedTimeout } ?: AutoLockTimeout.Minutes15
 
-        val searchFilterFlow = combine(_searchQuery, _selectedCategory, _selectedTag, _onlyFavorites) { q, cat, tag, fav ->
+        @OptIn(kotlinx.coroutines.FlowPreview::class)
+        viewModelScope.launch {
+            _searchQuery
+                .debounce(300)
+                .collect { query ->
+                    _debouncedSearchQuery.value = query
+                    _isSearching.value = false
+                }
+        }
+
+        val searchFilterFlow = combine(_debouncedSearchQuery, _selectedCategory, _selectedTag, _onlyFavorites) { q, cat, tag, fav ->
             FilterCriteria(q, cat, tag, fav)
         }
 
@@ -325,11 +341,14 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setSearchQuery(query: String) {
+        _isSearching.value = true
         _searchQuery.value = query
     }
 
     fun clearSearch() {
+        _isSearching.value = false
         _searchQuery.value = ""
+        _debouncedSearchQuery.value = ""
     }
 
     fun setSelectedCategory(category: String) {

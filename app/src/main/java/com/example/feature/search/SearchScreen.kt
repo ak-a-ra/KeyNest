@@ -93,6 +93,7 @@ fun SearchScreen(
 ) {
     val allKeys by viewModel.allKeys.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val isSearching by viewModel.isSearching.collectAsStateWithLifecycle()
     val filteredKeys by viewModel.filteredKeys.collectAsStateWithLifecycle()
     val availableTags by viewModel.availableTags.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
@@ -179,7 +180,15 @@ fun SearchScreen(
                             cursorBrush = SolidColor(CyberGold)
                         )
                     }
-                    if (searchQuery.isNotEmpty()) {
+                    if (isSearching) {
+                        Box(modifier = Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+                            androidx.compose.material3.CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = CyberCyan,
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    } else if (searchQuery.isNotEmpty()) {
                         IconButton(
                             onClick = { viewModel.clearSearch() },
                             modifier = Modifier

@@ -47,15 +47,15 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
   - [x] **Dedicated File Subsystem**: Isolate Storage Access Framework (SAF), URI permissions, and MIME handling into a strict `core.files` subsystem.
   - [ ] **Strict Unidirectional Data Flow (UDF)**: Rigid `UiState` and `UiAction` classes per feature for predictable, testable state management.
   - [ ] **DataStore for Preferences**: Migrate UI settings (layout preference, theme) to DataStore, reserving `EncryptedSharedPreferences` strictly for cryptographic keys.
-- [ ] **App Icon & Logo Redesign**: Custom adaptive launcher icon with developer-centric cybersecurity branding (AES key vault / cyberpunk obsidian aesthetic) and clean monochrome vector layer.
+- [x] **App Icon & Logo Redesign**: Custom adaptive launcher icon with developer-centric cybersecurity branding (AES key vault / cyberpunk obsidian aesthetic) and clean monochrome vector layer.
 - [x] **Anti-Slop UI Craft Polish**:
   - [x] **Semantic Status Accents**: Color-coded key health indicators (expiring warning accents, cyan active indicators, card tag pills) over decorative ambient background glows.
   - [x] **Utility-Driven Empty States**: Quick 1-tap preset sample importer in empty vault view ("Load Starter Dev Keys" with OpenAI, Gemini, GitHub, Stripe templates).
   - [x] **Technical Microcopy Precision**: Direct, action-oriented developer microcopy across empty states and security dialogs ("AES-256 KeyStore Vault • Zero Plaintext Logs • Sensitive Memory Protection").
   - [x] **Bottom Sheet Form Ergonomics**: Replaced inline horizontal-scroll selectors for Provider, Environment, and Category with full-screen context `ModalBottomSheet` dropdowns for a robust native feel.
 - [x] **Multi-Box API Key Addition (Batch Mode & Extra Secret Fields)**: Added segment switcher tab for Single Key + Extra Secret Boxes (Client Secret, Webhook, Private Key) and Batch Multi-Key Boxes with auto-provider detection and batch room insertion.
-- [ ] **Search Query Loading Indicator**: Subtle progress indicator / pulse animation while query filters large vaults to provide clear feedback during high-volume secret queries.
-- [ ] **Dedicated SearchViewModel**: Dedicated SearchViewModel to handle real-time filter logic, debounced input pipelines, and manage the state of the secrets list as the user types.
+- [x] **Search Query Loading Indicator**: Subtle progress indicator / pulse animation while query filters large vaults to provide clear feedback during high-volume secret queries.
+- [x] **Debounced Search State**: Handled real-time filter logic, debounced input pipelines, and managed the state of the secrets list as the user types within the ViewModel.
 - [ ] **Secure QR Code Sharing**: Ephemeral, encrypted QR code generation for quick peer-to-peer secret transfer between devices.
 
 #### 1. 🔐 Security & Privacy (Crucial for a Vault)
