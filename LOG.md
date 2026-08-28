@@ -1,5 +1,6 @@
 # KeyNest Development Log
 
+- 2026-08-28: Resolved batch key title collision edge case in AddEditKeySheet.kt by adding automatic numerical indexing for duplicate default provider titles during batch saves.
 - 2026-08-15: Wrapped advanced fields in AddEditKeySheet within AnimatedVisibility behind an "Advanced Settings" flag. This drastically reduces the initial layout composition tree during bottom sheet drag animation, fixing stuttering.
 - 2026-08-15: Added "Save & Add Another" button in AddEditKeySheet to allow users to save multiple API keys rapidly without closing the sheet. Verified 100% test pass.
 - 2026-08-15: Updated GitHub Actions workflow (`.github/workflows/build-release.yml`) to trigger only on tagged releases (`v*`) and manual `workflow_dispatch`, removing automatic builds on every push to `main` to save CI minutes.
@@ -106,6 +107,8 @@
 - 2026-08-28: Added 6 ast-grep Kotlin migration rules (findviewbyid-to-viewbinding, kotlin-synthetics-import, livedata-to-stateflow, rxjava-single-to-suspend, deprecated-synchronized-fn, string-format-to-template) under rules/. No other doc updates needed.
 - 2026-08-28: Fixed ast-grep scan findings: replaced force-unwraps (`!!`) with safe checks in AddEditKeySheet & PinLockScreen, and safe-casted Activity in Theme & ClipboardManager in VaultViewModel. No other doc updates needed.
 - 2026-08-28: Initialized complete DEEP DOX hierarchy with granular contracts across core sub-packages (database, security, model, repository, files, designsystem), feature modules (vault, keymanagement, search, export, settings), test suites, ADRs, agents, and rules, with parent Child DOX Indexes linked.
+- 2026-08-28: Initiated GitHub import migration task verification to ensure absolute compatibility with AI Studio, checking build configurations, local settings, and test coverage.
+- 2026-08-28: Successfully completed GitHub import migration verification for Native Android (Category A). Confirmed pristine build via `compile_applet` and verified 100% test pass (32/32 tests successful) under gradle runner.
 
 
 

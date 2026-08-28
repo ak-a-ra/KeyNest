@@ -161,8 +161,14 @@ fun AddEditKeySheet(
                 val now = System.currentTimeMillis()
                 val itemsToInsert = validEntries.mapIndexed { idx, entry ->
                     val p = ProviderPresets.findByName(entry.provider)
+                    val baseTitle = entry.title.ifBlank { "${entry.provider} Key" }.trim()
+                    val disambiguatedTitle = if (validEntries.count { it.provider == entry.provider } > 1 && entry.title.isBlank()) {
+                        "$baseTitle #${idx + 1}"
+                    } else {
+                        baseTitle
+                    }
                     ApiKeyItem(
-                        title = entry.title.ifBlank { "${entry.provider} Key" }.trim(),
+                        title = disambiguatedTitle,
                         apiKey = entry.apiKey.trim(),
                         provider = entry.provider,
                         category = entry.category,
