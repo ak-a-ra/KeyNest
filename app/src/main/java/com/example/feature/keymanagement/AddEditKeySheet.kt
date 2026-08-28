@@ -120,7 +120,6 @@ fun AddEditKeySheet(
 
     var isKeyVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var showAdvancedSettings by remember { mutableStateOf(existingItem != null) }
 
     var showDuplicateWarning by remember { mutableStateOf(false) }
     var pendingItemToSave by remember { mutableStateOf<ApiKeyItem?>(null) }
@@ -437,7 +436,33 @@ fun AddEditKeySheet(
                         if (title.isEmpty() || title.endsWith("Key") || title.endsWith("API Key")) {
                             title = "$detected Key"
                         }
+                        val detectedPreset = ProviderPresets.findByName(detected)
+                        if (endpointUrl.isEmpty() || endpointUrl == preset.defaultEndpoint) {
+                            endpointUrl = detectedPreset.defaultEndpoint
+                        }
                     }
+                )
+
+                // Base Endpoint URL (Positioned directly under API Key)
+                OutlinedTextField(
+                    value = endpointUrl,
+                    onValueChange = { endpointUrl = it },
+                    label = { Text("Base Endpoint URL", color = TextSecondary) },
+                    placeholder = { Text(preset.defaultEndpoint.ifEmpty { "https://api.example.com" }, color = TextTertiary) },
+                    singleLine = true,
+                    textStyle = MonospaceCodeStyle.copy(fontSize = 13.sp, color = TextPrimary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("input_endpoint_url"),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = CyberGold,
+                        unfocusedBorderColor = ObsidianBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedContainerColor = ObsidianSurfaceElevated,
+                        unfocusedContainerColor = ObsidianSurfaceElevated
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 // Optional Secret / Second Key (e.g. Webhook secret, Private Key)
@@ -477,6 +502,27 @@ fun AddEditKeySheet(
                     clipboardManager = clipboardManager
                 )
 
+                // Org / Project ID
+                OutlinedTextField(
+                    value = organizationId,
+                    onValueChange = { organizationId = it },
+                    label = { Text("Org / Project ID (Optional)", color = TextSecondary) },
+                    singleLine = true,
+                    textStyle = MonospaceCodeStyle.copy(fontSize = 13.sp, color = TextPrimary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("input_org_id"),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = CyberGold,
+                        unfocusedBorderColor = ObsidianBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedContainerColor = ObsidianSurfaceElevated,
+                        unfocusedContainerColor = ObsidianSurfaceElevated
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
                 // Category Picker
                 CategoryPickerRow(
                     selectedCategory = selectedCategory,
@@ -489,89 +535,37 @@ fun AddEditKeySheet(
                     onSelectColor = { selectedColorHex = it }
                 )
 
-                androidx.compose.material3.TextButton(
-                    onClick = { showAdvancedSettings = !showAdvancedSettings },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(if (showAdvancedSettings) "Hide Advanced Settings" else "Show Advanced Settings", color = CyberGold)
-                }
+                // Tags
+                TagInputChipField(
+                    tagsString = tags,
+                    onTagsChange = { tags = it },
+                    availableTags = availableTags
+                )
 
-                androidx.compose.animation.AnimatedVisibility(visible = showAdvancedSettings) {
-                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                        // Optional Metadata Row (Endpoint URL, Organization ID)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = endpointUrl,
-                                onValueChange = { endpointUrl = it },
-                                label = { Text("Base Endpoint URL", color = TextSecondary, fontSize = 11.sp) },
-                                singleLine = true,
-                                textStyle = MonospaceCodeStyle.copy(fontSize = 11.sp, color = TextPrimary),
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = CyberGold,
-                                    unfocusedBorderColor = ObsidianBorder,
-                                    focusedTextColor = TextPrimary,
-                                    unfocusedTextColor = TextPrimary,
-                                    focusedContainerColor = ObsidianSurfaceElevated,
-                                    unfocusedContainerColor = ObsidianSurfaceElevated
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            )
+                // Internal Developer Notes
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Internal Developer Notes", color = TextSecondary) },
+                    minLines = 2,
+                    maxLines = 4,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = CyberGold,
+                        unfocusedBorderColor = ObsidianBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedContainerColor = ObsidianSurfaceElevated,
+                        unfocusedContainerColor = ObsidianSurfaceElevated
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
 
-                            OutlinedTextField(
-                                value = organizationId,
-                                onValueChange = { organizationId = it },
-                                label = { Text("Org / Project ID", color = TextSecondary, fontSize = 11.sp) },
-                                singleLine = true,
-                                textStyle = MonospaceCodeStyle.copy(fontSize = 11.sp, color = TextPrimary),
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = CyberGold,
-                                    unfocusedBorderColor = ObsidianBorder,
-                                    focusedTextColor = TextPrimary,
-                                    unfocusedTextColor = TextPrimary,
-                                    focusedContainerColor = ObsidianSurfaceElevated,
-                                    unfocusedContainerColor = ObsidianSurfaceElevated
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-
-                        // Tags & Notes
-                        TagInputChipField(
-                            tagsString = tags,
-                            onTagsChange = { tags = it },
-                            availableTags = availableTags
-                        )
-
-                        OutlinedTextField(
-                            value = notes,
-                            onValueChange = { notes = it },
-                            label = { Text("Internal Developer Notes", color = TextSecondary) },
-                            minLines = 2,
-                            maxLines = 4,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = CyberGold,
-                                unfocusedBorderColor = ObsidianBorder,
-                                focusedTextColor = TextPrimary,
-                                unfocusedTextColor = TextPrimary,
-                                focusedContainerColor = ObsidianSurfaceElevated,
-                                unfocusedContainerColor = ObsidianSurfaceElevated
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-
-                        // Rotation interval
-                        RotationIntervalPicker(
-                            rotationDays = rotationDays,
-                            onRotationDaysChange = { rotationDays = it }
-                        )
-                    }
-                }
+                // Rotation interval
+                RotationIntervalPicker(
+                    rotationDays = rotationDays,
+                    onRotationDaysChange = { rotationDays = it }
+                )
             }
 
             if (errorMessage != null) {

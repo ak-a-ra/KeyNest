@@ -90,3 +90,4 @@
 - 2026-08-26: docs: canonical test command is ./gradlew testDebugUnitTest (CI verify gate); aligned AGENTS.md, app/AGENTS.md, CONTRIBUTING.md, README.md. No other doc updates needed.
 - 2026-08-28: Generated new custom adaptive launcher icon and background gradient for KeyNest app branding.
 - 2026-08-28: Implemented debounced search query and loading indicators in SearchScreen and VaultTopSearchBar.
+- 2026-08-28: Positioned Base Endpoint URL directly below API Key field with auto-fill provider defaults and removed Advanced Settings toggle for continuous inline form fields.
