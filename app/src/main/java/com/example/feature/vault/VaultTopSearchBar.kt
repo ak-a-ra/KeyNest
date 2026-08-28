@@ -49,6 +49,9 @@ import com.example.feature.vault.SortOption
 
 import androidx.compose.material.icons.filled.ViewAgenda
 
+import androidx.compose.material3.CircularProgressIndicator
+import com.example.core.designsystem.CyberCyan
+
 @Composable
 fun GoogleKeepTopSearchBar(
     searchQuery: String,
@@ -60,6 +63,7 @@ fun GoogleKeepTopSearchBar(
     onOpenAudit: () -> Unit,
     isGridView: Boolean,
     onToggleGridView: () -> Unit,
+    isSearching: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
@@ -114,7 +118,15 @@ fun GoogleKeepTopSearchBar(
                     )
                 }
 
-                if (searchQuery.isNotEmpty()) {
+                if (isSearching) {
+                    Box(modifier = Modifier.size(34.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = CyberCyan,
+                            strokeWidth = 2.dp
+                        )
+                    }
+                } else if (searchQuery.isNotEmpty()) {
                     IconButton(
                         onClick = { onSearchQueryChange("") },
                         modifier = Modifier.size(34.dp)
