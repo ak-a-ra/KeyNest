@@ -91,3 +91,4 @@
 - 2026-08-28: Generated new custom adaptive launcher icon and background gradient for KeyNest app branding.
 - 2026-08-28: Implemented debounced search query and loading indicators in SearchScreen and VaultTopSearchBar.
 - 2026-08-28: Positioned Base Endpoint URL directly below API Key field with auto-fill provider defaults and removed Advanced Settings toggle for continuous inline form fields.
+- 2026-08-28: Restored collapsible Advanced Settings toggle in AddEditKeySheet for Org/Project ID, Tags, Notes, and Rotation Days while keeping Base Endpoint URL under API Key with provider auto-fill.

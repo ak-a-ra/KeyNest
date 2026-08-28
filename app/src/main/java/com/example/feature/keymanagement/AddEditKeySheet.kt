@@ -120,6 +120,7 @@ fun AddEditKeySheet(
 
     var isKeyVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showAdvancedSettings by remember { mutableStateOf(existingItem != null) }
 
     var showDuplicateWarning by remember { mutableStateOf(false) }
     var pendingItemToSave by remember { mutableStateOf<ApiKeyItem?>(null) }
@@ -502,27 +503,6 @@ fun AddEditKeySheet(
                     clipboardManager = clipboardManager
                 )
 
-                // Org / Project ID
-                OutlinedTextField(
-                    value = organizationId,
-                    onValueChange = { organizationId = it },
-                    label = { Text("Org / Project ID (Optional)", color = TextSecondary) },
-                    singleLine = true,
-                    textStyle = MonospaceCodeStyle.copy(fontSize = 13.sp, color = TextPrimary),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("input_org_id"),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = CyberGold,
-                        unfocusedBorderColor = ObsidianBorder,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedContainerColor = ObsidianSurfaceElevated,
-                        unfocusedContainerColor = ObsidianSurfaceElevated
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                )
-
                 // Category Picker
                 CategoryPickerRow(
                     selectedCategory = selectedCategory,
@@ -535,37 +515,69 @@ fun AddEditKeySheet(
                     onSelectColor = { selectedColorHex = it }
                 )
 
-                // Tags
-                TagInputChipField(
-                    tagsString = tags,
-                    onTagsChange = { tags = it },
-                    availableTags = availableTags
-                )
+                androidx.compose.material3.TextButton(
+                    onClick = { showAdvancedSettings = !showAdvancedSettings },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (showAdvancedSettings) "Hide Advanced Settings" else "Show Advanced Settings", color = CyberGold)
+                }
 
-                // Internal Developer Notes
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Internal Developer Notes", color = TextSecondary) },
-                    minLines = 2,
-                    maxLines = 4,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = CyberGold,
-                        unfocusedBorderColor = ObsidianBorder,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedContainerColor = ObsidianSurfaceElevated,
-                        unfocusedContainerColor = ObsidianSurfaceElevated
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                )
+                androidx.compose.animation.AnimatedVisibility(visible = showAdvancedSettings) {
+                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                        // Org / Project ID
+                        OutlinedTextField(
+                            value = organizationId,
+                            onValueChange = { organizationId = it },
+                            label = { Text("Org / Project ID (Optional)", color = TextSecondary) },
+                            singleLine = true,
+                            textStyle = MonospaceCodeStyle.copy(fontSize = 13.sp, color = TextPrimary),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("input_org_id"),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = CyberGold,
+                                unfocusedBorderColor = ObsidianBorder,
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary,
+                                focusedContainerColor = ObsidianSurfaceElevated,
+                                unfocusedContainerColor = ObsidianSurfaceElevated
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
 
-                // Rotation interval
-                RotationIntervalPicker(
-                    rotationDays = rotationDays,
-                    onRotationDaysChange = { rotationDays = it }
-                )
+                        // Tags
+                        TagInputChipField(
+                            tagsString = tags,
+                            onTagsChange = { tags = it },
+                            availableTags = availableTags
+                        )
+
+                        // Internal Developer Notes
+                        OutlinedTextField(
+                            value = notes,
+                            onValueChange = { notes = it },
+                            label = { Text("Internal Developer Notes", color = TextSecondary) },
+                            minLines = 2,
+                            maxLines = 4,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = CyberGold,
+                                unfocusedBorderColor = ObsidianBorder,
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary,
+                                focusedContainerColor = ObsidianSurfaceElevated,
+                                unfocusedContainerColor = ObsidianSurfaceElevated
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        // Rotation interval
+                        RotationIntervalPicker(
+                            rotationDays = rotationDays,
+                            onRotationDaysChange = { rotationDays = it }
+                        )
+                    }
+                }
             }
 
             if (errorMessage != null) {
