@@ -1,9 +1,11 @@
 package com.example.feature.vault
 import com.example.feature.settings.PinSettingsSheet
+import com.example.feature.settings.SecurityAuditSheet
 import com.example.feature.export.DotEnvExportSheet
 import com.example.feature.export.VaultBackupSheet
 import com.example.feature.keymanagement.KeyDetailSheet
 import com.example.feature.keymanagement.AddEditKeySheet
+import com.example.feature.keymanagement.KeyGeneratorSheet
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.AnimatedPane
@@ -399,11 +401,12 @@ fun VaultHomeScreen(
     // Dialogs & Sheets
     when (val state = dialogState) {
         is VaultDialogState.AddKey -> {
+            val existingTitles = remember(allKeys) { allKeys.map { it.title } }
             AddEditKeySheet(
                 existingItem = null,
                 initialPreset = state.preset,
                 initialKeyText = state.initialKey,
-                existingTitles = allKeys.map { it.title },
+                existingTitles = existingTitles,
                 availableTags = availableTags,
                 onDismiss = { viewModel.closeDialog() },
                 onSave = { viewModel.saveKey(it) },
@@ -411,9 +414,12 @@ fun VaultHomeScreen(
             )
         }
         is VaultDialogState.EditKey -> {
+            val existingTitles = remember(allKeys, state.item.id) {
+                allKeys.filter { it.id != state.item.id }.map { it.title }
+            }
             AddEditKeySheet(
                 existingItem = state.item,
-                existingTitles = allKeys.filter { it.id != state.item.id }.map { it.title },
+                existingTitles = existingTitles,
                 availableTags = availableTags,
                 onDismiss = { viewModel.closeDialog() },
                 onSave = { viewModel.saveKey(it) }
@@ -424,7 +430,28 @@ fun VaultHomeScreen(
             viewModel.closeDialog()
             navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, state.item.id)
         }
-        is VaultDialogState.Generator, is VaultDialogState.SecurityAudit -> Unit
+        is VaultDialogState.Generator -> {
+            KeyGeneratorSheet(
+                onDismiss = { viewModel.closeDialog() },
+                onSaveToVault = { generatedKey ->
+                    viewModel.openDialog(VaultDialogState.AddKey(initialKey = generatedKey))
+                },
+                onCopy = { generatedKey ->
+                    viewModel.copyToClipboard(generatedKey, "Generated Secret", isSecret = true)
+                }
+            )
+        }
+        is VaultDialogState.SecurityAudit -> {
+            SecurityAuditSheet(
+                keys = allKeys,
+                isPinEnabled = isPinConfigured,
+                onDismiss = { viewModel.closeDialog() },
+                onSelectKey = { item ->
+                    viewModel.closeDialog()
+                    navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, item.id)
+                }
+            )
+        }
         is VaultDialogState.DotEnvExport -> {
             DotEnvExportSheet(
                 viewModel = viewModel,

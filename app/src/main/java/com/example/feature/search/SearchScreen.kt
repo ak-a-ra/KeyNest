@@ -451,9 +451,12 @@ fun SearchScreen(
             )
         }
         is VaultDialogState.EditKey -> {
+            val existingTitles = remember(allKeys, state.item.id) {
+                allKeys.filter { it.id != state.item.id }.map { it.title }
+            }
             AddEditKeySheet(
                 existingItem = state.item,
-                existingTitles = allKeys.filter { it.id != state.item.id }.map { it.title },
+                existingTitles = existingTitles,
                 availableTags = availableTags,
                 onDismiss = { viewModel.closeDialog() },
                 onSave = { viewModel.saveKey(it) }

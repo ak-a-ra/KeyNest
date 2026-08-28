@@ -246,11 +246,27 @@ object VaultSecurity {
     fun calculateEntropy(key: String): EntropyResult {
         if (key.isBlank()) return EntropyResult(0.0, "Empty", 0.0f, "#EF4444")
 
+        var hasLower = false
+        var hasUpper = false
+        var hasDigit = false
+        var hasSymbol = false
+
+        for (i in 0 until key.length) {
+            val c = key[i]
+            when {
+                c.isLowerCase() -> hasLower = true
+                c.isUpperCase() -> hasUpper = true
+                c.isDigit() -> hasDigit = true
+                !c.isWhitespace() -> hasSymbol = true
+            }
+            if (hasLower && hasUpper && hasDigit && hasSymbol) break
+        }
+
         var poolSize = 0
-        if (key.any { it.isLowerCase() }) poolSize += 26
-        if (key.any { it.isUpperCase() }) poolSize += 26
-        if (key.any { it.isDigit() }) poolSize += 10
-        if (key.any { !it.isLetterOrDigit() }) poolSize += 32
+        if (hasLower) poolSize += 26
+        if (hasUpper) poolSize += 26
+        if (hasDigit) poolSize += 10
+        if (hasSymbol) poolSize += 32
         if (poolSize == 0) poolSize = 10
 
         val entropy = key.length * log2(poolSize.toDouble())
