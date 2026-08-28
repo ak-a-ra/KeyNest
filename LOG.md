@@ -93,3 +93,4 @@
 - 2026-08-28: Positioned Base Endpoint URL directly below API Key field with auto-fill provider defaults and removed Advanced Settings toggle for continuous inline form fields.
 - 2026-08-28: Restored collapsible Advanced Settings toggle in AddEditKeySheet for Org/Project ID, Tags, Notes, and Rotation Days while keeping Base Endpoint URL under API Key with provider auto-fill.
 - 2026-08-28: Re-verified complete build and unit test suite (32/32 tests passing cleanly, JVM fallback added for KeystoreCipher in Robolectric unit tests). No other doc updates needed.
+- 2026-08-28: Executed Android Lint static analysis via lint_applet; build completed successfully with 0 fatal errors. No other doc updates needed.
