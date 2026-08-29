@@ -2,11 +2,11 @@
 
 ## Scope
 
-Governs `com.example.core.designsystem`: `Theme.kt`, `Color.kt`, `Type.kt`, and reusable core components (`SecureTextField.kt`, `VaultButton.kt`, `StateWrapper.kt`).
+Governs `com.example.core.designsystem`: `Theme.kt`, `Color.kt`, and `Type.kt`.
 
 ## Responsibilities
 
-- Material Design 3 color palette, typography hierarchy, Keep pastel card tints, and reusable design components.
+- Material Design 3 color palette, typography hierarchy, and Keep pastel card tints.
 
 ## Invariants
 

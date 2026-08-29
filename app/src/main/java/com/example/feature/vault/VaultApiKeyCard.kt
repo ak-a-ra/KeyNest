@@ -145,6 +145,7 @@ fun ApiKeyCard(
             }
 
             // Key Masked Row & 1-Tap Tactile Copy Button
+            val maskedKey = remember(item.apiKey) { VaultSecurity.maskKey(item.apiKey, 4) }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -155,7 +156,7 @@ fun ApiKeyCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = VaultSecurity.maskKey(item.apiKey, 4),
+                    text = maskedKey,
                     style = MonospaceCodeStyle.copy(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,

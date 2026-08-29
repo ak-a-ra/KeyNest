@@ -62,19 +62,19 @@ To be the fastest, safest, and most intuitive secret manager for mobile develope
 #### 1. 🔐 Security & Privacy (Crucial for a Vault)
 - [ ] **FLAG_SECURE**: Prevent users and background apps from taking screenshots, recording the screen, or seeing the app preview in the recent apps switcher.
 - [ ] **Automatic Background Locking**: Detect when the app enters the background (via ProcessLifecycleOwner) and automatically lock the vault if the user leaves it unattended.
-- [ ] **Clipboard Expiration**: Automatically clear sensitive API keys from the Android clipboard after a short timeout.
+- [x] **Clipboard Expiration**: Automatically clear sensitive API keys from the Android clipboard after a 30-second countdown (`startClipboardAutoClearCountdown`).
 
 #### 2. ⚡ Performance & Search
 - [ ] **SQLite FTS4**: Upgrade the current `LIKE '%query%'` search implementation to Room's Full-Text Search (`@Fts4`). This turns O(N) table scans into O(1) index lookups, guaranteeing zero-latency filtering as the vault grows.
 - [ ] **Baseline Profiles**: Generate a baseline profile to pre-compile critical user journeys (CUJs), reducing startup time and initial scroll jank.
-- [ ] **Flow Distinctness**: Apply `.distinctUntilChanged()` to Room database flows to prevent unnecessary UI updates when background operations occur (like updating copy counts).
+- [x] **Flow Distinctness**: Apply `.distinctUntilChanged()` to Room database flows and derived flows to prevent unnecessary UI updates when background operations occur.
 
 #### 3. 🎨 UI/UX & Compose Recomposition
 - [ ] **Immutable Collections**: Adopt `kotlinx-collections-immutable` to enforce stability on list states, allowing Jetpack Compose to skip recomposition for unaffected cards.
 - [ ] **Derived State**: Wrap scroll offset calculations in `derivedStateOf {}` to stop the entire screen from recomposing on every scroll frame.
 
 #### 4. 📦 Build & APK Size
-- [ ] **R8 Minification**: Ensure `isMinifyEnabled` and `isShrinkResources` are enabled to strip unused code and obfuscate the security logic.
+- [x] **R8 Minification**: Enabled `isMinifyEnabled = true` and `isShrinkResources = true` in release build type with `proguard-android-optimize.txt` to strip unused code and optimize DEX size.
 - [ ] **Resource Stripping**: Exclude unused Android framework translation strings to reduce the final APK size.
 
 ---

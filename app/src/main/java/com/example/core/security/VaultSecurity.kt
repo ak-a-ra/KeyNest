@@ -192,10 +192,21 @@ object VaultSecurity {
         return false
     }
 
+    private fun ByteArray.toHexString(): String {
+        val hexChars = "0123456789abcdef"
+        val chars = CharArray(size * 2)
+        for (i in indices) {
+            val v = this[i].toInt() and 0xFF
+            chars[i * 2] = hexChars[v ushr 4]
+            chars[i * 2 + 1] = hexChars[v and 0x0F]
+        }
+        return String(chars)
+    }
+
     private fun hashPinWithSalt(pin: String, salt: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val hashBytes = digest.digest((pin + salt).toByteArray(Charsets.UTF_8))
-        return hashBytes.joinToString("") { "%02x".format(it) }
+        return hashBytes.toHexString()
     }
 
     /**
@@ -246,11 +257,27 @@ object VaultSecurity {
     fun calculateEntropy(key: String): EntropyResult {
         if (key.isBlank()) return EntropyResult(0.0, "Empty", 0.0f, "#EF4444")
 
+        var hasLower = false
+        var hasUpper = false
+        var hasDigit = false
+        var hasSymbol = false
+
+        for (i in 0 until key.length) {
+            val c = key[i]
+            when {
+                c.isLowerCase() -> hasLower = true
+                c.isUpperCase() -> hasUpper = true
+                c.isDigit() -> hasDigit = true
+                !c.isWhitespace() -> hasSymbol = true
+            }
+            if (hasLower && hasUpper && hasDigit && hasSymbol) break
+        }
+
         var poolSize = 0
-        if (key.any { it.isLowerCase() }) poolSize += 26
-        if (key.any { it.isUpperCase() }) poolSize += 26
-        if (key.any { it.isDigit() }) poolSize += 10
-        if (key.any { !it.isLetterOrDigit() }) poolSize += 32
+        if (hasLower) poolSize += 26
+        if (hasUpper) poolSize += 26
+        if (hasDigit) poolSize += 10
+        if (hasSymbol) poolSize += 32
         if (poolSize == 0) poolSize = 10
 
         val entropy = key.length * log2(poolSize.toDouble())
@@ -292,9 +319,8 @@ object VaultSecurity {
         }.ifEmpty { lower + numbers }
 
         val random = SecureRandom()
-        val randomString = (1..length)
-            .map { charPool[random.nextInt(charPool.length)] }
-            .joinToString("")
+        val chars = CharArray(length) { charPool[random.nextInt(charPool.length)] }
+        val randomString = String(chars)
 
         return if (prefix.isNotEmpty()) "$prefix$randomString" else randomString
     }
@@ -305,7 +331,7 @@ object VaultSecurity {
         val random = SecureRandom()
         val bytes = ByteArray(bytesCount)
         random.nextBytes(bytes)
-        return bytes.joinToString("") { "%02x".format(it) }
+        return bytes.toHexString()
     }
 
     fun exportToDotEnv(keys: List<ApiKeyItem>): String {

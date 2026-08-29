@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -222,6 +223,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                     .distinct()
                     .sorted()
             }
+            .distinctUntilChanged()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
@@ -254,6 +256,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
         favoritesCount = allKeys
             .map { list -> list.count { it.isPinned } }
+            .distinctUntilChanged()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
@@ -295,23 +298,23 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             keys.asSequence()
                 .filter { item ->
                     if (query.isBlank()) true else {
-                        val q = query.trim().lowercase()
-                        val masked = VaultSecurity.maskKey(item.apiKey).lowercase()
-                        item.title.lowercase().contains(q) ||
-                                item.provider.lowercase().contains(q) ||
-                                item.category.lowercase().contains(q) ||
-                                item.tags.lowercase().contains(q) ||
-                                item.endpointUrl.lowercase().contains(q) ||
-                                item.modelOrProject.lowercase().contains(q) ||
-                                item.organizationId.lowercase().contains(q) ||
-                                item.notes.lowercase().contains(q) ||
-                                masked.contains(q) ||
-                                (q.startsWith("#") && item.tags.lowercase().contains(q.removePrefix("#"))) ||
-                                (q.startsWith("tag:") && item.tags.lowercase().contains(q.removePrefix("tag:")))
+                        val q = query.trim()
+                        val masked = VaultSecurity.maskKey(item.apiKey)
+                        item.title.contains(q, ignoreCase = true) ||
+                                item.provider.contains(q, ignoreCase = true) ||
+                                item.category.contains(q, ignoreCase = true) ||
+                                item.tags.contains(q, ignoreCase = true) ||
+                                item.endpointUrl.contains(q, ignoreCase = true) ||
+                                item.modelOrProject.contains(q, ignoreCase = true) ||
+                                item.organizationId.contains(q, ignoreCase = true) ||
+                                item.notes.contains(q, ignoreCase = true) ||
+                                masked.contains(q, ignoreCase = true) ||
+                                (q.startsWith("#") && item.tags.contains(q.removePrefix("#"), ignoreCase = true)) ||
+                                (q.startsWith("tag:") && item.tags.contains(q.removePrefix("tag:"), ignoreCase = true))
                     }
                 }
                 .filter { category == "All" || it.category.equals(category, ignoreCase = true) }
-                .filter { tagFilter == null || ApiKeyFormatting.parseTags(it.tags).any { tag -> tag.equals(tagFilter, ignoreCase = true) } }
+                .filter { tagFilter == null || ApiKeyFormatting.hasTag(it.tags, tagFilter) }
                 .filter { !onlyFavs || it.isPinned }
                 .toList()
                 .sortedWithOption(sort)
@@ -687,7 +690,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 private fun List<ApiKeyItem>.sortedWithOption(sort: SortOption): List<ApiKeyItem> = when (sort) {
     SortOption.RECENT -> sortedWith(compareByDescending<ApiKeyItem> { it.isPinned }.thenByDescending { it.createdAt })
     SortOption.MOST_USED -> sortedWith(compareByDescending<ApiKeyItem> { it.isPinned }.thenByDescending { it.copyCount })
-    SortOption.ALPHABETICAL -> sortedWith(compareByDescending<ApiKeyItem> { it.isPinned }.thenBy { it.title.lowercase() })
+    SortOption.ALPHABETICAL -> sortedWith(compareByDescending<ApiKeyItem> { it.isPinned }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.title })
     SortOption.EXPIRING_SOON -> sortedWith(compareByDescending<ApiKeyItem> { it.isPinned }.thenBy { it.expiresAt ?: Long.MAX_VALUE })
     SortOption.PINNED_FIRST -> sortedWith(compareByDescending<ApiKeyItem> { it.isPinned }.thenByDescending { it.createdAt })
 }
