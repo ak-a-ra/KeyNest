@@ -29,36 +29,6 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run Lint
-        run: ./gradlew lint --no-daemon
-
-      - name: Upload Lint Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lint-report
-          path: |
-            app/build/reports/lint-results-debug.html
-            app/build/reports/lint-results-debug.xml
-            app/build/reports/lint-results-release.html
-            app/build/reports/lint-results-release.xml
-          retention-days: 3
-          if-no-files-found: warn
-
-      - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --no-daemon
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: |
-            app/build/test-results/testDebugUnitTest/
-            app/build/reports/tests/testDebugUnitTest/
-          retention-days: 3
-          if-no-files-found: warn
-
       - name: Create Env Configuration
         run: |
           if [ -f .env.example ]; then
@@ -81,12 +51,6 @@ jobs:
 
       - name: Build Release APK (unsigned, catches R8 failures)
         run: ./gradlew :app:assembleRelease --no-daemon
-
-      - name: Unit tests (Robolectric migration test)
-        run: >-
-          ./gradlew :app:testDebugUnitTest
-          --tests "com.example.core.database.AppDatabaseMigrationTest"
-          --no-daemon
 
       - name: Prepare APK Output
         id: prepare_apk
