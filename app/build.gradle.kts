@@ -60,7 +60,6 @@ android {
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
-    // java.time used on minSdk 24 (ApiKeyFormatting, VaultTrashView) - requires desugaring
     isCoreLibraryDesugaringEnabled = true
   }
   buildFeatures {
@@ -68,7 +67,6 @@ android {
     buildConfig = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
-  // AGP 9 Kotlin-DSL accessor above may be unreliable here; keep the Groovy-builder form as well.
   android.withGroovyBuilder {
     "testOptions" {
       "unitTests" {
@@ -77,8 +75,6 @@ android {
     }
   }
   sourceSets {
-    // Robolectric migration tests read schemas from app assets via MigrationTestHelper's
-    // targetContext fallback; debug-only so release APK stays schema-free.
     getByName("debug") { assets.srcDir("$projectDir/schemas") }
   }
   dependenciesInfo {
