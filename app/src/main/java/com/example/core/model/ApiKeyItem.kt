@@ -12,12 +12,12 @@ data class ApiKeyItem(
     val secretKey: String = "",
     val provider: String = "Other",
     val category: String = "AI & LLMs",
-    val environment: String = "Production",
+    val environment: String = "Production", // Production, Staging, Development, Test, Personal
     val endpointUrl: String = "",
     val organizationId: String = "",
     val modelOrProject: String = "",
     val notes: String = "",
-    val tags: String = "",
+    val tags: String = "", // Comma-separated
     val isPinned: Boolean = false,
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null,
