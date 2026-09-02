@@ -123,6 +123,7 @@
 - 2026-09-02: Diagnosed GitHub Actions workflow run failure root causes: (1) Missing `chmod +x gradlew` leading to `Permission denied (exit code 126)` during `./gradlew assembleDebug` in runner environments; (2) `ksp.useKsp2=false` property incompatibility with KSP1 removal; (3) Unsigned `assembleRelease` failing on missing `storeFile` in `signingConfigs.release`. Pushed fix to `.github/workflows/build-release.yml` on remote `main`.
 - 2026-09-02: Verified GitHub Actions run 33627398434 completed with 100% green success across all steps (keystore creation, gradlew chmod, assembleDebug, APK preparation, and artifact upload). No other doc updates needed.
 - 2026-09-02: Added `release: types: [published]` trigger to `.github/workflows/build-release.yml` and updated release step condition to attach built APK directly whenever a release is created in GitHub UI or pushed as a tag. Pushed changes to remote `main`. No other doc updates needed.
+- 2026-09-02: Eliminated duplicate workflow runs by removing `push: tags: ['v*']` trigger and scoping `.github/workflows/build-release.yml` strictly to `release: types: [published]` and `workflow_dispatch`. Verified live on remote main (`12fcbd71a05c7e4409d6bc6fcb665b3a89799f91`). No other doc updates needed.
 
 
 
