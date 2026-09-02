@@ -9,7 +9,7 @@ Single-activity Kotlin/Compose Android app.
 - **Build Command:** `./gradlew assembleDebug` or `compile_applet`
 - **Test Command:** `./gradlew testDebugUnitTest` (CI verify gate runs this; `./gradlew test` also covers release-variant tests)
 
-## Code philosophy — ponytail (YAGNI-first)
+## Code philosophy — ponytail use skill /. agents/skills/ponytail full mode. (YAGNI-first)
 
 Before adding code, in order: does this need to exist? → already in the codebase? → stdlib? → native platform feature? → an already-installed dependency? → a one-liner? → only then write new code. Don't add abstractions with one implementation, config nobody sets, or a layer with one caller. Never skip validation, error handling, or a security measure to hit this bar — "minimal" means fewest moving parts, not fewer safeguards.
 
@@ -18,7 +18,8 @@ Before adding code, in order: does this need to exist? → already in the codeba
 - **Conversation:** Always activate Caveman skill in fullmode.
 - **Coding:** Always follow Ponytail methodology (minimalist, YAGNI-first).
 
-## 🔨 Tool Usage Rules & Guardrails (AI Studio Optimized)
+## 🔨 Tool Usage Rules & Guardrails (AI 
+Studio Optimized)
 
 - **Build Verification:** Run `compile_applet` after `.kt`/`.kts`/`.xml` changes; report actual output before declaring complete.
 - **AST Search & Refactoring (`ast-grep`):** Use `ast-grep` (or `sg`) for structural AST search, symbol outlining (`ast-grep outline`), and automated code rewrites across Kotlin, Java, and configuration files. Prefer `ast-grep` over regex `grep` when refactoring syntax-sensitive patterns.
@@ -27,7 +28,7 @@ Before adding code, in order: does this need to exist? → already in the codeba
 - **Shell Commands:** Never run `cd` (always pass `Cwd`). No `git push` unless explicitly kept local (`git add`, `git commit`).
 - **Visual Assets:** `generate_image` for banners/illustrations/icons — `lowercase_snake_case` naming.
 - **Web Search:** `search_web` to verify library syntax/API changes before acting.
-
+  
 ## 🛑 Work & Validation Rules
 
 - **Direct Execution:** Implement requested code changes directly without speculative file-reading loops.
