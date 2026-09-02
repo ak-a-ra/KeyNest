@@ -118,5 +118,8 @@
 - 2026-08-28: Recovered after session interruption: verified codebase integrity, ran `compile_applet` (build succeeded) and `./gradlew testDebugUnitTest` (32/32 unit & Robolectric tests passed). All tasks complete and verified. No other doc updates needed.
 - 2026-08-28: Executed Code Review skill evaluation along Standards and Spec axes. All security invariants, Material 3 conventions, and feature specs validated with 0 findings. No other doc updates needed.
 
+- 2026-09-02: Fixed workflow action run failure by adding missing `toJson`, `toCsv`, and `toPlainText` export functions to `ApiKeyFormatting.kt`. Verified 100% build compilation (`compile_applet`) and unit tests.
+
+
 
 

@@ -1,5 +1,7 @@
 package com.example.core.util
 
+import com.example.core.model.ApiKeyItem
+
 /**
  * Formatting utilities for tag processing and string manipulation in the vault.
  * 
@@ -64,5 +66,86 @@ object ApiKeyFormatting {
                 else -> sb.append(c)
             }
         }
+    }
+
+    /** Export keys to JSON format string */
+    fun toJson(keys: List<ApiKeyItem>): String {
+        val sb = java.lang.StringBuilder()
+        sb.append("[\n")
+        val validKeys = keys.filter { !it.isDeleted }
+        validKeys.forEachIndexed { index, item ->
+            sb.append("  {\n")
+            sb.append("    \"id\": ").append(item.id).append(",\n")
+            sb.append("    \"title\": \""); appendEscapedJson(sb, item.title); sb.append("\",\n")
+            sb.append("    \"apiKey\": \""); appendEscapedJson(sb, item.apiKey); sb.append("\",\n")
+            sb.append("    \"secretKey\": \""); appendEscapedJson(sb, item.secretKey); sb.append("\",\n")
+            sb.append("    \"provider\": \""); appendEscapedJson(sb, item.provider); sb.append("\",\n")
+            sb.append("    \"category\": \""); appendEscapedJson(sb, item.category); sb.append("\",\n")
+            sb.append("    \"environment\": \""); appendEscapedJson(sb, item.environment); sb.append("\",\n")
+            sb.append("    \"endpointUrl\": \""); appendEscapedJson(sb, item.endpointUrl); sb.append("\",\n")
+            sb.append("    \"organizationId\": \""); appendEscapedJson(sb, item.organizationId); sb.append("\",\n")
+            sb.append("    \"modelOrProject\": \""); appendEscapedJson(sb, item.modelOrProject); sb.append("\",\n")
+            sb.append("    \"notes\": \""); appendEscapedJson(sb, item.notes); sb.append("\",\n")
+            sb.append("    \"tags\": \""); appendEscapedJson(sb, item.tags); sb.append("\"\n")
+            sb.append("  }")
+            if (index < validKeys.size - 1) sb.append(",")
+            sb.append("\n")
+        }
+        sb.append("]")
+        return sb.toString()
+    }
+
+    /** Export keys to CSV format string */
+    fun toCsv(keys: List<ApiKeyItem>): String {
+        val sb = java.lang.StringBuilder()
+        sb.append("Title,Provider,Category,Environment,API Key,Secret Key,Endpoint URL,Org ID,Model/Project,Tags,Notes\n")
+        fun escapeCsv(value: String): String {
+            return if (value.contains(",") || value.contains("\"") || value.contains("\n") || value.contains("\r")) {
+                "\"" + value.replace("\"", "\"\"") + "\""
+            } else {
+                value
+            }
+        }
+        keys.filter { !it.isDeleted }.forEach { item ->
+            sb.append(escapeCsv(item.title)).append(",")
+                .append(escapeCsv(item.provider)).append(",")
+                .append(escapeCsv(item.category)).append(",")
+                .append(escapeCsv(item.environment)).append(",")
+                .append(escapeCsv(item.apiKey)).append(",")
+                .append(escapeCsv(item.secretKey)).append(",")
+                .append(escapeCsv(item.endpointUrl)).append(",")
+                .append(escapeCsv(item.organizationId)).append(",")
+                .append(escapeCsv(item.modelOrProject)).append(",")
+                .append(escapeCsv(item.tags)).append(",")
+                .append(escapeCsv(item.notes)).append("\n")
+        }
+        return sb.toString().trimEnd()
+    }
+
+    /** Export keys to human-readable plain text format */
+    fun toPlainText(keys: List<ApiKeyItem>): String {
+        val sb = java.lang.StringBuilder()
+        keys.filter { !it.isDeleted }.forEachIndexed { index, item ->
+            sb.append("Title: ").append(item.title).append("\n")
+            sb.append("Provider: ").append(item.provider).append("\n")
+            sb.append("Environment: ").append(item.environment).append("\n")
+            sb.append("API Key: ").append(item.apiKey).append("\n")
+            if (item.secretKey.isNotBlank()) {
+                sb.append("Secret Key: ").append(item.secretKey).append("\n")
+            }
+            if (item.endpointUrl.isNotBlank()) {
+                sb.append("Endpoint URL: ").append(item.endpointUrl).append("\n")
+            }
+            if (item.tags.isNotBlank()) {
+                sb.append("Tags: ").append(item.tags).append("\n")
+            }
+            if (item.notes.isNotBlank()) {
+                sb.append("Notes: ").append(item.notes).append("\n")
+            }
+            if (index < keys.size - 1) {
+                sb.append("\n----------------------------------------\n\n")
+            }
+        }
+        return sb.toString().trimEnd()
     }
 }
