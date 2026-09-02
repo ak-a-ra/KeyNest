@@ -177,10 +177,15 @@ class ProviderRepository(
         val current = getProviderById(providerId).firstOrNull()
         if (current == null) return
         val existingIndex = current.keys.indexOfFirst { it.id == keyItem.id }
-        val newKeys = if (existingIndex >= 0) {
+        val rawKeys = if (existingIndex >= 0) {
             current.keys.toMutableList().apply { set(existingIndex, keyItem) }
         } else {
             current.keys + keyItem
+        }
+        val newKeys = if (keyItem.isPrimary) {
+            rawKeys.map { if (it.id == keyItem.id) it else it.copy(isPrimary = false) }
+        } else {
+            rawKeys
         }
         val activeId = if (keyItem.isPrimary || current.activeKeyId.isEmpty()) keyItem.id else current.activeKeyId
         val updated = current.copy(

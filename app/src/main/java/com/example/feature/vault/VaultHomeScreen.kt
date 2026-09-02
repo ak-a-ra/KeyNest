@@ -130,13 +130,6 @@ fun VaultHomeScreen(
         )
     }
 
-    // Handle toast feedback events
-    LaunchedEffect(Unit) {
-        viewModel.copyFeedbackEvent.collectLatest { feedback ->
-            Toast.makeText(context, feedback.message, Toast.LENGTH_SHORT).show()
-        }
-    }
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = ObsidianBg,

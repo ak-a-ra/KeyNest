@@ -125,4 +125,31 @@ class ProviderRepositoryTest {
         assertEquals(1, repository.allProviders.first().size)
         assertEquals(0, repository.trashedProviders.first().size)
     }
+
+    @Test
+    fun addOrUpdateKey_settingNewPrimary_demotesExistingPrimary() = runBlocking {
+        val profile = ProviderProfile(
+            id = "groq",
+            category = "AI & LLMs",
+            displayName = "Groq",
+            baseUrl = "https://api.groq.com",
+            colorHex = "#F55036",
+            isActive = true,
+            activeKeyId = "g1",
+            keys = listOf(
+                ProviderKeyItem(id = "g1", label = "Key 1", apiKey = "gsk_1", isPrimary = true)
+            )
+        )
+
+        repository.saveProvider(profile)
+        repository.addOrUpdateKey("groq", ProviderKeyItem(id = "g2", label = "Key 2", apiKey = "gsk_2", isPrimary = true))
+
+        val retrieved = repository.allProviders.first().first()
+        val key1 = retrieved.keys.find { it.id == "g1" }!!
+        val key2 = retrieved.keys.find { it.id == "g2" }!!
+
+        assertFalse("Key 1 should no longer be primary", key1.isPrimary)
+        assertTrue("Key 2 should be primary", key2.isPrimary)
+        assertEquals("g2", retrieved.activeKeyId)
+    }
 }

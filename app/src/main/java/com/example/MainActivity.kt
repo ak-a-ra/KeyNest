@@ -160,6 +160,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        vaultViewModel?.checkClipboardForApiKey()
+        vaultViewModel?.startClipboardMonitoring()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        vaultViewModel?.stopClipboardMonitoring()
     }
 }

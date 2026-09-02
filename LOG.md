@@ -134,3 +134,5 @@
 
 - 2026-09-02: Authored scalable System Architecture covering UDF data pipelines, Keystore memory-caching strategies, API design, and cross-platform KMP/zero-knowledge sync plans in PLAN.md and ROADMAP.md.
 - 2026-09-02: Formulated senior systems architect scalable plan across Architecture, Component Structure, Data Flow, API Design, Database Schema, and Caching Strategy in PLAN.md and expanded Phase 4 Faraway Design in ROADMAP.md.
+- 2026-09-02: Fixed clipboard auto-clear wiping unrelated clips, empty clip crash, self-copied key persistence across restarts, and multiple primary keys conflict in ProviderRepository. Verified 100% tests passing. No other doc updates needed.
+- 2026-09-02: Optimized battery consumption: scoped clipboard listener strictly to foreground lifecycle (onResume/onPause), eliminated background clipboard polling, and removed duplicate compose coroutine collectors. Unit tests 100% green. No other doc updates needed.

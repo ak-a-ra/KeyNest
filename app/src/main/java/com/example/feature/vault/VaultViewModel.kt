@@ -130,7 +130,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val clipboardManager: ClipboardManager? =
         application.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
     private var autoClearJob: Job? = null
-    private var lastSelfCopiedKey: String? = null
+    private var lastSelfCopiedKey: String? = VaultSecurity.getLastSelfCopiedKey(application)
     private val clipListener = ClipboardManager.OnPrimaryClipChangedListener {
         checkClipboardForApiKey()
     }
@@ -228,10 +228,6 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         val database = AppDatabase.getDatabase(application)
         repository = ApiKeyRepository(database.apiKeyDao())
         providerRepository = ProviderRepository(database.providerDao())
-
-        try {
-            clipboardManager?.addPrimaryClipChangedListener(clipListener)
-        } catch (_: Exception) { }
 
         allKeys = repository.allKeys
             .stateIn(
@@ -678,6 +674,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     fun copySecretValue(secretText: String, label: String, isSecret: Boolean = true) {
         val mgr = clipboardManager ?: return
         lastSelfCopiedKey = secretText
+        VaultSecurity.setLastSelfCopiedKey(getApplication(), secretText)
         val clip = ClipData.newPlainText(label, secretText).apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && isSecret) {
                 description.extras = PersistableBundle().apply {
@@ -743,24 +740,53 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     fun clearClipboardNow() {
         autoClearJob?.cancel()
         clearClipboardIfMatches(null)
+        lastSelfCopiedKey = null
+        VaultSecurity.setLastSelfCopiedKey(getApplication(), null)
         _clipboardCopyState.value = null
     }
 
     private fun clearClipboardIfMatches(expected: String?) {
         val mgr = clipboardManager ?: return
         try {
+            if (expected != null) {
+                val clip = mgr.primaryClip ?: return
+                if (clip.itemCount == 0) return
+                val currentText = clip.getItemAt(0)?.text?.toString()
+                if (currentText != expected) return
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 mgr.clearPrimaryClip()
             } else {
                 mgr.setPrimaryClip(ClipData.newPlainText("", ""))
             }
+            if (expected != null && (expected == lastSelfCopiedKey || expected == VaultSecurity.getLastSelfCopiedKey(getApplication()))) {
+                lastSelfCopiedKey = null
+                VaultSecurity.setLastSelfCopiedKey(getApplication(), null)
+            }
+        } catch (_: Exception) { }
+    }
+
+    fun startClipboardMonitoring() {
+        try {
+            clipboardManager?.removePrimaryClipChangedListener(clipListener)
+            clipboardManager?.addPrimaryClipChangedListener(clipListener)
+            checkClipboardForApiKey()
+        } catch (_: Exception) { }
+    }
+
+    fun stopClipboardMonitoring() {
+        try {
+            clipboardManager?.removePrimaryClipChangedListener(clipListener)
         } catch (_: Exception) { }
     }
 
     fun checkClipboardForApiKey() {
         val mgr = clipboardManager ?: return
-        val item = mgr.primaryClip?.getItemAt(0)?.text?.toString()?.trim() ?: return
-        if (item == lastSelfCopiedKey || item.isBlank()) return
+        val clip = mgr.primaryClip ?: return
+        if (clip.itemCount == 0) return
+        val item = clip.getItemAt(0)?.text?.toString()?.trim() ?: return
+        val savedSelfCopied = lastSelfCopiedKey ?: VaultSecurity.getLastSelfCopiedKey(getApplication())
+        if (item == savedSelfCopied || item.isBlank()) return
 
         if (VaultSecurity.isLikelyApiKey(item)) {
             _clipboardDetectedKey.value = item
