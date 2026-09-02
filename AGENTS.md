@@ -28,25 +28,12 @@ Before adding code, in order: does this need to exist? → already in the codeba
 - **Visual Assets:** `generate_image` for banners/illustrations/icons — `lowercase_snake_case` naming.
 - **Web Search:** `search_web` to verify library syntax/API changes before acting.
 
-## 🛑 Verify Before You Build (Three-Layer Approach)
+## 🛑 Work & Validation Rules
 
-To ensure accurate, complete, and resilient changes, **always** execute this three-layer validation sequence before declaring a task finished:
-
-1. **Layer 1: Update MD (Documentation Sync)**
-   - Before executing builds, synchronize the 6 core DOX files (`README.md`, `PLAN.md`, `ROADMAP.md`, `LOG.md`, `AGENTS.md`, `CONTEXT.md`) with the intended changes.
-   - Update `PLAN.md` with current status and `LOG.md` with action records.
-2. **Layer 2: Enable Tools (Automated Verification)**
-   - **Build:** Run `compile_applet` to ensure compilation success.
-   - **Test:** Run `./gradlew testDebugUnitTest` to ensure unit & Robolectric tests pass.
-   - **Lint:** Run `lint_applet` or `./gradlew lint` if static analysis is required.
-   - **Gate:** Use the `no-mistakes` pre-push pipeline to ensure codebase constraints are met.
-3. **Layer 3: Human Validation Zones (Mandatory Stops)**
-   - Stop and explicitly ask the user for confirmation when touching these zones:
-     - Introducing breaking API or architecture changes.
-     - Modifying `VaultSecurity` or Keystore implementations.
-     - Adding new 3rd-party dependencies.
-     - Deleting >20 lines of code.
-     - Making significant shifts to data schemas (Room DB migrations).
+- **Direct Execution:** Implement requested code changes directly without speculative file-reading loops.
+- **Verification:** Run `compile_applet` after editing `.kt`/`.kts`/`.xml` files.
+- **Documentation:** Update `LOG.md` or other docs only when meaningful features/architectures change, not on simple questions or clarifications.
+- **Human Confirmation Zones:** Ask for user confirmation only when introducing breaking architectural changes, modifying Keystore crypto implementations, or deleting large code blocks (>20 lines).
 
 ## 🔐 Security Invariants (Crucial)
 
