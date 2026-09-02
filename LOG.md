@@ -124,6 +124,8 @@
 - 2026-09-02: Verified GitHub Actions run 33627398434 completed with 100% green success across all steps (keystore creation, gradlew chmod, assembleDebug, APK preparation, and artifact upload). No other doc updates needed.
 - 2026-09-02: Added `release: types: [published]` trigger to `.github/workflows/build-release.yml` and updated release step condition to attach built APK directly whenever a release is created in GitHub UI or pushed as a tag. Pushed changes to remote `main`. No other doc updates needed.
 - 2026-09-02: Eliminated duplicate workflow runs by removing `push: tags: ['v*']` trigger and scoping `.github/workflows/build-release.yml` strictly to `release: types: [published]` and `workflow_dispatch`. Verified live on remote main (`12fcbd71a05c7e4409d6bc6fcb665b3a89799f91`). No other doc updates needed.
+- 2026-09-02: Updated PLAN.md and ROADMAP.md with the Agora-style Provider Vault Remake Implementation Spec (Room v3, Keystore AES-GCM, multi-key per provider profile with 1 active key toggle, and live endpoint connection probe).
+- 2026-09-02: Completed Agora-style Provider Vault remake: Room schema v3 migration with ProviderProfileEntity and ProviderDao, Keystore AES-256-GCM encryption in ProviderRepository, multi-key radio selection with 1-active toggle, live HTTP status & latency probe in ProviderConnectionTester, Agora ProviderCard and ProviderConfigSheet Compose UI, updated .env aggregation export, and passed 100% unit tests & compilation. No other doc updates needed.
 
 
 

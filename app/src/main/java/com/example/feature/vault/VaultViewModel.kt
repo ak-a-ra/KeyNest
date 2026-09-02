@@ -1,29 +1,32 @@
 package com.example.feature.vault
 
 import androidx.core.content.edit
-
 import android.app.Application
 import android.content.ClipData
 import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.PersistableBundle
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import android.net.Uri
 import com.example.core.database.AppDatabase
 import com.example.core.files.VaultFileManager
 import com.example.core.model.ApiKeyItem
+import com.example.core.model.ProviderKeyItem
 import com.example.core.model.ProviderPreset
 import com.example.core.model.ProviderPresets
-import com.example.core.repository.UNDECRYPTABLE_PLACEHOLDER
+import com.example.core.model.ProviderProfile
+import com.example.core.network.ConnectionResult
+import com.example.core.network.ProviderConnectionTester
 import com.example.core.repository.ApiKeyRepository
+import com.example.core.repository.ProviderRepository
+import com.example.core.repository.UNDECRYPTABLE_PLACEHOLDER
 import com.example.core.security.VaultBackupCrypto
 import com.example.core.security.VaultSecurity
 import com.example.core.util.ApiKeyFormatting
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -32,13 +35,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private data class FilterCriteria(
     val query: String,
@@ -71,6 +76,8 @@ sealed interface VaultDialogState {
     data class AddKey(val preset: ProviderPreset? = null, val initialKey: String = "") : VaultDialogState
     data class EditKey(val item: ApiKeyItem) : VaultDialogState
     data class KeyDetail(val item: ApiKeyItem) : VaultDialogState
+    data class ConfigureProvider(val profile: ProviderProfile) : VaultDialogState
+    data class AddCustomProvider(val preset: ProviderPreset? = null) : VaultDialogState
     object Generator : VaultDialogState
     object DotEnvExport : VaultDialogState
     object DotEnvImport : VaultDialogState
@@ -119,6 +126,7 @@ data class AutoLockTimeout(
 
 class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: ApiKeyRepository
+    private val providerRepository: ProviderRepository
     private val clipboardManager: ClipboardManager? =
         application.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
     private var autoClearJob: Job? = null
@@ -131,10 +139,19 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     val trashedKeys: StateFlow<List<ApiKeyItem>>
     val trashCount: StateFlow<Int>
 
-    private val _cipherError = MutableStateFlow(false)
+    // Provider Profiles (Agora Architecture)
+    val allProviders: StateFlow<List<ProviderProfile>>
+    val trashedProviders: StateFlow<List<ProviderProfile>>
+    val providerTrashCount: StateFlow<Int>
+    val filteredProviders: StateFlow<List<ProviderProfile>>
 
-    /** True when a row could not be decrypted (e.g. invalidated Keystore key); the vault stays usable. */
-    val cipherError: StateFlow<Boolean> = _cipherError.asStateFlow()
+    private val _connectionResults = MutableStateFlow<Map<String, ConnectionResult>>(emptyMap())
+    val connectionResults: StateFlow<Map<String, ConnectionResult>> = _connectionResults.asStateFlow()
+
+    private val _testingProviders = MutableStateFlow<Set<String>>(emptySet())
+    val testingProviders: StateFlow<Set<String>> = _testingProviders.asStateFlow()
+
+    val cipherError: StateFlow<Boolean>
 
     private val _currentViewMode = MutableStateFlow(VaultViewMode.ALL_SECRETS)
     val currentViewMode: StateFlow<VaultViewMode> = _currentViewMode.asStateFlow()
@@ -206,6 +223,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val database = AppDatabase.getDatabase(application)
         repository = ApiKeyRepository(database.apiKeyDao())
+        providerRepository = ProviderRepository(database.providerDao())
+
         try {
             clipboardManager?.addPrimaryClipChangedListener(clipListener)
         } catch (_: Exception) { }
@@ -215,6 +234,27 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
+            )
+
+        allProviders = providerRepository.allProviders
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
+
+        trashedProviders = providerRepository.trashedProviders
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
+
+        providerTrashCount = providerRepository.trashCount
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = 0
             )
 
         availableTags = allKeys
@@ -237,15 +277,15 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 initialValue = emptyList()
             )
 
-        // Repository degrades undecryptable rows to UNDECRYPTABLE_PLACEHOLDER per-row; flag it for the UI.
-        viewModelScope.launch {
-            combine(repository.allKeys, repository.trashedKeys) { keys, trashed -> keys + trashed }
-                .collect { rows ->
-                    _cipherError.value = rows.any {
-                        it.apiKey == UNDECRYPTABLE_PLACEHOLDER || it.secretKey == UNDECRYPTABLE_PLACEHOLDER
-                    }
-                }
-        }
+        cipherError = combine(repository.allKeys, repository.trashedKeys) { keys, trashed ->
+            (keys + trashed).any {
+                it.apiKey == UNDECRYPTABLE_PLACEHOLDER || it.secretKey == UNDECRYPTABLE_PLACEHOLDER
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
 
         trashCount = repository.trashCount
             .stateIn(
@@ -254,7 +294,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 initialValue = 0
             )
 
-        favoritesCount = allKeys
+        favoritesCount = allProviders
             .map { list -> list.count { it.isPinned } }
             .distinctUntilChanged()
             .stateIn(
@@ -264,11 +304,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             )
 
         // Restore saved preferences
-        val prefs = application.getApplicationContext().getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
+        val prefs = application.applicationContext.getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
         val savedMode = prefs.getString(_displayModePreferenceKey, "Grid")
         _displayMode.value = if (savedMode == "List") DisplayMode.List else DisplayMode.Grid
 
-        // Restore auto-lock timeout
         val savedTimeout = prefs.getString(_autoLockTimeoutPreferenceKey, "15 min")
         _autoLockTimeout.value = AutoLockTimeout.presets.firstOrNull { it.label == savedTimeout } ?: AutoLockTimeout.Minutes15
 
@@ -324,6 +363,59 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+        filteredProviders = combine(
+            allProviders,
+            searchFilterFlow,
+            _sortOption
+        ) { providers, criteria, _ ->
+            val query = criteria.query
+            val category = criteria.category
+            val onlyFavs = criteria.onlyFavorites
+            providers.asSequence()
+                .filter { p ->
+                    if (query.isBlank()) true else {
+                        val q = query.trim()
+                        p.displayName.contains(q, ignoreCase = true) ||
+                                p.category.contains(q, ignoreCase = true) ||
+                                p.baseUrl.contains(q, ignoreCase = true) ||
+                                p.notes.contains(q, ignoreCase = true) ||
+                                p.tags.contains(q, ignoreCase = true) ||
+                                p.keys.any { k -> k.label.contains(q, ignoreCase = true) }
+                    }
+                }
+                .filter { category == "All" || it.category.equals(category, ignoreCase = true) }
+                .filter { !onlyFavs || it.isPinned }
+                .toList()
+        }.flowOn(Dispatchers.Default)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+        // Ensure default presets exist on first run
+        seedDefaultProvidersIfEmpty()
+    }
+
+    private fun seedDefaultProvidersIfEmpty() {
+        viewModelScope.launch {
+            val existing = providerRepository.allProviders.first()
+            if (existing.isEmpty()) {
+                val defaultProfiles = ProviderPresets.list.map { preset ->
+                    ProviderProfile(
+                        id = preset.id.ifBlank { preset.name.lowercase().replace(" ", "_") },
+                        category = preset.category,
+                        displayName = preset.name,
+                        baseUrl = preset.defaultEndpoint,
+                        colorHex = preset.defaultColorHex,
+                        isActive = true,
+                        keys = emptyList()
+                    )
+                }
+                providerRepository.insertAll(defaultProfiles)
+            }
+        }
     }
 
     override fun onCleared() {
@@ -335,13 +427,13 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setDisplayMode(mode: DisplayMode) {
         _displayMode.value = mode
-        val prefs = getApplication<Application>().getApplicationContext().getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
+        val prefs = getApplication<Application>().applicationContext.getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
         prefs.edit { putString(_displayModePreferenceKey, mode.label) }
     }
 
     fun setAutoLockTimeout(timeout: AutoLockTimeout) {
         _autoLockTimeout.value = timeout
-        val prefs = getApplication<Application>().getApplicationContext().getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
+        val prefs = getApplication<Application>().applicationContext.getSharedPreferences("key-nest-prefs", Context.MODE_PRIVATE)
         prefs.edit { putString(_autoLockTimeoutPreferenceKey, timeout.label) }
     }
 
@@ -364,228 +456,294 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _selectedTag.value = tag
     }
 
-    fun toggleTagFilter(tag: String) {
-        _selectedTag.value = if (_selectedTag.value.equals(tag, ignoreCase = true)) null else tag
-    }
-
-    fun setOnlyFavorites(only: Boolean) {
-        _onlyFavorites.value = only
-    }
-
     fun toggleOnlyFavorites() {
         _onlyFavorites.value = !_onlyFavorites.value
     }
 
-    fun setSortOption(sort: SortOption) {
-        _sortOption.value = sort
-    }
-
-    fun openDialog(dialog: VaultDialogState) {
-        _dialogState.value = dialog
-    }
-
-    fun closeDialog() {
-        _dialogState.value = VaultDialogState.None
-    }
-
-    fun copyToClipboard(text: String, label: String, isSecret: Boolean = true, itemId: Long? = null) {
-        lastSelfCopiedKey = text
-        VaultSecurity.setLastSelfCopiedKey(getApplication(), text)
-        val clip = ClipData.newPlainText(label, text)
-        if (isSecret && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            clip.description.extras = PersistableBundle().apply {
-                putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
-            }
-        }
-        clipboardManager?.setPrimaryClip(clip)
-        if (itemId != null) {
-            viewModelScope.launch { repository.recordCopy(itemId) }
-        }
-        viewModelScope.launch {
-            _copyFeedbackEvent.emit(
-                CopyFeedback(title = label, isSecret = isSecret, message = "Copied to clipboard")
-            )
-        }
-        if (isSecret) {
-            startClipboardAutoClearCountdown(label)
-        }
-    }
-
-    private fun startClipboardAutoClearCountdown(label: String) {
-        autoClearJob?.cancel()
-        autoClearJob = viewModelScope.launch {
-            val totalSeconds = 30
-            for (sec in totalSeconds downTo 1) {
-                _clipboardCopyState.value = ClipboardCopyState(
-                    label = label,
-                    totalSeconds = totalSeconds,
-                    secondsRemaining = sec
-                )
-                delay(1000)
-            }
-            clearClipboard()
-        }
-    }
-
-    fun clearClipboard() {
-        autoClearJob?.cancel()
-        autoClearJob = null
-        _clipboardCopyState.value = null
-        lastSelfCopiedKey = null
-        VaultSecurity.setLastSelfCopiedKey(getApplication(), null)
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                clipboardManager?.clearPrimaryClip()
-            } else {
-                clipboardManager?.setPrimaryClip(ClipData.newPlainText("", ""))
-            }
-        } catch (_: Exception) { }
-    }
-
-    fun checkClipboardForApiKey() {
-        try {
-            val clip = clipboardManager?.primaryClip
-            if (clip != null && clip.itemCount > 0) {
-                val text = clip.getItemAt(0).text?.toString()?.trim()
-                if (!text.isNullOrEmpty() && text.length in 16..512 && !text.contains("\n") && !text.contains(" ")) {
-                    val persistedSelfCopied = VaultSecurity.getLastSelfCopiedKey(getApplication())
-                    if (text == lastSelfCopiedKey || text == persistedSelfCopied) return
-                    val detectedProvider = VaultSecurity.detectProviderFromKey(text)
-                    val isPresetMatch = ProviderPresets.list.any { preset ->
-                        preset.defaultPrefix.isNotEmpty() && text.startsWith(preset.defaultPrefix)
-                    }
-                    val isRecognizedKey = (detectedProvider != "Custom / Other") || isPresetMatch || (text.length >= 24)
-                    val exists = allKeys.value.any { it.apiKey == text || it.secretKey == text }
-                    if (!exists && isRecognizedKey) {
-                        _clipboardDetectedKey.value = text
-                        return
-                    }
-                }
-            }
-        } catch (_: Exception) { }
-        _clipboardDetectedKey.value = null
-    }
-
-    fun dismissClipboardBanner() {
-        _clipboardDetectedKey.value = null
-    }
-
-    fun saveKey(item: ApiKeyItem) {
-        viewModelScope.launch {
-            if (item.id == 0L) repository.insertKey(item) else repository.updateKey(item)
-            closeDialog()
-            _clipboardDetectedKey.value = null
-        }
+    fun setSortOption(option: SortOption) {
+        _sortOption.value = option
     }
 
     fun setViewMode(mode: VaultViewMode) {
         _currentViewMode.value = mode
     }
 
-    fun moveToTrash(item: ApiKeyItem) {
-        viewModelScope.launch {
-            repository.softDeleteKey(item.id)
-            if (_dialogState.value is VaultDialogState.KeyDetail || _dialogState.value is VaultDialogState.EditKey) {
-                closeDialog()
+    fun setOnlyFavorites(only: Boolean) {
+        _onlyFavorites.value = only
+    }
+
+    fun toggleTagFilter(tag: String) {
+        _selectedTag.value = if (_selectedTag.value == tag) null else tag
+    }
+
+    fun openDialog(state: VaultDialogState) {
+        _dialogState.value = state
+    }
+
+    fun closeDialog() {
+        _dialogState.value = VaultDialogState.None
+    }
+
+    fun deleteKey(item: ApiKeyItem) {
+        softDeleteKey(item)
+    }
+
+    fun importKeys(items: List<ApiKeyItem>) {
+        batchSaveKeys(items)
+    }
+
+    fun clearClipboard() {
+        clearClipboardNow()
+    }
+
+    fun copyToClipboard(text: String, label: String, isSecret: Boolean = true, itemId: Long? = null) {
+        copySecretValue(text, label, isSecret)
+        if (itemId != null) {
+            viewModelScope.launch {
+                repository.recordCopy(itemId)
             }
         }
     }
 
-    fun restoreKey(item: ApiKeyItem) {
+    fun loadStarterTemplates() {
+        seedDefaultProvidersIfEmpty()
+    }
+
+    fun setDialogState(state: VaultDialogState) {
+        _dialogState.value = state
+    }
+
+    fun dismissDialog() {
+        _dialogState.value = VaultDialogState.None
+    }
+
+    // Provider Profile Operations (Agora Architecture)
+    fun testProviderConnection(profile: ProviderProfile, overrideKey: String? = null) {
         viewModelScope.launch {
-            repository.restoreKey(item.id)
+            _testingProviders.value = _testingProviders.value + profile.id
+            val result = ProviderConnectionTester.testConnection(profile, overrideKey)
+            _connectionResults.value = _connectionResults.value + (profile.id to result)
+            _testingProviders.value = _testingProviders.value - profile.id
         }
     }
 
-    fun permanentDeleteKey(item: ApiKeyItem) {
+    fun saveProvider(profile: ProviderProfile) {
         viewModelScope.launch {
-            repository.permanentDeleteKey(item.id)
+            providerRepository.saveProvider(profile)
+        }
+    }
+
+    fun deleteProvider(profile: ProviderProfile) {
+        viewModelScope.launch {
+            providerRepository.softDeleteProvider(profile.id)
+        }
+    }
+
+    fun restoreProvider(id: String) {
+        viewModelScope.launch {
+            providerRepository.restoreProvider(id)
+        }
+    }
+
+    fun permanentDeleteProvider(id: String) {
+        viewModelScope.launch {
+            providerRepository.permanentDeleteProvider(id)
+        }
+    }
+
+    fun toggleProviderActive(profile: ProviderProfile, isActive: Boolean) {
+        viewModelScope.launch {
+            providerRepository.toggleActive(profile.id, isActive)
+        }
+    }
+
+    fun toggleProviderPin(profile: ProviderProfile) {
+        viewModelScope.launch {
+            providerRepository.togglePin(profile.id, !profile.isPinned)
+        }
+    }
+
+    fun setActiveKey(providerId: String, keyId: String) {
+        viewModelScope.launch {
+            providerRepository.setActiveKey(providerId, keyId)
+        }
+    }
+
+    fun addKeyToProvider(providerId: String, keyItem: ProviderKeyItem) {
+        viewModelScope.launch {
+            providerRepository.addOrUpdateKey(providerId, keyItem)
+        }
+    }
+
+    fun removeKeyFromProvider(providerId: String, keyId: String) {
+        viewModelScope.launch {
+            providerRepository.removeKey(providerId, keyId)
+        }
+    }
+
+    fun openConfigureProvider(profile: ProviderProfile) {
+        _dialogState.value = VaultDialogState.ConfigureProvider(profile)
+    }
+
+    fun openAddCustomProvider(preset: ProviderPreset? = null) {
+        _dialogState.value = VaultDialogState.AddCustomProvider(preset)
+    }
+
+    fun getAggregatedDotEnv(): String {
+        val providers = allProviders.value.filter { it.isActive && it.isConfigured }
+        val sb = StringBuilder()
+        sb.append("# KeyNest Aggregated Active Environment Keys\n")
+        sb.append("# Generated at: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date())}\n\n")
+
+        for (p in providers) {
+            val preset = ProviderPresets.findById(p.id)
+            val varName = preset.envVarNameSuggestion.ifBlank { "${p.displayName.uppercase().replace(Regex("[^A-Z0-9]"), "_")}_API_KEY" }
+            val key = p.activeApiKey
+            if (key.isNotBlank()) {
+                sb.append("$varName=$key\n")
+            }
+        }
+        return sb.toString()
+    }
+
+    // Legacy Key Operations (Preserved)
+    fun saveKey(item: ApiKeyItem) {
+        viewModelScope.launch {
+            repository.saveKey(item)
+        }
+    }
+
+    fun batchSaveKeys(items: List<ApiKeyItem>) {
+        viewModelScope.launch {
+            repository.insertAll(items)
+        }
+    }
+
+    fun softDeleteKey(item: ApiKeyItem) {
+        viewModelScope.launch {
+            repository.softDeleteKey(item.id)
+        }
+    }
+
+    fun restoreKey(id: Long) {
+        viewModelScope.launch {
+            repository.restoreKey(id)
+        }
+    }
+
+    fun permanentDeleteKey(id: Long) {
+        viewModelScope.launch {
+            repository.permanentDeleteKey(id)
         }
     }
 
     fun emptyTrash() {
         viewModelScope.launch {
             repository.emptyTrash()
+            providerRepository.emptyTrash()
         }
     }
 
-    fun deleteKey(item: ApiKeyItem) {
-        moveToTrash(item)
+    fun togglePin(item: ApiKeyItem) {
+        viewModelScope.launch {
+            repository.togglePin(item.id, !item.isPinned)
+        }
     }
 
-    fun togglePin(item: ApiKeyItem) {
-        val newPinnedState = !item.isPinned
+    fun copySecretValue(secretText: String, label: String, isSecret: Boolean = true) {
+        val mgr = clipboardManager ?: return
+        lastSelfCopiedKey = secretText
+        val clip = ClipData.newPlainText(label, secretText).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && isSecret) {
+                description.extras = PersistableBundle().apply {
+                    putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+                }
+            }
+        }
+        mgr.setPrimaryClip(clip)
+
         viewModelScope.launch {
-            repository.togglePin(item.id, newPinnedState)
-            val currentDialog = _dialogState.value
-            if (currentDialog is VaultDialogState.KeyDetail && currentDialog.item.id == item.id) {
-                _dialogState.value = VaultDialogState.KeyDetail(item.copy(isPinned = newPinnedState))
+            _copyFeedbackEvent.emit(
+                CopyFeedback(
+                    title = label,
+                    isSecret = isSecret,
+                    message = if (isSecret) "$label copied (Auto-clears in 30s)" else "$label copied"
+                )
+            )
+        }
+
+        if (isSecret) {
+            startClipboardAutoClear(label, secretText)
+        }
+    }
+
+    fun copyActiveKeyForProvider(profile: ProviderProfile) {
+        val activeKey = profile.activeKey
+        if (activeKey != null && activeKey.apiKey.isNotBlank()) {
+            copySecretValue(activeKey.apiKey, "${profile.displayName} (${activeKey.label})", isSecret = true)
+            viewModelScope.launch {
+                providerRepository.recordCopy(profile.id)
             }
         }
     }
 
-    fun importKeys(items: List<ApiKeyItem>) {
+    fun copyApiKey(item: ApiKeyItem) {
+        copySecretValue(item.apiKey, item.title, isSecret = true)
         viewModelScope.launch {
-            repository.insertAll(items)
-            closeDialog()
+            repository.recordCopy(item.id)
         }
     }
 
-    fun loadStarterTemplates() {
-        val now = System.currentTimeMillis()
-        val sampleKeys = listOf(
-            ApiKeyItem(
-                title = "OpenAI Production GPT-4o",
-                provider = "OpenAI",
-                category = "AI & LLMs",
-                environment = "Production",
-                apiKey = "sample-openai-key-demo-placeholder-000000000",
-                tags = "prod, ai, gpt4",
-                notes = "Main backend inference key for production workloads",
-                isPinned = true,
-                colorHex = "#10A37F",
-                createdAt = now
-            ),
-            ApiKeyItem(
-                title = "Google Gemini 2.0 Flash API",
-                provider = "Google Gemini",
-                category = "AI & LLMs",
-                environment = "Production",
-                apiKey = "sample-google-gemini-key-demo-placeholder-000000",
-                tags = "ai, gemini, multimodal",
-                notes = "Multimodal reasoning & image processing pipeline",
-                isPinned = true,
-                colorHex = "#4285F4",
-                createdAt = now - 86400000
-            ),
-            ApiKeyItem(
-                title = "GitHub CI/CD Automation",
-                provider = "GitHub",
-                category = "Developer Tools",
-                environment = "Staging",
-                apiKey = "sample-github-token-demo-placeholder-000000",
-                tags = "ci-cd, github-actions, deploy",
-                notes = "Deployment token with repo and workflow scopes",
-                isPinned = false,
-                colorHex = "#24292E",
-                createdAt = now - 172800000
-            ),
-            ApiKeyItem(
-                title = "Stripe Billing Webhook Secret",
-                provider = "Stripe",
-                category = "Payments",
-                environment = "Development",
-                apiKey = "sample-stripe-webhook-secret-demo-placeholder-000",
-                tags = "billing, payments, webhook",
-                notes = "Local Stripe CLI test webhook signing secret",
-                isPinned = false,
-                colorHex = "#635BFF",
-                createdAt = now - 259200000
-            )
-        )
-        viewModelScope.launch {
-            repository.insertAll(sampleKeys)
+    fun copySecretKey(item: ApiKeyItem) {
+        if (item.secretKey.isNotBlank()) {
+            copySecretValue(item.secretKey, "${item.title} Secret", isSecret = true)
+            viewModelScope.launch {
+                repository.recordCopy(item.id)
+            }
         }
+    }
+
+    private fun startClipboardAutoClear(label: String, expectedContent: String) {
+        autoClearJob?.cancel()
+        autoClearJob = viewModelScope.launch {
+            for (remaining in 30 downTo 1) {
+                _clipboardCopyState.value = ClipboardCopyState(label = label, totalSeconds = 30, secondsRemaining = remaining)
+                delay(1000)
+            }
+            clearClipboardIfMatches(expectedContent)
+            _clipboardCopyState.value = null
+        }
+    }
+
+    fun clearClipboardNow() {
+        autoClearJob?.cancel()
+        clearClipboardIfMatches(null)
+        _clipboardCopyState.value = null
+    }
+
+    private fun clearClipboardIfMatches(expected: String?) {
+        val mgr = clipboardManager ?: return
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                mgr.clearPrimaryClip()
+            } else {
+                mgr.setPrimaryClip(ClipData.newPlainText("", ""))
+            }
+        } catch (_: Exception) { }
+    }
+
+    fun checkClipboardForApiKey() {
+        val mgr = clipboardManager ?: return
+        val item = mgr.primaryClip?.getItemAt(0)?.text?.toString()?.trim() ?: return
+        if (item == lastSelfCopiedKey || item.isBlank()) return
+
+        if (VaultSecurity.isLikelyApiKey(item)) {
+            _clipboardDetectedKey.value = item
+        }
+    }
+
+    fun dismissClipboardBanner() {
+        _clipboardDetectedKey.value = null
     }
 
     fun unlockVault(pin: String): Boolean {

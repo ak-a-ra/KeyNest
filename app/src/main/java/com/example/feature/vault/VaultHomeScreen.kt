@@ -1,27 +1,15 @@
 package com.example.feature.vault
-import com.example.feature.settings.PinSettingsSheet
-import com.example.feature.settings.SecurityAuditSheet
-import com.example.feature.export.DotEnvExportSheet
-import com.example.feature.export.VaultBackupSheet
-import com.example.feature.keymanagement.KeyDetailSheet
-import com.example.feature.keymanagement.AddEditKeySheet
-import com.example.feature.keymanagement.KeyGeneratorSheet
+
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.layout.AnimatedPane
-import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
-import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
-import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
-import com.example.feature.keymanagement.KeyDetailPane
-import com.example.core.model.ProviderPresets
-
-
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,15 +24,19 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed as staggeredItemsIndexed
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.NetworkCheck
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -52,51 +44,66 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.core.model.ApiKeyItem
-import com.example.feature.vault.ApiKeyCard
-import com.example.feature.vault.ClipboardAutoClearBanner
-import com.example.feature.vault.ClipboardDetectionBanner
-import com.example.feature.vault.EmptyKeysState
-import com.example.feature.vault.GoogleKeepTopSearchBar
-import com.example.feature.vault.KeyCardActions
-import com.example.feature.vault.VaultDrawerSheetContent
+import com.example.core.designsystem.CyberCyan
+import com.example.core.designsystem.CyberEmerald
+import com.example.core.designsystem.CyberGold
 import com.example.core.designsystem.ObsidianBg
+import com.example.core.designsystem.ObsidianBorder
+import com.example.core.designsystem.ObsidianBorderLight
+import com.example.core.designsystem.ObsidianSurface
 import com.example.core.designsystem.ObsidianSurfaceElevated
+import com.example.core.designsystem.ObsidianSurfaceHighlight
+import com.example.core.designsystem.StatusSuccess
 import com.example.core.designsystem.TextPrimary
 import com.example.core.designsystem.TextSecondary
-import com.example.feature.vault.VaultViewModel
-import com.example.feature.vault.VaultDialogState
-import com.example.feature.vault.DisplayMode
+import com.example.core.designsystem.TextTertiary
+import com.example.core.model.ProviderPresets
+import com.example.core.model.ProviderProfile
+import com.example.feature.export.DotEnvExportSheet
+import com.example.feature.export.VaultBackupSheet
+import com.example.feature.keymanagement.AddEditKeySheet
+import com.example.feature.keymanagement.KeyGeneratorSheet
+import com.example.feature.keymanagement.ProviderConfigSheet
+import com.example.feature.settings.PinSettingsSheet
+import com.example.feature.settings.SecurityAuditSheet
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.util.UUID
 
-import com.example.feature.vault.VaultTrashView
-import com.example.feature.vault.VaultViewMode
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VaultHomeScreen(
     viewModel: VaultViewModel,
     onNavigateToSearch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val allProviders by viewModel.allProviders.collectAsStateWithLifecycle()
+    val trashedProviders by viewModel.trashedProviders.collectAsStateWithLifecycle()
+    val filteredProviders by viewModel.filteredProviders.collectAsStateWithLifecycle()
+    val connectionResults by viewModel.connectionResults.collectAsStateWithLifecycle()
+    val testingProviders by viewModel.testingProviders.collectAsStateWithLifecycle()
+
     val allKeys by viewModel.allKeys.collectAsStateWithLifecycle()
     val trashedKeys by viewModel.trashedKeys.collectAsStateWithLifecycle()
     val trashCount by viewModel.trashCount.collectAsStateWithLifecycle()
     val currentViewMode by viewModel.currentViewMode.collectAsStateWithLifecycle()
-    val filteredKeys by viewModel.filteredKeys.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
     val sortOption by viewModel.sortOption.collectAsStateWithLifecycle()
@@ -112,25 +119,14 @@ fun VaultHomeScreen(
     val onlyFavorites by viewModel.onlyFavorites.collectAsStateWithLifecycle()
     val favoritesCount by viewModel.favoritesCount.collectAsStateWithLifecycle()
 
-
     val coroutineScope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val navigator = rememberListDetailPaneScaffoldNavigator<Long>()
 
-    BackHandler(navigator.canNavigateBack()) {
-        navigator.navigateBack()
-    }
-
-
-    val cardActions = remember(viewModel) {
-        KeyCardActions(
-            onClick = { item -> navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, item.id) },
-            onCopy = { item ->
-                viewModel.copyToClipboard(item.apiKey, "${item.title} API Key", isSecret = true, itemId = item.id)
-            },
-            onTogglePin = { item -> viewModel.togglePin(item) },
-            onTagClick = { tag -> viewModel.toggleTagFilter(tag) }
-        )
+    // Handle toast feedback events
+    LaunchedEffect(Unit) {
+        viewModel.copyFeedbackEvent.collectLatest { feedback ->
+            Toast.makeText(context, feedback.message, Toast.LENGTH_SHORT).show()
+        }
     }
 
     ModalNavigationDrawer(
@@ -138,8 +134,8 @@ fun VaultHomeScreen(
         gesturesEnabled = true,
         drawerContent = {
             VaultDrawerSheetContent(
-                totalKeysCount = allKeys.size,
-                trashCount = trashCount,
+                totalKeysCount = allProviders.count { it.isConfigured },
+                trashCount = trashCount + trashedProviders.size,
                 favoritesCount = favoritesCount,
                 onlyFavorites = onlyFavorites,
                 currentViewMode = currentViewMode,
@@ -148,13 +144,12 @@ fun VaultHomeScreen(
                 isPinConfigured = isPinConfigured,
                 onSelectAllSecrets = {
                     viewModel.setViewMode(VaultViewMode.ALL_SECRETS)
-                    viewModel.setOnlyFavorites(false)
                     viewModel.setSelectedCategory("All")
                     coroutineScope.launch { drawerState.close() }
                 },
                 onSelectFavorites = {
                     viewModel.setViewMode(VaultViewMode.ALL_SECRETS)
-                    viewModel.setOnlyFavorites(true)
+                    viewModel.toggleOnlyFavorites()
                     coroutineScope.launch { drawerState.close() }
                 },
                 onSelectTrash = {
@@ -163,20 +158,19 @@ fun VaultHomeScreen(
                 },
                 onSelectCategory = { category ->
                     viewModel.setViewMode(VaultViewMode.ALL_SECRETS)
-                    viewModel.setOnlyFavorites(false)
                     viewModel.setSelectedCategory(category)
                     coroutineScope.launch { drawerState.close() }
                 },
                 onOpenSecurityAudit = {
-                    viewModel.openDialog(VaultDialogState.SecurityAudit)
+                    viewModel.setDialogState(VaultDialogState.SecurityAudit)
                     coroutineScope.launch { drawerState.close() }
                 },
                 onOpenGenerator = {
-                    viewModel.openDialog(VaultDialogState.Generator)
+                    viewModel.setDialogState(VaultDialogState.Generator)
                     coroutineScope.launch { drawerState.close() }
                 },
                 onOpenDotEnvExport = {
-                    viewModel.openDialog(VaultDialogState.DotEnvExport)
+                    viewModel.setDialogState(VaultDialogState.DotEnvExport)
                     coroutineScope.launch { drawerState.close() }
                 },
                 onOpenBackupRestore = {
@@ -185,45 +179,39 @@ fun VaultHomeScreen(
                 },
                 onCycleTheme = { viewModel.cycleThemeMode() },
                 onToggleLockOrPinSettings = {
-                    if (isPinConfigured) viewModel.lockVault() else viewModel.openDialog(VaultDialogState.PinSettings)
+                    if (isPinConfigured) viewModel.lockVault() else viewModel.setDialogState(VaultDialogState.PinSettings)
                     coroutineScope.launch { drawerState.close() }
                 }
             )
         }
     ) {
-        ListDetailPaneScaffold(
-            directive = navigator.scaffoldDirective,
-            value = navigator.scaffoldValue,
+        Scaffold(
             modifier = modifier.fillMaxSize(),
-            listPane = {
-                AnimatedPane {
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
             containerColor = ObsidianBg,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             floatingActionButton = {
                 if (currentViewMode == VaultViewMode.ALL_SECRETS) {
                     FloatingActionButton(
-                        onClick = { viewModel.openDialog(VaultDialogState.AddKey()) },
-                        containerColor = ObsidianSurfaceElevated,
+                        onClick = { viewModel.openAddCustomProvider() },
+                        containerColor = CyberEmerald,
                         contentColor = TextPrimary,
                         shape = RoundedCornerShape(16.dp),
                         elevation = FloatingActionButtonDefaults.elevation(
-                            defaultElevation = 2.dp,
-                            pressedElevation = 4.dp
+                            defaultElevation = 3.dp,
+                            pressedElevation = 6.dp
                         ),
                         modifier = Modifier
                             .navigationBarsPadding()
                             .padding(end = 6.dp, bottom = 6.dp)
-                            .testTag("fab_add_key")
+                            .testTag("fab_add_provider")
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = "Add Key", tint = TextPrimary, modifier = Modifier.size(22.dp))
-                            Text("Add Secret", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+                            Icon(Icons.Default.Add, contentDescription = "Add Provider", tint = TextPrimary, modifier = Modifier.size(20.dp))
+                            Text("Add Provider", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
                         }
                     }
                 }
@@ -245,11 +233,12 @@ fun VaultHomeScreen(
                             trashedKeys = trashedKeys,
                             onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
                             onBackToSecrets = { viewModel.setViewMode(VaultViewMode.ALL_SECRETS) },
-                            onRestoreKey = { viewModel.restoreKey(it) },
-                            onPermanentDeleteKey = { viewModel.permanentDeleteKey(it) },
+                            onRestoreKey = { viewModel.restoreKey(it.id) },
+                            onPermanentDeleteKey = { viewModel.permanentDeleteKey(it.id) },
                             onEmptyTrash = { viewModel.emptyTrash() }
                         )
                     } else {
+                        // Top Search & Navigation Bar
                         GoogleKeepTopSearchBar(
                             searchQuery = searchQuery,
                             onSearchQueryChange = { viewModel.setSearchQuery(it) },
@@ -257,7 +246,7 @@ fun VaultHomeScreen(
                             sortOption = sortOption,
                             onSortOptionChange = { viewModel.setSortOption(it) },
                             onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
-                            onOpenAudit = { viewModel.openDialog(VaultDialogState.SecurityAudit) },
+                            onOpenAudit = { viewModel.setDialogState(VaultDialogState.SecurityAudit) },
                             isGridView = displayMode.isGrid,
                             onToggleGridView = {
                                 viewModel.setDisplayMode(if (displayMode.isGrid) DisplayMode.List else DisplayMode.Grid)
@@ -265,39 +254,138 @@ fun VaultHomeScreen(
                             isSearching = isSearching
                         )
 
-                        // Horizontal Tag Filter Carousel
+                        // Categories Carousel
                         VaultTagFilterCarousel(
-                            tags = availableTags,
-                            selectedTag = selectedTag,
+                            tags = ProviderPresets.categories.filterNot { it == "All" },
+                            selectedTag = if (selectedCategory == "All") null else selectedCategory,
                             onlyFavorites = onlyFavorites,
                             favoritesCount = favoritesCount,
-                            onTagSelected = { viewModel.toggleTagFilter(it) },
-                            onClearTagFilter = { viewModel.setSelectedTag(null) },
+                            onTagSelected = { category ->
+                                viewModel.setSelectedCategory(if (selectedCategory == category) "All" else category)
+                            },
+                            onClearTagFilter = { viewModel.setSelectedCategory("All") },
                             onToggleFavorites = { viewModel.toggleOnlyFavorites() }
                         )
 
+                        // Agora Metrics & Quick Action Strip
+                        val configuredCount = allProviders.count { it.isConfigured }
+                        val activeCount = allProviders.count { it.isActive && it.isConfigured }
+
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 6.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            color = ObsidianSurfaceHighlight,
+                            border = BorderStroke(1.dp, ObsidianBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = CyberEmerald.copy(alpha = 0.15f)
+                                    ) {
+                                        Text(
+                                            text = "$activeCount Active",
+                                            color = CyberEmerald,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+
+                                    Text(
+                                        text = "$configuredCount / ${allProviders.size} Configured",
+                                        fontSize = 11.sp,
+                                        color = TextSecondary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    // Quick Ping All Configured
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = ObsidianSurfaceElevated,
+                                        border = BorderStroke(1.dp, ObsidianBorderLight),
+                                        modifier = Modifier
+                                            .clickable {
+                                                allProviders.filter { it.isConfigured }.forEach { p ->
+                                                    viewModel.testProviderConnection(p)
+                                                }
+                                            }
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Icon(Icons.Default.NetworkCheck, contentDescription = null, tint = CyberCyan, modifier = Modifier.size(13.dp))
+                                            Text("Ping All", fontSize = 11.sp, color = CyberCyan, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+
+                                    // Quick Export .env
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = ObsidianSurfaceElevated,
+                                        border = BorderStroke(1.dp, ObsidianBorderLight),
+                                        modifier = Modifier
+                                            .clickable { viewModel.setDialogState(VaultDialogState.DotEnvExport) }
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Icon(Icons.Default.FileDownload, contentDescription = null, tint = CyberGold, modifier = Modifier.size(13.dp))
+                                            Text(".env", fontSize = 11.sp, color = CyberGold, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        if (filteredKeys.isEmpty()) {
+                        if (filteredProviders.isEmpty()) {
                             EmptyKeysState(
-                                hasQuery = searchQuery.isNotEmpty() || selectedCategory != "All" || selectedTag != null || onlyFavorites,
-                                onImportFromNotes = { viewModel.openDialog(VaultDialogState.DotEnvImport) },
-                                onLoadSampleTemplates = { viewModel.loadStarterTemplates() }
+                                hasQuery = searchQuery.isNotEmpty() || selectedCategory != "All" || onlyFavorites,
+                                onImportFromNotes = { viewModel.setDialogState(VaultDialogState.DotEnvImport) },
+                                onLoadSampleTemplates = { viewModel.setDialogState(VaultDialogState.AddCustomProvider()) }
                             )
                         } else {
                             if (displayMode.isGrid) {
                                 LazyVerticalStaggeredGrid(
-                                    columns = StaggeredGridCells.Fixed(2),
+                                    columns = StaggeredGridCells.Fixed(1),
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 84.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalItemSpacing = 12.dp,
                                     modifier = Modifier.fillMaxSize()
                                 ) {
-                                    staggeredItemsIndexed(filteredKeys, key = { _, item -> item.id }) { index, item ->
-                                        ApiKeyCard(
-                                            item = item,
-                                            actions = cardActions,
-                                            modifier = Modifier.testTag("card_${index}_${item.id}")
+                                    items(filteredProviders, key = { it.id }) { provider ->
+                                        val preset = remember(provider.id) { ProviderPresets.findById(provider.id) }
+                                        ProviderCard(
+                                            profile = provider,
+                                            preset = preset,
+                                            connectionState = connectionResults[provider.id],
+                                            isTesting = testingProviders.contains(provider.id),
+                                            onCardClick = { viewModel.openConfigureProvider(provider) },
+                                            onTestConnection = { viewModel.testProviderConnection(provider) },
+                                            onCopyActiveKey = { viewModel.copyActiveKeyForProvider(provider) },
+                                            onToggleActive = { active -> viewModel.toggleProviderActive(provider, active) },
+                                            onConfigure = { viewModel.openConfigureProvider(provider) }
                                         )
                                     }
                                 }
@@ -307,11 +395,18 @@ fun VaultHomeScreen(
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
                                     modifier = Modifier.fillMaxSize()
                                 ) {
-                                    itemsIndexed(filteredKeys, key = { _, item -> item.id }) { index, item ->
-                                        ApiKeyCard(
-                                            item = item,
-                                            actions = cardActions,
-                                            modifier = Modifier.testTag("card_list_${index}_${item.id}")
+                                    items(filteredProviders, key = { it.id }) { provider ->
+                                        val preset = remember(provider.id) { ProviderPresets.findById(provider.id) }
+                                        ProviderCard(
+                                            profile = provider,
+                                            preset = preset,
+                                            connectionState = connectionResults[provider.id],
+                                            isTesting = testingProviders.contains(provider.id),
+                                            onCardClick = { viewModel.openConfigureProvider(provider) },
+                                            onTestConnection = { viewModel.testProviderConnection(provider) },
+                                            onCopyActiveKey = { viewModel.copyActiveKeyForProvider(provider) },
+                                            onToggleActive = { active -> viewModel.toggleProviderActive(provider, active) },
+                                            onConfigure = { viewModel.openConfigureProvider(provider) }
                                         )
                                     }
                                 }
@@ -336,7 +431,7 @@ fun VaultHomeScreen(
                         clipboardCopyState?.let { state ->
                             ClipboardAutoClearBanner(
                                 copyState = state,
-                                onClearNow = { viewModel.clearClipboard() }
+                                onClearNow = { viewModel.clearClipboardNow() }
                             )
                         }
                     }
@@ -349,7 +444,16 @@ fun VaultHomeScreen(
                         clipboardDetectedKey?.let { rawKey ->
                             ClipboardDetectionBanner(
                                 detectedKey = rawKey,
-                                onSave = { viewModel.openDialog(VaultDialogState.AddKey(initialKey = rawKey)) },
+                                onSave = {
+                                    val detectedProviderName = ProviderPresets.detectProvider(rawKey)
+                                    val matched = allProviders.find { it.displayName.equals(detectedProviderName, ignoreCase = true) }
+                                    if (matched != null) {
+                                        viewModel.openConfigureProvider(matched)
+                                    } else {
+                                        val preset = ProviderPresets.findByName(detectedProviderName)
+                                        viewModel.openAddCustomProvider(preset)
+                                    }
+                                },
                                 onDismiss = { viewModel.dismissClipboardBanner() }
                             )
                         }
@@ -357,99 +461,40 @@ fun VaultHomeScreen(
                 }
             }
         }
-                }
-            },
-            detailPane = {
-                AnimatedPane {
-                    val currentId = navigator.currentDestination?.content
-                    val item = allKeys.find { it.id == currentId }
-                    if (item != null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(ObsidianBg)
-                        ) {
-                            KeyDetailPane(
-                                item = item,
-                                preset = ProviderPresets.findByName(item.provider),
-                                onEdit = { viewModel.openDialog(VaultDialogState.EditKey(it)) },
-                                onDelete = {
-                                    viewModel.deleteKey(item)
-                                    if (navigator.canNavigateBack()) {
-                                        navigator.navigateBack()
-                                    }
-                                },
-                                onTogglePin = { viewModel.togglePin(it) },
-                                onCopyKey = { text, label, id ->
-                                    viewModel.copyToClipboard(text, label, isSecret = true, itemId = id)
-                                },
-                                onClose = {
-                                    if (navigator.canNavigateBack()) {
-                                        navigator.navigateBack()
-                                    }
-                                }
-                            )
-                        }
-                    } else {
-                        Box(modifier = Modifier.fillMaxSize().background(ObsidianBg))
-                    }
-                }
-            }
-        )
     }
 
-    // Dialogs & Sheets
+    // Sheets & Dialogs
     when (val state = dialogState) {
-        is VaultDialogState.AddKey -> {
-            val existingTitles = remember(allKeys) { allKeys.map { it.title } }
-            AddEditKeySheet(
-                existingItem = null,
-                initialPreset = state.preset,
-                initialKeyText = state.initialKey,
-                existingTitles = existingTitles,
-                availableTags = availableTags,
-                onDismiss = { viewModel.closeDialog() },
-                onSave = { viewModel.saveKey(it) },
-                onBatchSave = { items -> viewModel.importKeys(items) }
+        is VaultDialogState.ConfigureProvider -> {
+            val preset = remember(state.profile.id) { ProviderPresets.findById(state.profile.id) }
+            ProviderConfigSheet(
+                profile = state.profile,
+                preset = preset,
+                onDismiss = { viewModel.dismissDialog() },
+                onSaveProfile = { viewModel.saveProvider(it) },
+                onDeleteProfile = { viewModel.deleteProvider(state.profile) },
+                onCopyKey = { viewModel.copySecretValue(it, "${state.profile.displayName} Key") }
             )
         }
-        is VaultDialogState.EditKey -> {
-            val existingTitles = remember(allKeys, state.item.id) {
-                allKeys.filter { it.id != state.item.id }.map { it.title }
+        is VaultDialogState.AddCustomProvider -> {
+            val preset = state.preset ?: ProviderPresets.findById("custom")
+            val newProfile = remember {
+                ProviderProfile(
+                    id = UUID.randomUUID().toString(),
+                    category = preset.category,
+                    displayName = preset.name,
+                    baseUrl = preset.defaultEndpoint,
+                    colorHex = preset.defaultColorHex,
+                    isActive = true,
+                    keys = emptyList()
+                )
             }
-            AddEditKeySheet(
-                existingItem = state.item,
-                existingTitles = existingTitles,
-                availableTags = availableTags,
-                onDismiss = { viewModel.closeDialog() },
-                onSave = { viewModel.saveKey(it) }
-            )
-        }
-        is VaultDialogState.KeyDetail -> {
-            // Migrated to adaptive detail pane
-            viewModel.closeDialog()
-            navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, state.item.id)
-        }
-        is VaultDialogState.Generator -> {
-            KeyGeneratorSheet(
-                onDismiss = { viewModel.closeDialog() },
-                onSaveToVault = { generatedKey ->
-                    viewModel.openDialog(VaultDialogState.AddKey(initialKey = generatedKey))
-                },
-                onCopy = { generatedKey ->
-                    viewModel.copyToClipboard(generatedKey, "Generated Secret", isSecret = true)
-                }
-            )
-        }
-        is VaultDialogState.SecurityAudit -> {
-            SecurityAuditSheet(
-                keys = allKeys,
-                isPinEnabled = isPinConfigured,
-                onDismiss = { viewModel.closeDialog() },
-                onSelectKey = { item ->
-                    viewModel.closeDialog()
-                    navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, item.id)
-                }
+            ProviderConfigSheet(
+                profile = newProfile,
+                preset = preset,
+                onDismiss = { viewModel.dismissDialog() },
+                onSaveProfile = { viewModel.saveProvider(it) },
+                onCopyKey = { viewModel.copySecretValue(it, "API Key") }
             )
         }
         is VaultDialogState.DotEnvExport -> {
@@ -457,11 +502,11 @@ fun VaultHomeScreen(
                 viewModel = viewModel,
                 keys = allKeys,
                 isImportMode = false,
-                onDismiss = { viewModel.closeDialog() },
+                onDismiss = { viewModel.dismissDialog() },
                 onCopyAll = { content ->
-                    viewModel.copyToClipboard(content, ".env Export", isSecret = true)
+                    viewModel.copySecretValue(content, ".env Export", isSecret = true)
                 },
-                onImportKeys = { items -> viewModel.importKeys(items) }
+                onImportKeys = { items -> viewModel.batchSaveKeys(items) }
             )
         }
         is VaultDialogState.DotEnvImport -> {
@@ -469,17 +514,62 @@ fun VaultHomeScreen(
                 viewModel = viewModel,
                 keys = allKeys,
                 isImportMode = true,
-                onDismiss = { viewModel.closeDialog() },
+                onDismiss = { viewModel.dismissDialog() },
                 onCopyAll = { content ->
-                    viewModel.copyToClipboard(content, ".env Export", isSecret = true)
+                    viewModel.copySecretValue(content, ".env Export", isSecret = true)
                 },
-                onImportKeys = { items -> viewModel.importKeys(items) }
+                onImportKeys = { items -> viewModel.batchSaveKeys(items) }
+            )
+        }
+        is VaultDialogState.AddKey -> {
+            AddEditKeySheet(
+                existingItem = null,
+                initialPreset = state.preset,
+                initialKeyText = state.initialKey,
+                existingTitles = allKeys.map { it.title },
+                availableTags = availableTags,
+                onDismiss = { viewModel.dismissDialog() },
+                onSave = { viewModel.saveKey(it) },
+                onBatchSave = { items -> viewModel.batchSaveKeys(items) }
+            )
+        }
+        is VaultDialogState.EditKey -> {
+            AddEditKeySheet(
+                existingItem = state.item,
+                existingTitles = allKeys.filter { it.id != state.item.id }.map { it.title },
+                availableTags = availableTags,
+                onDismiss = { viewModel.dismissDialog() },
+                onSave = { viewModel.saveKey(it) }
+            )
+        }
+        is VaultDialogState.KeyDetail -> {
+            viewModel.dismissDialog()
+        }
+        is VaultDialogState.Generator -> {
+            KeyGeneratorSheet(
+                onDismiss = { viewModel.dismissDialog() },
+                onSaveToVault = { generatedKey ->
+                    viewModel.setDialogState(VaultDialogState.AddKey(initialKey = generatedKey))
+                },
+                onCopy = { generatedKey ->
+                    viewModel.copySecretValue(generatedKey, "Generated Secret", isSecret = true)
+                }
+            )
+        }
+        is VaultDialogState.SecurityAudit -> {
+            SecurityAuditSheet(
+                keys = allKeys,
+                isPinEnabled = isPinConfigured,
+                onDismiss = { viewModel.dismissDialog() },
+                onSelectKey = { item ->
+                    viewModel.dismissDialog()
+                }
             )
         }
         is VaultDialogState.PinSettings -> {
             PinSettingsSheet(
                 isPinCurrentlyEnabled = isPinConfigured,
-                onDismiss = { viewModel.closeDialog() },
+                onDismiss = { viewModel.dismissDialog() },
                 onSetPin = { pin -> viewModel.setMasterPin(pin) },
                 onRemovePin = { viewModel.removeMasterPin() }
             )
@@ -489,7 +579,7 @@ fun VaultHomeScreen(
                 viewModel = viewModel,
                 keys = allKeys,
                 initialTab = state.initialTab,
-                onDismiss = { viewModel.closeDialog() }
+                onDismiss = { viewModel.dismissDialog() }
             )
         }
         VaultDialogState.None -> Unit

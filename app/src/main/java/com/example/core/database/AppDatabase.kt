@@ -6,9 +6,10 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.core.model.ApiKeyItem
 
-@Database(entities = [ApiKeyItem::class], version = 2, exportSchema = true)
+@Database(entities = [ApiKeyItem::class, ProviderProfileEntity::class], version = 3, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun apiKeyDao(): ApiKeyDao
+    abstract fun providerDao(): ProviderDao
 
     companion object {
         @Volatile
@@ -25,6 +26,5 @@ abstract class AppDatabase : RoomDatabase() {
             INSTANCE = instance
             instance
         }
-        
     }
 }

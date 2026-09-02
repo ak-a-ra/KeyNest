@@ -612,6 +612,16 @@ object VaultSecurity {
         }
     }
 
+    fun isLikelyApiKey(candidate: String): Boolean {
+        val trimmed = candidate.trim()
+        if (trimmed.length < 16 || trimmed.contains(" ") || trimmed.contains("\n")) return false
+        val detected = ProviderPresets.detectProvider(trimmed)
+        if (detected != "Custom / Other" && detected != "Other") {
+            return true
+        }
+        return trimmed.matches(Regex("^[A-Za-z0-9_\\-\\.\\=\\/+]{20,}$"))
+    }
+
     private fun buildCleanTitle(keyName: String, provider: String): String {
         val stripped = keyName
             .replace("_", " ")

@@ -1,7 +1,6 @@
 package com.example.core.database
 
 import androidx.room.testing.MigrationTestHelper
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,7 +23,7 @@ class AppDatabaseMigrationTest {
 
     @Test
     fun migrate1To2_preservesExistingRows() {
-        val dbName = "migration-test.db"
+        val dbName = "migration-test-1-2.db"
         helper.createDatabase(dbName, 1).use { v1 ->
             v1.execSQL(
                 "INSERT INTO api_keys (title, apiKey, secretKey, provider, category, environment, " +
@@ -46,5 +45,27 @@ class AppDatabaseMigrationTest {
             assertFalse(cursor.moveToNext()) // exactly one row survived
         }
         v2.close()
+    }
+
+    @Test
+    fun migrate2To3_createsProviderProfilesTable() {
+        val dbName = "migration-test-2-3.db"
+        helper.createDatabase(dbName, 2).use { v2 ->
+            v2.execSQL(
+                "INSERT INTO api_keys (id, title, apiKey, secretKey, provider, category, environment, " +
+                    "endpointUrl, organizationId, modelOrProject, notes, tags, isPinned, isDeleted, " +
+                    "deletedAt, copyCount, lastCopiedAt, createdAt, expiresAt, rotationDays, colorHex) " +
+                    "VALUES (1, 'OpenAI Key', 'sk-123', '', 'OpenAI', 'AI & LLMs', 'Production', " +
+                    "'https://api.openai.com/v1', '', '', '', '[]', 0, 0, NULL, 0, NULL, 1000, NULL, NULL, '#10A37F')"
+            )
+        }
+
+        val v3 = helper.runMigrationsAndValidate(dbName, 3, true, MIGRATION_2_3)
+        // Verify provider_profiles table exists and can be queried
+        v3.query("SELECT count(*) FROM provider_profiles").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+        v3.close()
     }
 }

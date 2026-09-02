@@ -5,10 +5,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
  * v1 -> v2: adds soft-delete columns `isDeleted` (NOT NULL) and `deletedAt` (nullable).
- *
- * Table rebuild instead of ALTER TABLE ADD COLUMN because Room validates the resulting
- * schema against the exported 2.json, where `isDeleted` has NO default value — SQLite
- * requires one on ADD COLUMN NOT NULL, so a plain ALTER would fail validation.
  */
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -52,4 +48,33 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2)
+/**
+ * v2 -> v3: creates Agora-style `provider_profiles` table for multi-key provider profiles.
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `provider_profiles` (" +
+                "`id` TEXT PRIMARY KEY NOT NULL, " +
+                "`category` TEXT NOT NULL, " +
+                "`displayName` TEXT NOT NULL, " +
+                "`baseUrl` TEXT NOT NULL, " +
+                "`customHeadersJson` TEXT NOT NULL, " +
+                "`isActive` INTEGER NOT NULL, " +
+                "`keysJson` TEXT NOT NULL, " +
+                "`activeKeyId` TEXT NOT NULL, " +
+                "`isPinned` INTEGER NOT NULL, " +
+                "`isDeleted` INTEGER NOT NULL, " +
+                "`deletedAt` INTEGER, " +
+                "`copyCount` INTEGER NOT NULL, " +
+                "`lastCopiedAt` INTEGER, " +
+                "`createdAt` INTEGER NOT NULL, " +
+                "`updatedAt` INTEGER NOT NULL, " +
+                "`colorHex` TEXT NOT NULL, " +
+                "`notes` TEXT NOT NULL, " +
+                "`tags` TEXT NOT NULL)"
+        )
+    }
+}
+
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3)

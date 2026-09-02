@@ -12,17 +12,17 @@ import java.util.concurrent.ConcurrentHashMap
 /** Shown in place of a secret whose ciphertext cannot be decrypted (e.g. invalidated Keystore key). */
 const val UNDECRYPTABLE_PLACEHOLDER = "<undecryptable>"
 
-class ApiKeyRepository(
-    private val dao: ApiKeyDao,
-    private val cipher: SecretCipher = KeystoreCipher,
+/**
+ * Shared decryption cache and placeholder handler for repository layers.
+ */
+class CachedSecretCipher(
+    private val cipher: SecretCipher = KeystoreCipher
 ) {
     private val decryptCache = ConcurrentHashMap<String, String>()
 
-    /** Empty stays "" (legitimate empty field); any cipher failure throws typed [com.example.core.security.SecretCipherException]. */
-    /** Per-field: empty stays ""; undecryptable rows degrade to a visible placeholder instead of hiding the entry. */
-    private fun String.decryptOrPlaceholder(): String {
-        if (isEmpty()) return ""
-        return decryptCache.computeIfAbsent(this) { ct ->
+    fun decryptOrPlaceholder(cipherText: String): String {
+        if (cipherText.isEmpty()) return ""
+        return decryptCache.computeIfAbsent(cipherText) { ct ->
             try {
                 cipher.decrypt(ct)
             } catch (_: SecretCipherException) {
@@ -31,9 +31,18 @@ class ApiKeyRepository(
         }
     }
 
-    /** Fails loudly before any DB write — a failed encryption is never persisted as "". */
-    private fun encrypt(plainText: String): String =
+    fun encrypt(plainText: String): String =
         if (plainText.isEmpty()) "" else cipher.encrypt(plainText)
+}
+
+class ApiKeyRepository(
+    private val dao: ApiKeyDao,
+    private val cipher: SecretCipher = KeystoreCipher,
+) {
+    private val cryptor = CachedSecretCipher(cipher)
+
+    private fun String.decryptOrPlaceholder(): String = cryptor.decryptOrPlaceholder(this)
+    private fun encrypt(plainText: String): String = cryptor.encrypt(plainText)
 
     suspend fun softDeleteKey(id: Long, timestamp: Long = System.currentTimeMillis()): Long {
         try {
@@ -92,6 +101,15 @@ class ApiKeyRepository(
     fun getKeyById(id: Long): Flow<ApiKeyItem?> = dao.getKeyById(id).map { it?.decrypted() }
 
     suspend fun insertKey(item: ApiKeyItem): Long = dao.insertKey(item.encrypted())
+
+    suspend fun saveKey(item: ApiKeyItem): Long {
+        return if (item.id == 0L) {
+            insertKey(item)
+        } else {
+            updateKey(item)
+            item.id
+        }
+    }
 
     suspend fun insertAll(items: List<ApiKeyItem>) = dao.insertAllKeys(items.map { it.encrypted() })
 
