@@ -119,6 +119,9 @@
 - 2026-08-28: Executed Code Review skill evaluation along Standards and Spec axes. All security invariants, Material 3 conventions, and feature specs validated with 0 findings. No other doc updates needed.
 
 - 2026-09-02: Fixed workflow action run failure by adding missing `toJson`, `toCsv`, and `toPlainText` export functions to `ApiKeyFormatting.kt`. Verified 100% build compilation (`compile_applet`) and unit tests.
+- 2026-09-02: Created GitHub release `v0.1.2` and uploaded `app-debug.apk` asset. Deleted old comment-triggered `/.github/workflows/opencode.yml` workflow. No other doc updates needed.
+- 2026-09-02: Diagnosed GitHub Actions workflow run failure root causes: (1) Missing `chmod +x gradlew` leading to `Permission denied (exit code 126)` during `./gradlew assembleDebug` in runner environments; (2) `ksp.useKsp2=false` property incompatibility with KSP1 removal; (3) Unsigned `assembleRelease` failing on missing `storeFile` in `signingConfigs.release`. Pushed fix to `.github/workflows/build-release.yml` on remote `main`.
+- 2026-09-02: Verified GitHub Actions run 33627398434 completed with 100% green success across all steps (keystore creation, gradlew chmod, assembleDebug, APK preparation, and artifact upload). No other doc updates needed.
 
 
 
