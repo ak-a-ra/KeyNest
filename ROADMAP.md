@@ -33,7 +33,28 @@ To provide developers and AI practitioners with an ultra-fast, local-first, encr
 - **Encrypted Backup & Migration**: Seamless cross-device import/export with merge and overwrite conflict resolution.
 - **Master PIN & Biometric Lock**: Fast biometric prompt (`BiometricPrompt`) to unlock provider secrets.
 
-### Phase 3: CLI & Companion Tooling (⏳ Future)
-- **Local Bridge / ADB Stream**: Secure local pairing to pipe active keys into workstation `.env` files without cloud intermediary.
-- **Key Rotation & Expiration Reminders**: Track key age and prompt periodic rotation.
-- **Offline Proxy Helper**: Local mock server for testing API schemas offline.
+### Phase 3: Advanced Integrations & Scalability (Q4 2026)
+- **KSP Optimization & R8 Strict Mode**: Full static code generation for database schemas and dependency injection to drastically reduce startup time.
+- **Zero-Knowledge Cloud Sync (Opt-In)**: Bring-Your-Own-Cloud (WebDAV, Google Drive) synchronization where the vault is fully encrypted locally with PBKDF2 before ever leaving the device.
+- **Cross-Device Payload Sync (Air-Gapped)**: Generate dense QR codes for high-entropy secret transfer between physical devices without a network intermediary.
+
+### Phase 4: Platform Ecosystem & Scalable Architecture (Faraway Design)
+*Evolution into a distributed, zero-knowledge developer secrets platform.*
+
+- **4.1. Multi-Workspace & Blind FTS5 Indexing**:
+  - Logical data partitioning (`workspaces` table) separating Personal, Work, and Client environments with isolated KeyStore aliases.
+  - Blind FTS5 full-text search indexing on provider names and tags with zero plaintext leakage of cryptographic secrets.
+- **4.2. Zero-Knowledge E2EE Sync Protocol & CRDT Engine**:
+  - Decentralized delta synchronization via Hybrid Logical Clocks (HLC) and Last-Write-Wins element sets (LWW-Element-Set CRDT).
+  - Outbox staging queue (`sync_outbox`) with ChaCha20-Poly1305 encrypted mutation envelopes for self-hosted relay or WebDAV targets.
+- **4.3. Android Autofill Framework & Local IPC Daemon**:
+  - Android `AutofillService` implementation to securely autofill API keys into terminal emulators (Termux), IDEs, and browser developer consoles.
+  - Local Unix Domain Socket daemon for authenticated CLI access (`keynest get <provider> --env=prod`) gated by biometrics.
+- **4.4. Kotlin Multiplatform (KMP) Core & Native Hardware Security**:
+  - Decouple `core.security` into KMP expect/actual: Android KeyStore + StrongBox, Apple Keychain + Secure Enclave, and Linux Secret Service / Windows DPAPI.
+  - Migrate persistence to SQLDelight for unified schema and migration execution across Android, Desktop (Compose Multiplatform), and CLI.
+  - FIDO2 / WebAuthn and physical hardware security key (YubiKey NFC/USB-C) challenge-response authentication.
+- **4.5. Enterprise Team Vaults & Shamir's Secret Sharing (SSS)**:
+  - High-security production key splits requiring M-of-N quorum approvals to reconstruct master API credentials.
+  - Cryptographic tamper-evident audit trail logging every secret access, export, and rotation event.
+

@@ -135,6 +135,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         checkClipboardForApiKey()
     }
 
+    private val envVarSanitizeRegex = Regex("[^A-Z0-9]")
+
     val allKeys: StateFlow<List<ApiKeyItem>>
     val trashedKeys: StateFlow<List<ApiKeyItem>>
     val trashCount: StateFlow<Int>
@@ -144,6 +146,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     val trashedProviders: StateFlow<List<ProviderProfile>>
     val providerTrashCount: StateFlow<Int>
     val filteredProviders: StateFlow<List<ProviderProfile>>
+    val configuredProvidersCount: StateFlow<Int>
+    val activeProvidersCount: StateFlow<Int>
 
     private val _connectionResults = MutableStateFlow<Map<String, ConnectionResult>>(emptyMap())
     val connectionResults: StateFlow<Map<String, ConnectionResult>> = _connectionResults.asStateFlow()
@@ -257,11 +261,31 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 initialValue = 0
             )
 
+        configuredProvidersCount = allProviders
+            .map { list -> list.count { it.isConfigured } }
+            .distinctUntilChanged()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = 0
+            )
+
+        activeProvidersCount = allProviders
+            .map { list -> list.count { it.isActive && it.isConfigured } }
+            .distinctUntilChanged()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = 0
+            )
+
         availableTags = allKeys
             .map { keys ->
-                keys.flatMap { ApiKeyFormatting.parseTags(it.tags) }
-                    .distinct()
-                    .sorted()
+                val set = mutableSetOf<String>()
+                for (k in keys) {
+                    set.addAll(ApiKeyFormatting.parseTags(k.tags))
+                }
+                set.sorted()
             }
             .distinctUntilChanged()
             .stateIn(
@@ -366,11 +390,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
         filteredProviders = combine(
             allProviders,
-            searchFilterFlow,
-            _sortOption
-        ) { providers, criteria, _ ->
+            searchFilterFlow
+        ) { providers, criteria ->
             val query = criteria.query
             val category = criteria.category
+            val tagFilter = criteria.tag
             val onlyFavs = criteria.onlyFavorites
             providers.asSequence()
                 .filter { p ->
@@ -385,6 +409,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 .filter { category == "All" || it.category.equals(category, ignoreCase = true) }
+                .filter { tagFilter == null || it.tags.contains(tagFilter, ignoreCase = true) || it.keys.any { k -> k.label.contains(tagFilter, ignoreCase = true) } }
                 .filter { !onlyFavs || it.isPinned }
                 .toList()
         }.flowOn(Dispatchers.Default)
@@ -597,7 +622,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
         for (p in providers) {
             val preset = ProviderPresets.findById(p.id)
-            val varName = preset.envVarNameSuggestion.ifBlank { "${p.displayName.uppercase().replace(Regex("[^A-Z0-9]"), "_")}_API_KEY" }
+            val varName = preset.envVarNameSuggestion.ifBlank { "${p.displayName.uppercase().replace(envVarSanitizeRegex, "_")}_API_KEY" }
             val key = p.activeApiKey
             if (key.isNotBlank()) {
                 sb.append("$varName=$key\n")

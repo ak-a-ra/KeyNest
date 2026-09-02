@@ -39,26 +39,30 @@ class ProviderRepository(
         return array.toString()
     }
 
+    private val keysCache = ConcurrentHashMap<String, List<ProviderKeyItem>>()
+
     private fun decryptAndDeserializeKeys(jsonStr: String): List<ProviderKeyItem> {
         if (jsonStr.isBlank() || jsonStr == "[]") return emptyList()
-        val result = mutableListOf<ProviderKeyItem>()
-        try {
-            val array = JSONArray(jsonStr)
-            for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                result.add(
-                    ProviderKeyItem(
-                        id = obj.optString("id", java.util.UUID.randomUUID().toString()),
-                        label = obj.optString("label", "Default"),
-                        apiKey = obj.optString("apiKey", "").decryptOrPlaceholder(),
-                        secretKey = obj.optString("secretKey", "").decryptOrPlaceholder(),
-                        isPrimary = obj.optBoolean("isPrimary", false),
-                        createdAt = obj.optLong("createdAt", System.currentTimeMillis())
+        return keysCache.computeIfAbsent(jsonStr) { raw ->
+            val result = mutableListOf<ProviderKeyItem>()
+            try {
+                val array = JSONArray(raw)
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    result.add(
+                        ProviderKeyItem(
+                            id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                            label = obj.optString("label", "Default"),
+                            apiKey = obj.optString("apiKey", "").decryptOrPlaceholder(),
+                            secretKey = obj.optString("secretKey", "").decryptOrPlaceholder(),
+                            isPrimary = obj.optBoolean("isPrimary", false),
+                            createdAt = obj.optLong("createdAt", System.currentTimeMillis())
+                        )
                     )
-                )
-            }
-        } catch (_: Exception) {}
-        return result
+                }
+            } catch (_: Exception) {}
+            result
+        }
     }
 
     private fun ProviderProfileEntity.toDomain(): ProviderProfile = ProviderProfile(

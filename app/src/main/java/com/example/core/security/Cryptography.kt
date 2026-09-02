@@ -17,29 +17,42 @@ object KeystoreCipher : SecretCipher {
     private const val IV_LENGTH = 12
 
     @Volatile
+    private var cachedKey: SecretKey? = null
+
+    @Volatile
     private var jvmFallbackKey: SecretKey? = null
 
     private fun getOrCreateKey(): SecretKey {
-        try {
-            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-            val existingKey = keyStore.getKey(KEY_ALIAS, null) as? SecretKey
-            if (existingKey != null) return existingKey
+        cachedKey?.let { return it }
+        return synchronized(this) {
+            cachedKey?.let { return it }
+            try {
+                val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+                val existingKey = keyStore.getKey(KEY_ALIAS, null) as? SecretKey
+                if (existingKey != null) {
+                    cachedKey = existingKey
+                    return existingKey
+                }
 
-            val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
-            val spec = KeyGenParameterSpec.Builder(
-                KEY_ALIAS,
-                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-            )
-                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                .setRandomizedEncryptionRequired(true)
-                .build()
-            keyGenerator.init(spec)
-            return keyGenerator.generateKey()
-        } catch (_: Exception) {
-            // Fallback for JVM unit tests where AndroidKeyStore security provider is absent
-            return jvmFallbackKey ?: synchronized(this) {
-                jvmFallbackKey ?: KeyGenerator.getInstance("AES").apply { init(256) }.generateKey().also { jvmFallbackKey = it }
+                val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
+                val spec = KeyGenParameterSpec.Builder(
+                    KEY_ALIAS,
+                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+                )
+                    .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .setRandomizedEncryptionRequired(true)
+                    .build()
+                keyGenerator.init(spec)
+                val newKey = keyGenerator.generateKey()
+                cachedKey = newKey
+                newKey
+            } catch (_: Exception) {
+                // Fallback for JVM unit tests where AndroidKeyStore security provider is absent
+                jvmFallbackKey ?: KeyGenerator.getInstance("AES").apply { init(256) }.generateKey().also {
+                    jvmFallbackKey = it
+                    cachedKey = it
+                }
             }
         }
     }

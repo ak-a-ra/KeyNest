@@ -34,6 +34,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
+import androidx.compose.runtime.remember
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -78,18 +79,23 @@ fun ProviderCard(
     onConfigure: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val brandColor = try {
-        Color(android.graphics.Color.parseColor(preset.defaultColorHex.ifBlank { profile.colorHex }))
-    } catch (_: Exception) {
-        CyberGold
+    val fallbackColor = CyberGold
+    val brandColor = remember(preset.defaultColorHex, profile.colorHex, fallbackColor) {
+        try {
+            Color(android.graphics.Color.parseColor(preset.defaultColorHex.ifBlank { profile.colorHex }))
+        } catch (_: Exception) {
+            fallbackColor
+        }
     }
 
     val isConfigured = profile.isConfigured
     val activeKey = profile.activeKey
-    val maskedToken = if (isConfigured && activeKey != null) {
-        VaultSecurity.maskKey(activeKey.apiKey)
-    } else {
-        "Not configured"
+    val maskedToken = remember(isConfigured, activeKey?.apiKey) {
+        if (isConfigured && activeKey != null) {
+            VaultSecurity.maskKey(activeKey.apiKey)
+        } else {
+            "Not configured"
+        }
     }
 
     Surface(

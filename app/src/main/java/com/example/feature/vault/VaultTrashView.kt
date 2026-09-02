@@ -70,7 +70,6 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun VaultTrashView(
     trashedKeys: List<ApiKeyItem>,
-    onOpenDrawer: () -> Unit,
     onBackToSecrets: () -> Unit,
     onRestoreKey: (ApiKeyItem) -> Unit,
     onPermanentDeleteKey: (ApiKeyItem) -> Unit,
@@ -102,9 +101,6 @@ fun VaultTrashView(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Navigation drawer", tint = TextSecondary)
-                    }
                     IconButton(onClick = onBackToSecrets) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to secrets", tint = TextSecondary)
                     }

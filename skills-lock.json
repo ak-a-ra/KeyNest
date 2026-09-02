@@ -11,6 +11,16 @@
       "source": "kunchenguid/no-mistakes",
       "sourceType": "github",
       "skillPath": "SKILL.md"
+    },
+    "caveman": {
+      "source": "JuliusBrussee/caveman",
+      "sourceType": "github",
+      "skillPath": "skills/caveman/SKILL.md"
+    },
+    "improve": {
+      "source": "shadcn/improve",
+      "sourceType": "github",
+      "skillPath": "skills/improve/SKILL.md"
     }
   }
 }

@@ -5,19 +5,33 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.ViewAgenda
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -38,19 +52,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.example.core.designsystem.CyberCyan
+import com.example.core.designsystem.CyberEmerald
 import com.example.core.designsystem.CyberGold
-import com.example.core.designsystem.CyberRose
+import com.example.core.designsystem.ObsidianBorder
 import com.example.core.designsystem.ObsidianBorderLight
 import com.example.core.designsystem.ObsidianSurface
+import com.example.core.designsystem.ObsidianSurfaceElevated
+import com.example.core.designsystem.StatusDanger
 import com.example.core.designsystem.TextPrimary
 import com.example.core.designsystem.TextSecondary
 import com.example.core.designsystem.VibrantPillBg
 import com.example.feature.vault.SortOption
-
-import androidx.compose.material.icons.filled.ViewAgenda
-
-import androidx.compose.material3.CircularProgressIndicator
-import com.example.core.designsystem.CyberCyan
 
 @Composable
 fun GoogleKeepTopSearchBar(
@@ -59,40 +72,34 @@ fun GoogleKeepTopSearchBar(
     onSearchClick: () -> Unit,
     sortOption: SortOption,
     onSortOptionChange: (SortOption) -> Unit,
-    onOpenDrawer: () -> Unit,
     onOpenAudit: () -> Unit,
+    onOpenGenerator: () -> Unit = {},
+    onOpenDotEnvExport: () -> Unit = {},
+    onOpenBackupRestore: () -> Unit = {},
+    onOpenTrash: () -> Unit = {},
+    onCycleTheme: () -> Unit = {},
+    onToggleLockOrPinSettings: () -> Unit = {},
+    trashCount: Int = 0,
+    isPinConfigured: Boolean = false,
     isGridView: Boolean,
     onToggleGridView: () -> Unit,
     isSearching: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
+    var showProfileMenu by remember { mutableStateOf(false) }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 6.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Menu / Navigation Drawer Icon (Outside Pill)
-        IconButton(
-            onClick = onOpenDrawer,
-            modifier = Modifier.testTag("button_top_menu")
-        ) {
-            Icon(
-                imageVector = Icons.Default.Menu,
-                contentDescription = "Open Navigation Drawer",
-                tint = TextPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-
         // Search Pill
         Surface(
             modifier = Modifier
                 .weight(1f)
-                .height(48.dp)
-                .padding(horizontal = 4.dp),
+                .height(48.dp),
             shape = CircleShape,
             color = VibrantPillBg,
             border = androidx.compose.foundation.BorderStroke(1.dp, ObsidianBorderLight)
@@ -100,21 +107,41 @@ fun GoogleKeepTopSearchBar(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(start = 16.dp, end = 4.dp),
+                    .padding(start = 12.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
                 // Embedded Search Text Input Field
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxSize()
-                        .clickable(onClick = onSearchClick),
+                        .fillMaxSize(),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    Text(
-                        text = if (searchQuery.isEmpty()) "Search Keep" else searchQuery,
-                        color = if (searchQuery.isEmpty()) TextSecondary else TextPrimary,
-                        fontSize = 15.sp
+                    if (searchQuery.isEmpty()) {
+                        Text(
+                            text = "Search keys, tags, providers...",
+                            color = TextSecondary,
+                            fontSize = 15.sp
+                        )
+                    }
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = searchQuery,
+                        onValueChange = onSearchQueryChange,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("search_input_field"),
+                        singleLine = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(color = TextPrimary, fontSize = 15.sp),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(CyberGold)
                     )
                 }
 
@@ -192,31 +219,152 @@ fun GoogleKeepTopSearchBar(
             }
         }
 
-        // Profile Avatar Badge (Outside Pill)
-        IconButton(
-            onClick = onOpenAudit,
-            modifier = Modifier
-                .padding(start = 4.dp)
-                .size(40.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFE53935)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.img_cat_ip_logo_1787319466857),
-                        contentDescription = "Profile and Security Audit",
+        // Profile Avatar Badge with Dropdown Quick Menu
+        Box(modifier = Modifier.padding(start = 8.dp)) {
+            IconButton(
+                onClick = { showProfileMenu = true },
+                modifier = Modifier
+                    .size(40.dp)
+                    .testTag("button_top_profile")
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Box(
                         modifier = Modifier
-                            .size(34.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFE53935)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.img_cat_ip_logo_1787319466857),
+                            contentDescription = "Profile and Actions Menu",
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
+            }
+
+            DropdownMenu(
+                expanded = showProfileMenu,
+                onDismissRequest = { showProfileMenu = false },
+                modifier = Modifier
+                    .background(ObsidianSurfaceElevated)
+            ) {
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(Icons.Default.Security, contentDescription = null, tint = CyberEmerald, modifier = Modifier.size(20.dp))
+                    },
+                    text = { Text("Security Audit", color = TextPrimary, fontWeight = FontWeight.Medium) },
+                    onClick = {
+                        showProfileMenu = false
+                        onOpenAudit()
+                    }
+                )
+
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(Icons.Default.Key, contentDescription = null, tint = CyberGold, modifier = Modifier.size(20.dp))
+                    },
+                    text = { Text("Key Generator", color = TextPrimary, fontWeight = FontWeight.Medium) },
+                    onClick = {
+                        showProfileMenu = false
+                        onOpenGenerator()
+                    }
+                )
+
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(Icons.Default.FileDownload, contentDescription = null, tint = CyberCyan, modifier = Modifier.size(20.dp))
+                    },
+                    text = { Text("Export / Import .env", color = TextPrimary, fontWeight = FontWeight.Medium) },
+                    onClick = {
+                        showProfileMenu = false
+                        onOpenDotEnvExport()
+                    }
+                )
+
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = CyberGold, modifier = Modifier.size(20.dp))
+                    },
+                    text = { Text("Backup & Restore", color = TextPrimary, fontWeight = FontWeight.Medium) },
+                    onClick = {
+                        showProfileMenu = false
+                        onOpenBackupRestore()
+                    }
+                )
+
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(Icons.Default.Delete, contentDescription = null, tint = StatusDanger, modifier = Modifier.size(20.dp))
+                    },
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Trash", color = TextPrimary, fontWeight = FontWeight.Medium)
+                            if (trashCount > 0) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = StatusDanger.copy(alpha = 0.2f)
+                                ) {
+                                    Text(
+                                        text = "$trashCount",
+                                        color = StatusDanger,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    onClick = {
+                        showProfileMenu = false
+                        onOpenTrash()
+                    }
+                )
+
+                HorizontalDivider(color = ObsidianBorder, modifier = Modifier.padding(vertical = 4.dp))
+
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(Icons.Default.Brightness4, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(20.dp))
+                    },
+                    text = { Text("Toggle Theme", color = TextPrimary) },
+                    onClick = {
+                        showProfileMenu = false
+                        onCycleTheme()
+                    }
+                )
+
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(
+                            if (isPinConfigured) Icons.Default.Lock else Icons.Default.LockOpen,
+                            contentDescription = null,
+                            tint = if (isPinConfigured) CyberEmerald else TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    text = {
+                        Text(
+                            if (isPinConfigured) "Lock Vault Now" else "Set Master PIN",
+                            color = TextPrimary
+                        )
+                    },
+                    onClick = {
+                        showProfileMenu = false
+                        onToggleLockOrPinSettings()
+                    }
+                )
             }
         }
     }
 }
+
