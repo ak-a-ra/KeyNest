@@ -81,29 +81,42 @@ object VaultSecurity {
 
     private val isRunningTests: Boolean by lazy {
         try {
-            Class.forName("org.robolectric.Robolectric")
+            Class.forName("org.robolectric.RobolectricTestRunner")
             true
-        } catch (_: ClassNotFoundException) {
-            false
+        } catch (_: Throwable) {
+            android.os.Build.FINGERPRINT == "robolectric" || android.os.Build.HARDWARE == "robolectric"
         }
     }
 
-    private fun getPrefs(context: Context): SharedPreferences = try {
+    @Volatile
+    private var cachedPrefs: SharedPreferences? = null
+
+    internal fun resetCacheForTesting() {
+        cachedPrefs = null
+    }
+
+    private fun getPrefs(context: Context): SharedPreferences {
         if (isRunningTests) {
-            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        } else {
-            val masterKey = MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
-            val sharedPreferences = EncryptedSharedPreferences.create(
-                context,
-                PREFS_NAME,
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
-            DegradingSharedPreferences(sharedPreferences, isDegraded = false)
+            return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         }
+        cachedPrefs?.let { return it }
+        return synchronized(this) {
+            cachedPrefs ?: createPrefs(context.applicationContext ?: context).also { cachedPrefs = it }
+        }
+    }
+
+    private fun createPrefs(context: Context): SharedPreferences = try {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        val sharedPreferences = EncryptedSharedPreferences.create(
+            context,
+            PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        DegradingSharedPreferences(sharedPreferences, isDegraded = false)
     } catch (_: Throwable) {
         // Security: Never fall back to plain SharedPreferences - if encryption fails,
         // enter a secure degraded/locked state. Do not crash or read/write sensitive data.

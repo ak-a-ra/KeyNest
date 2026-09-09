@@ -105,11 +105,9 @@ fun VaultHomeScreen(
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
     val sortOption by viewModel.sortOption.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
-    val clipboardDetectedKey by viewModel.clipboardDetectedKey.collectAsStateWithLifecycle()
     val isPinConfigured by viewModel.isPinConfigured.collectAsStateWithLifecycle()
     val isSearching by viewModel.isSearching.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
-    val clipboardCopyState by viewModel.clipboardCopyState.collectAsStateWithLifecycle()
     val displayMode by viewModel.displayMode.collectAsStateWithLifecycle()
     val availableTags by viewModel.availableTags.collectAsStateWithLifecycle()
     val selectedTag by viewModel.selectedTag.collectAsStateWithLifecycle()
@@ -281,11 +279,7 @@ fun VaultHomeScreen(
                                         color = ObsidianSurfaceElevated,
                                         border = BorderStroke(1.dp, ObsidianBorderLight),
                                         modifier = Modifier
-                                            .clickable {
-                                                allProviders.filter { it.isConfigured }.forEach { p ->
-                                                    viewModel.testProviderConnection(p)
-                                                }
-                                            }
+                                            .clickable { viewModel.pingAllConfiguredProviders() }
                                             .padding(horizontal = 8.dp, vertical = 4.dp)
                                     ) {
                                         Row(
@@ -389,50 +383,15 @@ fun VaultHomeScreen(
                     }
                 }
 
-                // Clipboard banners positioned over top bar
-                Column(
+                // Clipboard banners positioned over top bar (isolated to prevent recomposition loops)
+                IsolatedClipboardBanners(
+                    viewModel = viewModel,
+                    allProviders = allProviders,
                     modifier = Modifier
                         .fillMaxWidth()
                         .statusBarsPadding()
-                        .padding(top = 56.dp, start = 16.dp, end = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    AnimatedVisibility(
-                        visible = clipboardCopyState != null,
-                        enter = slideInVertically() + fadeIn(),
-                        exit = slideOutVertically() + fadeOut()
-                    ) {
-                        clipboardCopyState?.let { state ->
-                            ClipboardAutoClearBanner(
-                                copyState = state,
-                                onClearNow = { viewModel.clearClipboardNow() }
-                            )
-                        }
-                    }
-
-                    AnimatedVisibility(
-                        visible = clipboardDetectedKey != null,
-                        enter = slideInVertically() + fadeIn(),
-                        exit = slideOutVertically() + fadeOut()
-                    ) {
-                        clipboardDetectedKey?.let { rawKey ->
-                            ClipboardDetectionBanner(
-                                detectedKey = rawKey,
-                                onSave = {
-                                    val detectedProviderName = ProviderPresets.detectProvider(rawKey)
-                                    val matched = allProviders.find { it.displayName.equals(detectedProviderName, ignoreCase = true) }
-                                    if (matched != null) {
-                                        viewModel.openConfigureProvider(matched)
-                                    } else {
-                                        val preset = ProviderPresets.findByName(detectedProviderName)
-                                        viewModel.openAddCustomProvider(preset)
-                                    }
-                                },
-                                onDismiss = { viewModel.dismissClipboardBanner() }
-                            )
-                        }
-                    }
-                }
+                        .padding(top = 56.dp, start = 16.dp, end = 16.dp)
+                )
             }
         }
 
@@ -556,5 +515,56 @@ fun VaultHomeScreen(
             )
         }
         VaultDialogState.None -> Unit
+    }
+}
+
+@Composable
+private fun IsolatedClipboardBanners(
+    viewModel: VaultViewModel,
+    allProviders: List<ProviderProfile>,
+    modifier: Modifier = Modifier
+) {
+    val clipboardCopyState by viewModel.clipboardCopyState.collectAsStateWithLifecycle()
+    val clipboardDetectedKey by viewModel.clipboardDetectedKey.collectAsStateWithLifecycle()
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AnimatedVisibility(
+            visible = clipboardCopyState != null,
+            enter = slideInVertically() + fadeIn(),
+            exit = slideOutVertically() + fadeOut()
+        ) {
+            clipboardCopyState?.let { state ->
+                ClipboardAutoClearBanner(
+                    copyState = state,
+                    onClearNow = { viewModel.clearClipboardNow() }
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = clipboardDetectedKey != null,
+            enter = slideInVertically() + fadeIn(),
+            exit = slideOutVertically() + fadeOut()
+        ) {
+            clipboardDetectedKey?.let { rawKey ->
+                ClipboardDetectionBanner(
+                    detectedKey = rawKey,
+                    onSave = {
+                        val detectedProviderName = ProviderPresets.detectProvider(rawKey)
+                        val matched = allProviders.find { it.displayName.equals(detectedProviderName, ignoreCase = true) }
+                        if (matched != null) {
+                            viewModel.openConfigureProvider(matched)
+                        } else {
+                            val preset = ProviderPresets.findByName(detectedProviderName)
+                            viewModel.openAddCustomProvider(preset)
+                        }
+                    },
+                    onDismiss = { viewModel.dismissClipboardBanner() }
+                )
+            }
+        }
     }
 }

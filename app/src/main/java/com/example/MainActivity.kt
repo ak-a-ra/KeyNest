@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -76,14 +77,14 @@ fun MainScreen(vm: VaultViewModel) {
 
 class MainActivity : ComponentActivity() {
 
-    private var vaultViewModel: VaultViewModel? = null
+    private lateinit var vaultViewModel: VaultViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        vaultViewModel = ViewModelProvider(this)[VaultViewModel::class.java]
         setContent {
-            val vm: VaultViewModel = viewModel()
-            vaultViewModel = vm
+            val vm = vaultViewModel
 
             val themeMode by vm.themeMode.collectAsStateWithLifecycle()
             val systemInDark = isSystemInDarkTheme()
@@ -160,11 +161,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        vaultViewModel?.startClipboardMonitoring()
+        if (::vaultViewModel.isInitialized) {
+            vaultViewModel.onAppForegrounded()
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        vaultViewModel?.stopClipboardMonitoring()
+        if (::vaultViewModel.isInitialized) {
+            vaultViewModel.onAppBackgrounded()
+        }
     }
 }

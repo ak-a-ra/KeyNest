@@ -541,11 +541,24 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     // Provider Profile Operations (Agora Architecture)
     fun testProviderConnection(profile: ProviderProfile, overrideKey: String? = null) {
+        if (_testingProviders.value.contains(profile.id)) return
         viewModelScope.launch {
             _testingProviders.value = _testingProviders.value + profile.id
             val result = ProviderConnectionTester.testConnection(profile, overrideKey)
             _connectionResults.value = _connectionResults.value + (profile.id to result)
             _testingProviders.value = _testingProviders.value - profile.id
+        }
+    }
+
+    fun pingAllConfiguredProviders() {
+        val configured = allProviders.value.filter { it.isConfigured }
+        if (configured.isEmpty()) return
+        viewModelScope.launch {
+            for (p in configured) {
+                if (!_testingProviders.value.contains(p.id)) {
+                    testProviderConnection(p)
+                }
+            }
         }
     }
 
@@ -726,20 +739,71 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private var clipboardClearDeadline: Long = 0L
+    private var activeAutoClearSecret: String? = null
+    private var activeAutoClearLabel: String = ""
+    private var isAppForeground: Boolean = true
+
     private fun startClipboardAutoClear(label: String, expectedContent: String) {
         autoClearJob?.cancel()
+        clipboardClearDeadline = System.currentTimeMillis() + 30_000L
+        activeAutoClearSecret = expectedContent
+        activeAutoClearLabel = label
+        if (isAppForeground) {
+            runForegroundAutoClearCountdown()
+        }
+    }
+
+    private fun runForegroundAutoClearCountdown() {
+        autoClearJob?.cancel()
+        val deadline = clipboardClearDeadline
+        val secret = activeAutoClearSecret ?: return
+        val label = activeAutoClearLabel
+
         autoClearJob = viewModelScope.launch {
-            for (remaining in 30 downTo 1) {
-                _clipboardCopyState.value = ClipboardCopyState(label = label, totalSeconds = 30, secondsRemaining = remaining)
+            while (true) {
+                val now = System.currentTimeMillis()
+                val remainingMs = deadline - now
+                if (remainingMs <= 0) break
+                val remainingSec = ((remainingMs + 999) / 1000).toInt().coerceIn(1, 30)
+                _clipboardCopyState.value = ClipboardCopyState(label = label, totalSeconds = 30, secondsRemaining = remainingSec)
                 delay(1000)
             }
-            clearClipboardIfMatches(expectedContent)
+            clearClipboardIfMatches(secret)
             _clipboardCopyState.value = null
+            activeAutoClearSecret = null
+            clipboardClearDeadline = 0L
         }
+    }
+
+    fun onAppForegrounded() {
+        isAppForeground = true
+        startClipboardMonitoring()
+        if (clipboardClearDeadline > 0L) {
+            val now = System.currentTimeMillis()
+            if (now >= clipboardClearDeadline) {
+                clearClipboardIfMatches(activeAutoClearSecret)
+                _clipboardCopyState.value = null
+                activeAutoClearSecret = null
+                clipboardClearDeadline = 0L
+            } else {
+                runForegroundAutoClearCountdown()
+            }
+        }
+    }
+
+    fun onAppBackgrounded() {
+        isAppForeground = false
+        stopClipboardMonitoring()
+        // Stop UI ticking to prevent waking CPU every second in background
+        autoClearJob?.cancel()
+        autoClearJob = null
     }
 
     fun clearClipboardNow() {
         autoClearJob?.cancel()
+        clipboardClearDeadline = 0L
+        activeAutoClearSecret = null
         clearClipboardIfMatches(null)
         lastSelfCopiedKey = null
         VaultSecurity.setLastSelfCopiedKey(getApplication(), null)
