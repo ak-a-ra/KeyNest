@@ -38,7 +38,7 @@ class DegradingSharedPreferences(
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean =
         if (isDegraded) {
-            if (key == "is_pin_enabled") false else defValue
+            if (key == "is_pin_enabled") true else defValue
         } else {
             delegate.getBoolean(key, defValue)
         }

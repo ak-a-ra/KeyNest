@@ -8,9 +8,7 @@ class KeyNestApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
-        }
+        Timber.plant(Timber.DebugTree())
 
         Timber.tag("KeyNestApp").i("Application onCreate: Starting KeyNest startup sequence")
 
