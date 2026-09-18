@@ -1,5 +1,6 @@
 # KeyNest Development Log
 
+- 2026-09-18: Hardened Gradle build pipeline against stale emulator APK rollbacks: bumped versionCode to 5 / 0.0.5 to force Android PackageManager upgrade, added automated syncApkToBuildOutputs finalizing assembleDebug into .build-outputs. No other doc updates needed.
 - 2026-09-17: Moved provider metrics (Active/Configured) and Ping All action inside red logo dropdown menu, removed standalone home screen stats strip; .env export preserved without duplication. No other doc updates needed.
 - 2026-09-17: Removed category filter chip carousel from VaultHomeScreen as requested. No other doc updates needed.
 - 2026-09-17: Isolated Keystore ephemeral fallback in Cryptography.kt strictly to test runners (failing loudly with SecretCipherException in production); deleted unreferenced DeveloperCodeExporterScreen.kt (315 lines). No other doc updates needed.
