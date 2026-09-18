@@ -3,6 +3,7 @@ package com.example.feature.vault
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SwapVert
@@ -59,6 +61,7 @@ import com.example.core.designsystem.ObsidianBorder
 import com.example.core.designsystem.ObsidianBorderLight
 import com.example.core.designsystem.ObsidianSurface
 import com.example.core.designsystem.ObsidianSurfaceElevated
+import com.example.core.designsystem.ObsidianSurfaceHighlight
 import com.example.core.designsystem.StatusDanger
 import com.example.core.designsystem.TextPrimary
 import com.example.core.designsystem.TextSecondary
@@ -84,6 +87,10 @@ fun GoogleKeepTopSearchBar(
     isGridView: Boolean,
     onToggleGridView: () -> Unit,
     isSearching: Boolean = false,
+    activeCount: Int = 0,
+    configuredCount: Int = 0,
+    totalProvidersCount: Int = 0,
+    onPingAll: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
@@ -253,6 +260,53 @@ fun GoogleKeepTopSearchBar(
                 modifier = Modifier
                     .background(ObsidianSurfaceElevated)
             ) {
+                // Status Header inside Logo Menu
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = ObsidianSurfaceHighlight,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = CyberEmerald.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = "$activeCount Active",
+                                color = CyberEmerald,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                        Text(
+                            text = "$configuredCount / $totalProvidersCount Configured",
+                            color = TextSecondary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(Icons.Default.NetworkCheck, contentDescription = null, tint = CyberCyan, modifier = Modifier.size(20.dp))
+                    },
+                    text = { Text("Ping All Configured", color = TextPrimary, fontWeight = FontWeight.Medium) },
+                    onClick = {
+                        showProfileMenu = false
+                        onPingAll()
+                    }
+                )
+
+                HorizontalDivider(color = ObsidianBorder, modifier = Modifier.padding(vertical = 4.dp))
+
                 DropdownMenuItem(
                     leadingIcon = {
                         Icon(Icons.Default.Security, contentDescription = null, tint = CyberEmerald, modifier = Modifier.size(20.dp))

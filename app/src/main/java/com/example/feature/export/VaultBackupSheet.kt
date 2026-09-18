@@ -284,6 +284,8 @@ private fun ExportBackupView(
                 )
                 isExporting = false
                 if (result.isSuccess) {
+                    password = ""
+                    confirmPassword = ""
                     val count = result.getOrNull() ?: keys.size
                     Toast.makeText(context, "Encrypted backup created with $count secrets!", Toast.LENGTH_LONG).show()
                     onExportSuccess()
@@ -818,6 +820,7 @@ private fun RestoreBackupView(
                     )
                     isRestoring = false
                     if (result.isSuccess) {
+                        password = ""
                         val count = result.getOrNull() ?: 0
                         Toast.makeText(context, "Successfully restored $count secrets to your vault!", Toast.LENGTH_LONG).show()
                         onRestoreSuccess()

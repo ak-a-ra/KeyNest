@@ -188,9 +188,14 @@ object ProviderConnectionTester {
                     AuthType.QUERY_PARAM -> {}
                     AuthType.NONE -> {}
                 }
-                val probe = if (preset.probePath.isNotBlank()) {
+                var probe = if (preset.probePath.isNotBlank()) {
                     "$baseUrl${if (preset.probePath.startsWith("/")) "" else "/"}${preset.probePath}"
                 } else baseUrl
+                if (preset.authType == AuthType.QUERY_PARAM && apiKey.isNotBlank()) {
+                    val encodedKey = java.net.URLEncoder.encode(apiKey, "UTF-8")
+                    val delimiter = if (probe.contains("?")) "&" else "?"
+                    probe = "$probe${delimiter}key=$encodedKey"
+                }
                 Pair(probe, headers)
             }
         }

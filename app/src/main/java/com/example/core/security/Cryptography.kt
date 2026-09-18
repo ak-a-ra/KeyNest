@@ -47,11 +47,15 @@ object KeystoreCipher : SecretCipher {
                 val newKey = keyGenerator.generateKey()
                 cachedKey = newKey
                 newKey
-            } catch (_: Exception) {
-                // Fallback for JVM unit tests where AndroidKeyStore security provider is absent
-                jvmFallbackKey ?: KeyGenerator.getInstance("AES").apply { init(256) }.generateKey().also {
-                    jvmFallbackKey = it
-                    cachedKey = it
+            } catch (e: Exception) {
+                if (VaultSecurity.isRunningTests) {
+                    // Fallback for JVM unit tests where AndroidKeyStore security provider is absent
+                    jvmFallbackKey ?: KeyGenerator.getInstance("AES").apply { init(256) }.generateKey().also {
+                        jvmFallbackKey = it
+                        cachedKey = it
+                    }
+                } else {
+                    throw SecretCipherException("Failed to access AndroidKeyStore: ${e.message}", e)
                 }
             }
         }

@@ -79,7 +79,7 @@ object VaultSecurity {
     private const val KEY_LAST_SELF_COPIED = "last_self_copied_key"
     internal const val STATIC_SALT = "KeyNest_Vault_Secure_Salt_2026_!"
 
-    private val isRunningTests: Boolean by lazy {
+    internal val isRunningTests: Boolean by lazy {
         try {
             Class.forName("org.robolectric.RobolectricTestRunner")
             true

@@ -1,5 +1,9 @@
 # KeyNest Development Log
 
+- 2026-09-17: Moved provider metrics (Active/Configured) and Ping All action inside red logo dropdown menu, removed standalone home screen stats strip; .env export preserved without duplication. No other doc updates needed.
+- 2026-09-17: Removed category filter chip carousel from VaultHomeScreen as requested. No other doc updates needed.
+- 2026-09-17: Isolated Keystore ephemeral fallback in Cryptography.kt strictly to test runners (failing loudly with SecretCipherException in production); deleted unreferenced DeveloperCodeExporterScreen.kt (315 lines). No other doc updates needed.
+- 2026-09-17: Cleared backup passphrase state from Compose memory upon export/restore success in VaultBackupSheet; implemented generic AuthType.QUERY_PARAM key injection in ProviderConnectionTester. No other doc updates needed.
 - 2026-09-17: Implemented bounded LRU decryption caching (capacity 128) with lifecycle RAM purging on background and lock, URL-encoded Gemini test key query param, and removed pointless try-catch exception wrapping in ApiKeyRepository. 100% build & test pass. No other doc updates needed.
 - 2026-09-02: Optimized AES keystore operations with caching, cached JSON serialization in ProviderRepository, and reduced recompositions in VaultHomeScreen and ProviderCard.
 - 2026-08-28: Redesigned vault layout to minimalist single-view architecture (Option 1): removed redundant navigation drawer, integrated quick actions (Security Audit, Key Generator, Export/Import .env, Backup & Restore, Trash bin with live count badge, Lock/PIN settings, Theme toggle) into top bar profile menu. Verified 100% build pass. No other doc updates needed.

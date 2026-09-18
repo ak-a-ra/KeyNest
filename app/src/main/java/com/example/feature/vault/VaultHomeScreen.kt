@@ -115,7 +115,6 @@ fun VaultHomeScreen(
     val favoritesCount by viewModel.favoritesCount.collectAsStateWithLifecycle()
     val configuredCount by viewModel.configuredProvidersCount.collectAsStateWithLifecycle()
     val activeCount by viewModel.activeProvidersCount.collectAsStateWithLifecycle()
-    val categories = remember { ProviderPresets.categories.filterNot { it == "All" } }
 
     val cardActions = remember(viewModel) {
         KeyCardActions(
@@ -202,22 +201,13 @@ fun VaultHomeScreen(
                         onToggleGridView = {
                             viewModel.setDisplayMode(if (displayMode.isGrid) DisplayMode.List else DisplayMode.Grid)
                         },
-                        isSearching = isSearching
+                        isSearching = isSearching,
+                        activeCount = activeCount,
+                        configuredCount = configuredCount,
+                        totalProvidersCount = allProviders.size,
+                        onPingAll = { viewModel.pingAllConfiguredProviders() }
                     )
 
-                        // Categories Carousel
-                        VaultTagFilterCarousel(
-                            tags = categories,
-                            selectedTag = if (selectedCategory == "All") null else selectedCategory,
-                            onlyFavorites = onlyFavorites,
-                            favoritesCount = favoritesCount,
-                            onTagSelected = { category ->
-                                viewModel.setSelectedCategory(if (selectedCategory == category) "All" else category)
-                            },
-                            onClearTagFilter = { viewModel.setSelectedCategory("All") },
-                            onToggleFavorites = { viewModel.toggleOnlyFavorites() }
-                        )
-                        
                         // Tags Carousel
                         if (availableTags.isNotEmpty()) {
                             VaultTagFilterCarousel(
@@ -226,90 +216,6 @@ fun VaultHomeScreen(
                                 onTagSelected = { tag -> viewModel.toggleTagFilter(tag) },
                                 onClearTagFilter = { viewModel.setSelectedTag(null) }
                             )
-                        }
-
-                        // Agora Metrics & Quick Action Strip
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 6.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            color = ObsidianSurfaceHighlight,
-                            border = BorderStroke(1.dp, ObsidianBorder)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = CyberEmerald.copy(alpha = 0.15f)
-                                    ) {
-                                        Text(
-                                            text = "$activeCount Active",
-                                            color = CyberEmerald,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-
-                                    Text(
-                                        text = "$configuredCount / ${allProviders.size} Configured",
-                                        fontSize = 11.sp,
-                                        color = TextSecondary,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    // Quick Ping All Configured
-                                    Surface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = ObsidianSurfaceElevated,
-                                        border = BorderStroke(1.dp, ObsidianBorderLight),
-                                        modifier = Modifier
-                                            .clickable { viewModel.pingAllConfiguredProviders() }
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            Icon(Icons.Default.NetworkCheck, contentDescription = null, tint = CyberCyan, modifier = Modifier.size(13.dp))
-                                            Text("Ping All", fontSize = 11.sp, color = CyberCyan, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
-
-                                    // Quick Export .env
-                                    Surface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = ObsidianSurfaceElevated,
-                                        border = BorderStroke(1.dp, ObsidianBorderLight),
-                                        modifier = Modifier
-                                            .clickable { viewModel.setDialogState(VaultDialogState.DotEnvExport) }
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            Icon(Icons.Default.FileDownload, contentDescription = null, tint = CyberGold, modifier = Modifier.size(13.dp))
-                                            Text(".env", fontSize = 11.sp, color = CyberGold, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
-                                }
-                            }
                         }
 
                         Spacer(modifier = Modifier.height(4.dp))
