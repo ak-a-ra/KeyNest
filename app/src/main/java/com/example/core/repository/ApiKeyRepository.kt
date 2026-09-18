@@ -16,18 +16,35 @@ const val UNDECRYPTABLE_PLACEHOLDER = "<undecryptable>"
  * Shared decryption cache and placeholder handler for repository layers.
  */
 class CachedSecretCipher(
-    private val cipher: SecretCipher = KeystoreCipher
+    private val cipher: SecretCipher = KeystoreCipher,
+    private val maxCacheSize: Int = 128
 ) {
-    private val decryptCache = ConcurrentHashMap<String, String>()
+    private val lock = Any()
+    private val decryptCache = object : LinkedHashMap<String, String>(maxCacheSize, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
+            return size > maxCacheSize
+        }
+    }
 
     fun decryptOrPlaceholder(cipherText: String): String {
         if (cipherText.isEmpty()) return ""
-        return decryptCache.computeIfAbsent(cipherText) { ct ->
-            try {
-                cipher.decrypt(ct)
-            } catch (_: SecretCipherException) {
-                UNDECRYPTABLE_PLACEHOLDER
-            }
+        synchronized(lock) {
+            decryptCache[cipherText]?.let { return it }
+        }
+        val decrypted = try {
+            cipher.decrypt(cipherText)
+        } catch (_: SecretCipherException) {
+            UNDECRYPTABLE_PLACEHOLDER
+        }
+        synchronized(lock) {
+            decryptCache[cipherText] = decrypted
+        }
+        return decrypted
+    }
+
+    fun clearCache() {
+        synchronized(lock) {
+            decryptCache.clear()
         }
     }
 
@@ -41,37 +58,26 @@ class ApiKeyRepository(
 ) {
     private val cryptor = CachedSecretCipher(cipher)
 
+    fun clearCache() {
+        cryptor.clearCache()
+    }
+
     private fun String.decryptOrPlaceholder(): String = cryptor.decryptOrPlaceholder(this)
     private fun encrypt(plainText: String): String = cryptor.encrypt(plainText)
 
     suspend fun softDeleteKey(id: Long, timestamp: Long = System.currentTimeMillis()): Long {
-        try {
-            dao.softDeleteKey(id, timestamp)
-            return id
-        } catch (e: Exception) {
-            // Security: Do not silently fail soft-delete; propagate for UI handling
-            throw RuntimeException("Soft-delete failed")
-        }
+        dao.softDeleteKey(id, timestamp)
+        return id
     }
 
     suspend fun restoreKey(id: Long): Boolean {
-        try {
-            dao.restoreKey(id)
-            return true
-        } catch (e: Exception) {
-            // Security: Do not silently fail restore; propagate for UI handling
-            throw RuntimeException("Restore failed")
-        }
+        dao.restoreKey(id)
+        return true
     }
 
     suspend fun permanentDeleteKey(id: Long): Boolean {
-        try {
-            dao.permanentDeleteKey(id)
-            return true
-        } catch (e: Exception) {
-            // Security: Do not silently fail permanent delete; propagate for UI handling
-            throw RuntimeException("Permanent delete failed")
-        }
+        dao.permanentDeleteKey(id)
+        return true
     }
 
     private fun ApiKeyItem.decrypted() = copy(
@@ -89,11 +95,7 @@ class ApiKeyRepository(
     val trashCount: Flow<Int> = dao.getTrashCount()
 
     suspend fun emptyTrash() {
-        try {
-            dao.emptyTrash()
-        } catch (e: Exception) {
-            throw RuntimeException("Empty trash failed")
-        }
+        dao.emptyTrash()
     }
 
     fun searchKeys(query: String): Flow<List<ApiKeyItem>> = dao.searchKeys(query).map { list -> list.map { it.decrypted() } }

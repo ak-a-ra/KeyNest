@@ -137,10 +137,11 @@ object ProviderConnectionTester {
 
         return when (preset.id.lowercase()) {
             "gemini" -> {
+                val encodedKey = java.net.URLEncoder.encode(apiKey, "UTF-8")
                 val url = if (baseUrl.contains("/v1beta")) {
-                    "$baseUrl/models?key=$apiKey"
+                    "$baseUrl/models?key=$encodedKey"
                 } else {
-                    "$baseUrl/v1beta/models?key=$apiKey"
+                    "$baseUrl/v1beta/models?key=$encodedKey"
                 }
                 Pair(url, headers)
             }

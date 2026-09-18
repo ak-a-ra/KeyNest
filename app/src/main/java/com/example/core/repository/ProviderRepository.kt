@@ -39,30 +39,46 @@ class ProviderRepository(
         return array.toString()
     }
 
-    private val keysCache = ConcurrentHashMap<String, List<ProviderKeyItem>>()
+    private val keysCacheLock = Any()
+    private val keysCache = object : LinkedHashMap<String, List<ProviderKeyItem>>(128, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<ProviderKeyItem>>?): Boolean {
+            return size > 128
+        }
+    }
+
+    fun clearCache() {
+        synchronized(keysCacheLock) {
+            keysCache.clear()
+        }
+        cryptor.clearCache()
+    }
 
     private fun decryptAndDeserializeKeys(jsonStr: String): List<ProviderKeyItem> {
         if (jsonStr.isBlank() || jsonStr == "[]") return emptyList()
-        return keysCache.computeIfAbsent(jsonStr) { raw ->
-            val result = mutableListOf<ProviderKeyItem>()
-            try {
-                val array = JSONArray(raw)
-                for (i in 0 until array.length()) {
-                    val obj = array.getJSONObject(i)
-                    result.add(
-                        ProviderKeyItem(
-                            id = obj.optString("id", java.util.UUID.randomUUID().toString()),
-                            label = obj.optString("label", "Default"),
-                            apiKey = obj.optString("apiKey", "").decryptOrPlaceholder(),
-                            secretKey = obj.optString("secretKey", "").decryptOrPlaceholder(),
-                            isPrimary = obj.optBoolean("isPrimary", false),
-                            createdAt = obj.optLong("createdAt", System.currentTimeMillis())
-                        )
-                    )
-                }
-            } catch (_: Exception) {}
-            result
+        synchronized(keysCacheLock) {
+            keysCache[jsonStr]?.let { return it }
         }
+        val result = mutableListOf<ProviderKeyItem>()
+        try {
+            val array = JSONArray(jsonStr)
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                result.add(
+                    ProviderKeyItem(
+                        id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                        label = obj.optString("label", "Default"),
+                        apiKey = obj.optString("apiKey", "").decryptOrPlaceholder(),
+                        secretKey = obj.optString("secretKey", "").decryptOrPlaceholder(),
+                        isPrimary = obj.optBoolean("isPrimary", false),
+                        createdAt = obj.optLong("createdAt", System.currentTimeMillis())
+                    )
+                )
+            }
+        } catch (_: Exception) {}
+        synchronized(keysCacheLock) {
+            keysCache[jsonStr] = result
+        }
+        return result
     }
 
     private fun ProviderProfileEntity.toDomain(): ProviderProfile = ProviderProfile(

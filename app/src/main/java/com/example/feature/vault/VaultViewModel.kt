@@ -37,7 +37,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
@@ -798,6 +797,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         // Stop UI ticking to prevent waking CPU every second in background
         autoClearJob?.cancel()
         autoClearJob = null
+        // Security: Purge decrypted keys from RAM on app backgrounding
+        repository.clearCache()
+        providerRepository.clearCache()
     }
 
     fun clearClipboardNow() {
@@ -873,6 +875,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     fun lockVault() {
         if (VaultSecurity.isPinSet(getApplication())) {
             _isVaultLocked.value = true
+            // Security: Purge decrypted keys from RAM on vault lock
+            repository.clearCache()
+            providerRepository.clearCache()
         }
     }
 
