@@ -22,8 +22,8 @@ android {
     applicationId = "com.aistudio.keynest.vault"
     minSdk = 24
     targetSdk = 36
-    versionCode = 4
-    versionName = "0.0.4"
+    versionCode = 6
+    versionName = "0.0.6"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -126,14 +126,15 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
 }
 
-tasks.register<Copy>("syncApkToBuildOutputs") {
+val syncApk = tasks.register<Copy>("syncApkToBuildOutputs") {
   from(layout.buildDirectory.dir("outputs/apk/debug")) {
     include("app-debug.apk")
   }
   into(layout.projectDirectory.dir("../.build-outputs"))
+  duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
-tasks.matching { it.name == "assembleDebug" }.configureEach {
-  finalizedBy("syncApkToBuildOutputs")
+tasks.matching { it.name == "packageDebug" || it.name == "assembleDebug" }.configureEach {
+  finalizedBy(syncApk)
 }
 

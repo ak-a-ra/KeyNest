@@ -43,6 +43,13 @@ Studio Optimized)
 - Keep secret input fields masked by default (`PasswordVisualTransformation`).
 - Mark clipboard copies with `ClipDescription.EXTRA_IS_SENSITIVE` on API 33+.
 
+## 📱 Build, Versioning & Emulator Sync Invariants (Crucial — NEVER BREAK)
+
+- **Monotonically Increasing `versionCode`:** NEVER roll back or freeze `versionCode` when making changes intended to display in the emulator/preview. Android OS PackageManager ignores or refuses updates with equal/lower version codes.
+- **Unconditional APK Synchronization:** Gradle `packageDebug` MUST directly copy `app/build/outputs/apk/debug/app-debug.apk` to `.build-outputs/app-debug.apk`. The AI Studio preview/emulator serves `.build-outputs/app-debug.apk`.
+- **Pre-Completion Build Verification:** Run `compile_applet` before finishing turns. Verify that both APKs exist, have identical timestamps/sizes, and contain the new UI strings and resources.
+- **Tracked Build Output:** Never ignore `.build-outputs/app-debug.apk` in `.gitignore` to prevent containers from reverting to outdated image base layers.
+
 ## 💻 Coding Invariants (Ponytail)
 
 - **Ponytail Hierarchy:** 1. Needs to exist? → 2. Already in codebase? → 3. Kotlin stdlib? → 4. Native Android feature? → 5. Existing dependency? → 6. One-liner? → Only then write new code.

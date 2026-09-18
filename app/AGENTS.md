@@ -14,6 +14,8 @@ This contract governs the `/app` module: Android build configs, manifest, resour
 ## Invariants & Rules
 
 - **Namespace & ID:** Keep `namespace = "com.example"` unchanged; `applicationId` must stay unique.
+- **Monotonic Version Code:** Never roll back or freeze `versionCode`. Increment on each release to trigger emulator PackageManager upgrade.
+- **Unconditional APK Sync:** `packageDebug` must mirror `outputs/apk/debug/app-debug.apk` directly to `.build-outputs/app-debug.apk`.
 - **Zero Plaintext Backups:** Keep `android:allowBackup="false"` and `android:fullBackupContent="false"` in `AndroidManifest.xml`.
 - **Icon Integrity:** Custom adaptive launcher icon (`ic_launcher_foreground.xml`, `ic_launcher_background.xml`, `ic_launcher_keynest.jpg`) must remain configured.
 - **Test Integrity:** Never delete or bypass unit/Robolectric test suites. Verify `./gradlew testDebugUnitTest` passes on changes.
