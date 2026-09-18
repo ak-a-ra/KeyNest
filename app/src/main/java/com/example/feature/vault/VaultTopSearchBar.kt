@@ -239,11 +239,11 @@ fun GoogleKeepTopSearchBar(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFE53935)),
+                            .background(ObsidianSurfaceHighlight),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.img_cat_ip_logo_1787319466857),
+                            painter = painterResource(id = R.drawable.img_keynest_logo_1789723280787),
                             contentDescription = "Profile and Actions Menu",
                             modifier = Modifier
                                 .size(36.dp)

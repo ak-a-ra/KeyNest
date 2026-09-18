@@ -113,12 +113,12 @@ fun VaultDrawerSheetContent(
                         modifier = Modifier
                             .size(46.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFE53935)),
+                            .background(VibrantAvatarBg),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.img_cat_ip_logo_1787319466857),
-                            contentDescription = "KeyNest Cat Mascot Logo",
+                            painter = painterResource(id = R.drawable.img_keynest_logo_1789723280787),
+                            contentDescription = "KeyNest Logo",
                             modifier = Modifier
                                 .size(46.dp)
                                 .clip(CircleShape),

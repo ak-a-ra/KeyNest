@@ -3,6 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/keynest_icon_1787892202496"
+        android:drawable="@drawable/img_keynest_logo_1789723280787"
         android:gravity="center" />
 </layer-list>
