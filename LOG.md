@@ -1,5 +1,7 @@
 # KeyNest Development Log
 
+- 2026-09-18: Enhanced CI release pipeline to support persistent signing keystores from GitHub Secrets and resolved APK installation issues on physical devices. No other doc updates needed.
+
 - 2026-09-18: Bumped versionCode to 7 (0.0.7) to force Android PackageManager in emulator VM to invalidate stale cached build and load updated Compose UI tree. No other doc updates needed.
 - 2026-09-18: Rebuilt README.md with comprehensive structure and updated LICENSE to free personal use with mandatory attribution credit for commercial use.
 - 2026-09-18: Hardened APK build and emulator synchronization pipeline: bumped versionCode to 6 (0.0.6), attached direct un-skippable packageDebug doLast file copy to .build-outputs/app-debug.apk, updated .gitignore to track app-debug.apk, and rebuilt root AGENTS.md and app/AGENTS.md with strict monotonic versioning and APK sync invariants. No other doc updates needed.

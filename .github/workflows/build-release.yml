@@ -38,7 +38,10 @@ jobs:
 
       - name: Generate Debug Keystore
         run: |
-          if [ ! -f debug.keystore ]; then
+          if [ -n "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > debug.keystore
+            echo "Loaded persistent keystore from repository secrets."
+          elif [ ! -f debug.keystore ]; then
             keytool -genkey -v -keystore debug.keystore \
               -storepass android -alias androiddebugkey -keypass android \
               -keyalg RSA -keysize 2048 -validity 10000 \
